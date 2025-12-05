@@ -108,6 +108,24 @@ class StockPicking(models.Model):
         store=True,
     )
 
+    # ===== PHÂN LOẠI XUẤT KHO (cho outgoing) =====
+    outgoing_type = fields.Selection([
+        ('sale', 'Xuất bán hàng'),
+        ('transfer', 'Chuyển kho thành phẩm khác'),
+        ('production', 'Chuyển về kho sản xuất'),
+        ('other', 'Xuất khác'),
+    ], string='Loại xuất kho',
+       compute='_compute_outgoing_type',
+       store=True,
+       tracking=True,
+       help="Phân loại theo mục đích xuất kho")
+
+    destination_warehouse_id = fields.Many2one(
+        'stock.warehouse',
+        string='Kho đích',
+        help="Kho thành phẩm đích (nếu chuyển kho)"
+    )
+
     @api.depends('picking_type_id', 'picking_type_id.code')
     def _compute_require_putaway(self):
         """Auto-enable putaway for incoming pickings"""
@@ -115,6 +133,32 @@ class StockPicking(models.Model):
             picking.require_putaway_suggestion = (
                     picking.picking_type_id.code == 'incoming'
             )
+
+    @api.depends('location_dest_id', 'location_dest_id.usage', 'location_dest_id.warehouse_id', 'picking_type_code')
+    def _compute_outgoing_type(self):
+        """Tự động phân loại xuất kho dựa vào destination"""
+        for picking in self:
+            if picking.picking_type_code != 'outgoing':
+                picking.outgoing_type = False
+                continue
+            
+            dest_location = picking.location_dest_id
+            if not dest_location:
+                picking.outgoing_type = 'other'
+                continue
+            
+            # Xuất bán hàng: customer location
+            if dest_location.usage == 'customer':
+                picking.outgoing_type = 'sale'
+            # Chuyển kho: internal location của warehouse khác
+            elif dest_location.usage == 'internal' and dest_location.warehouse_id != picking.location_id.warehouse_id:
+                picking.outgoing_type = 'transfer'
+                picking.destination_warehouse_id = dest_location.warehouse_id
+            # Chuyển về sản xuất: production location
+            elif dest_location.usage == 'production':
+                picking.outgoing_type = 'production'
+            else:
+                picking.outgoing_type = 'other'
 
     @api.depends('batch_ids')
     def _compute_batch_count(self):

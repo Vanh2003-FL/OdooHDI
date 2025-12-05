@@ -13,6 +13,13 @@
                        decoration-warning="wms_state in ('putaway_pending', 'picking_progress')"
                        decoration-success="wms_state == 'wms_done'"
                        groups="hdi_wms.group_wms_user"/>
+                <!-- Hiển thị loại xuất kho cho outgoing -->
+                <field name="outgoing_type" widget="badge"
+                       invisible="picking_type_code != 'outgoing'"
+                       decoration-success="outgoing_type == 'sale'"
+                       decoration-info="outgoing_type == 'transfer'"
+                       decoration-warning="outgoing_type == 'production'"
+                       groups="hdi_wms.group_wms_user"/>
             </field>
 
             <!-- Add WMS buttons in header -->
@@ -46,6 +53,26 @@
             <xpath expr="//form/sheet/notebook" position="before">
                 <field name="picking_type_code" invisible="1"/>
                 <field name="picking_list_count" invisible="1"/>
+                
+                <!-- Thông tin xuất kho (cho outgoing) -->
+                <group string="Thông tin xuất kho" 
+                       invisible="picking_type_code != 'outgoing'"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="outgoing_type" widget="radio" options="{'horizontal': true}"/>
+                        <field name="destination_warehouse_id" 
+                               invisible="outgoing_type != 'transfer'"
+                               string="Kho thành phẩm đích"/>
+                    </group>
+                    <group>
+                        <field name="picking_list_count" string="Số bảng kê lấy hàng"/>
+                        <button name="action_view_picking_lists" type="object"
+                                string="→ Xem tất cả bảng kê"
+                                class="oe_link"
+                                invisible="picking_list_count == 0"/>
+                    </group>
+                </group>
+                
                 <group string="Cấu hình lô" groups="hdi_wms.group_wms_user">
                     <group>
                         <field name="use_batch_management" string=" Quản lý theo Lô hàng/Pallet"/>
