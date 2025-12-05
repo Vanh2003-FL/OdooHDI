@@ -1,15 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Picking Suggestion Wizard Tree (required for Odoo) -->
-    <record id="view_picking_suggestion_wizard_tree" model="ir.ui.view">
-        <field name="name">hdi.picking.suggestion.wizard.tree</field>
+    <!-- Picking Suggestion Line List View -->
+    <record id="view_picking_suggestion_line_list" model="ir.ui.view">
+        <field name="name">hdi.picking.suggestion.line.list</field>
+        <field name="model">hdi.picking.suggestion.line</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false" edit="false">
+                <field name="sequence"/>
+                <field name="product_id"/>
+                <field name="batch_id"/>
+                <field name="location_id"/>
+                <field name="location_priority" optional="show"/>
+                <field name="fifo_date" optional="show"/>
+                <field name="qty_needed"/>
+                <field name="available_qty"/>
+                <field name="suggested_qty"/>
+                <field name="warning" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Picking Suggestion Wizard List (required for Odoo) -->
+    <record id="view_picking_suggestion_wizard_list" model="ir.ui.view">
+        <field name="name">hdi.picking.suggestion.wizard.list</field>
         <field name="model">hdi.picking.suggestion.wizard</field>
         <field name="arch" type="xml">
-            <tree create="false" edit="false" delete="false">
+            <list create="false" edit="false" delete="false">
                 <field name="picking_id"/>
                 <field name="total_qty_needed"/>
                 <field name="total_qty_suggested"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -43,8 +63,8 @@
                     
                     <notebook>
                         <page string="Gợi ý lấy hàng (FIFO)" name="suggestions">
-                            <field name="suggestion_line_ids" mode="tree">
-                                <tree create="false" delete="false" edit="false">
+                            <field name="suggestion_line_ids" mode="list">
+                                <list create="false" delete="false" edit="false">
                                     <field name="sequence"/>
                                     <field name="product_id"/>
                                     <field name="batch_id"/>
@@ -55,7 +75,7 @@
                                     <field name="available_qty"/>
                                     <field name="suggested_qty"/>
                                     <field name="warning" optional="show"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
