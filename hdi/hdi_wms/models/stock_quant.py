@@ -52,6 +52,32 @@ class StockQuant(models.Model):
         for quant in self:
             quant.is_batched = bool(quant.batch_id)
     
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to handle batch inventory check"""
+        records = super().create(vals_list)
+        
+        # For KK_NV_01: Auto-populate from batch when batch_id is set
+        for record in records:
+            if record.check_type == 'batch' and record.batch_id and not record.product_id:
+                # Get all quants in this batch at this location
+                existing_quants = self.search([
+                    ('location_id', '=', record.location_id.id),
+                    ('batch_id', '=', record.batch_id.id),
+                    ('id', '!=', record.id)
+                ])
+                
+                if existing_quants:
+                    # Copy info from first quant
+                    first_quant = existing_quants[0]
+                    record.write({
+                        'product_id': first_quant.product_id.id,
+                        'lot_id': first_quant.lot_id.id if first_quant.lot_id else False,
+                        'package_id': first_quant.package_id.id if first_quant.package_id else False,
+                    })
+        
+        return records
+    
     def write(self, vals):
         result = super().write(vals)
         
@@ -66,6 +92,22 @@ class StockQuant(models.Model):
         if 'quantity' in vals or 'reserved_quantity' in vals:
             batches = self.mapped('batch_id').filtered(lambda b: b)
             batches._compute_quantities()
+        
+        # KK_NV_01: When batch_id changes, update product info
+        if 'batch_id' in vals and vals.get('batch_id'):
+            for quant in self:
+                if quant.check_type == 'batch' and quant.batch_id:
+                    existing_quants = self.search([
+                        ('location_id', '=', quant.location_id.id),
+                        ('batch_id', '=', quant.batch_id.id),
+                        ('id', '!=', quant.id)
+                    ], limit=1)
+                    
+                    if existing_quants:
+                        quant.write({
+                            'product_id': existing_quants.product_id.id,
+                            'lot_id': existing_quants.lot_id.id if existing_quants.lot_id else False,
+                        })
         
         return result
 

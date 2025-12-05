@@ -12,54 +12,115 @@
         </field>
     </record>
 
-    <!-- ✅ INHERIT Inventory Adjustment form - Add 2 check workflows -->
-    <record id="view_inventory_form_wms_check" model="ir.ui.view">
-        <field name="name">stock.quant.inventory.form.wms.check</field>
+    <!-- ✅ WMS Inventory Check Tree - KK_NV_01 (Batch) -->
+    <record id="view_wms_inventory_check_batch_tree" model="ir.ui.view">
+        <field name="name">wms.inventory.check.batch.tree</field>
         <field name="model">stock.quant</field>
-        <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
+        <field name="priority">20</field>
         <field name="arch" type="xml">
-            <!-- Disable direct quant creation -->
-            <xpath expr="//list" position="attributes">
-                <attribute name="create">0</attribute>
-            </xpath>
-            
-            <!-- Add check_type after location_id with better visibility -->
-            <field name="location_id" position="after">
-                <field name="check_type" 
-                       optional="show" 
-                       groups="hdi_wms.group_wms_user"
-                       widget="badge"
-                       decoration-info="check_type == 'batch'"
-                       decoration-success="check_type == 'barcode'"/>
-            </field>
-            
-            <!-- KK_NV_01: Show batch_id for batch check -->
-            <field name="product_id" position="after">
+            <list string="Kiểm kê theo Batch" editable="bottom" create="1" delete="1" default_order="location_id, product_id">
+                <field name="check_type" column_invisible="1" default="batch"/>
+                <field name="location_id" domain="[('usage', 'in', ['internal', 'transit'])]" required="1"/>
                 <field name="batch_id" 
-                       domain="[('location_id', '=', location_id)]"
-                       optional="hide"
-                       groups="hdi_wms.group_wms_user"
-                       placeholder="Chọn Batch..."/>
-            </field>
-            
-            <!-- KK_NV_02: Show barcode scanning fields before inventory_quantity -->
-            <field name="inventory_quantity" position="before">
+                       domain="[('location_id', '=', location_id)]" 
+                       required="1"
+                       placeholder="Chọn Batch/LPN..."
+                       options="{'no_create': True}"/>
+                <field name="product_id" readonly="1" options="{'no_create': True}"/>
+                <field name="lot_id" groups="stock.group_production_lot" readonly="1"/>
+                <field name="package_id" groups="stock.group_tracking_lot" readonly="1"/>
+                <field name="quantity" string="Số lượng hệ thống" readonly="1"/>
+                <field name="inventory_quantity" string="Số lượng kiểm đếm" required="1"/>
+                <field name="inventory_diff_quantity" 
+                       string="Chênh lệch" 
+                       readonly="1"
+                       decoration-danger="inventory_diff_quantity &lt; 0"
+                       decoration-success="inventory_diff_quantity &gt; 0"/>
+                <field name="product_uom_id" groups="uom.group_uom"/>
+                <button name="action_apply_inventory" 
+                        type="object" 
+                        string="Áp dụng" 
+                        class="btn-primary" 
+                        icon="fa-save"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ✅ WMS Inventory Check Tree - KK_NV_02 (Barcode) -->
+    <record id="view_wms_inventory_check_barcode_tree" model="ir.ui.view">
+        <field name="name">wms.inventory.check.barcode.tree</field>
+        <field name="model">stock.quant</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="Kiểm kê quét Barcode" editable="bottom" create="1" delete="1" default_order="location_id, product_id">
+                <field name="check_type" column_invisible="1" default="barcode"/>
+                <field name="location_id" domain="[('usage', 'in', ['internal', 'transit'])]" required="1"/>
+                <field name="product_id" options="{'no_create': True}"/>
+                <field name="lot_id" groups="stock.group_production_lot" optional="show"/>
                 <field name="scan_mode" 
                        widget="boolean_toggle" 
-                       string="🔍 Quét" 
-                       optional="hide"
-                       groups="hdi_wms.group_wms_user"/>
+                       string="🔍 Chế độ quét"
+                       decoration-success="scan_mode"/>
                 <field name="last_scanned_code" 
-                       readonly="1" 
-                       optional="hide"
-                       groups="hdi_wms.group_wms_user"
-                       placeholder="Chưa quét"/>
+                       readonly="1"
+                       string="Mã vừa quét"
+                       placeholder="Chưa quét..."/>
                 <field name="scanned_count" 
-                       readonly="1" 
-                       optional="hide"
-                       groups="hdi_wms.group_wms_user"
-                       string="Đã quét"/>
-            </field>
+                       readonly="1"
+                       string="Lần quét"
+                       decoration-info="scanned_count &gt; 0"/>
+                <field name="quantity" string="Số lượng hệ thống" readonly="1"/>
+                <field name="inventory_quantity" string="Số lượng kiểm đếm" required="1"/>
+                <field name="inventory_diff_quantity" 
+                       string="Chênh lệch" 
+                       readonly="1"
+                       decoration-danger="inventory_diff_quantity &lt; 0"
+                       decoration-success="inventory_diff_quantity &gt; 0"/>
+                <field name="product_uom_id" groups="uom.group_uom"/>
+                <button name="action_apply_inventory" 
+                        type="object" 
+                        string="Áp dụng" 
+                        class="btn-primary" 
+                        icon="fa-save"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ✅ Action: KK_NV_01 - Kiểm kê theo Batch -->
+    <record id="action_wms_inventory_check_batch" model="ir.actions.act_window">
+        <field name="name">KK_NV_01 - Kiểm kê theo Batch</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_wms_inventory_check_batch_tree"/>
+        <field name="domain">[('check_type', '=', 'batch')]</field>
+        <field name="context">{'default_check_type': 'batch', 'inventory_mode': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu kiểm kê theo Batch/LPN
+            </p>
+            <p>
+                Chọn vị trí kho và Batch/LPN cần kiểm kê.<br/>
+                Hệ thống sẽ tự động lấy danh sách sản phẩm trong batch đó.
+            </p>
+        </field>
+    </record>
+
+    <!-- ✅ Action: KK_NV_02 - Kiểm kê theo Barcode -->
+    <record id="action_wms_inventory_check_barcode" model="ir.actions.act_window">
+        <field name="name">KK_NV_02 - Kiểm kê quét Barcode</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_wms_inventory_check_barcode_tree"/>
+        <field name="domain">[('check_type', '=', 'barcode')]</field>
+        <field name="context">{'default_check_type': 'barcode', 'inventory_mode': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu kiểm kê bằng quét Barcode
+            </p>
+            <p>
+                Bật chế độ quét và dùng máy quét barcode để kiểm đếm từng sản phẩm.<br/>
+                Mỗi lần quét sẽ tự động tăng số lượng.
+            </p>
         </field>
     </record>
 
