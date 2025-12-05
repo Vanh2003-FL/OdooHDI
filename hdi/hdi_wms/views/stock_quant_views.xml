@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ✅ INHERIT stock.quant tree - chỉ thêm field ẩn -->
+    <!-- ✅ INHERIT stock.quant tree - add batch_id field -->
     <record id="view_quant_tree_wms" model="ir.ui.view">
         <field name="name">stock.quant.tree.wms</field>
         <field name="model">stock.quant</field>
@@ -12,4 +12,41 @@
         </field>
     </record>
 
+    <!-- ✅ INHERIT Inventory Adjustment form - Add 2 check workflows -->
+    <record id="view_inventory_form_wms_check" model="ir.ui.view">
+        <field name="name">stock.quant.inventory.form.wms.check</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_inventory_tree_editable"/>
+        <field name="arch" type="xml">
+            <!-- Add check_type selector at top -->
+            <xpath expr="//tree" position="before">
+                <group name="check_type_group">
+                    <field name="check_type" widget="radio" options="{'horizontal': true}"/>
+                </group>
+            </xpath>
+            
+            <!-- KK_NV_01: Show batch_id for batch check -->
+            <field name="product_id" position="after">
+                <field name="batch_id" 
+                       invisible="check_type != 'batch'" 
+                       required="check_type == 'batch'"
+                       domain="[('location_id', '=', location_id)]"/>
+            </field>
+            
+            <!-- KK_NV_02: Show barcode scanning fields -->
+            <field name="inventory_quantity" position="after">
+                <field name="scan_mode" widget="boolean_toggle" 
+                       invisible="check_type != 'barcode'"
+                       string="Quét Barcode"/>
+                <field name="last_scanned_code" 
+                       invisible="check_type != 'barcode'"
+                       readonly="1"/>
+                <field name="scanned_count" 
+                       invisible="check_type != 'barcode'"
+                       readonly="1"/>
+            </field>
+        </field>
+    </record>
+
 </odoo>
+
