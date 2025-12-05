@@ -18,29 +18,29 @@
         <field name="model">stock.quant</field>
         <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
         <field name="arch" type="xml">
-            <!-- Add check_type hidden field for conditional logic -->
+            <!-- Add check_type visible field for workflow selection -->
             <field name="location_id" position="after">
-                <field name="check_type" column_invisible="True"/>
+                <field name="check_type" optional="show" groups="hdi_wms.group_wms_user"/>
             </field>
             
             <!-- KK_NV_01: Show batch_id for batch check -->
             <field name="product_id" position="after">
                 <field name="batch_id" 
                        domain="[('location_id', '=', location_id)]"
-                       optional="hide"
+                       optional="show"
                        groups="hdi_wms.group_wms_user"/>
             </field>
             
             <!-- KK_NV_02: Show barcode scanning fields before inventory_quantity -->
             <field name="inventory_quantity" position="before">
                 <field name="scan_mode" widget="boolean_toggle" 
-                       string="Quét" optional="hide"
+                       string="Quét" optional="show"
                        groups="hdi_wms.group_wms_user"/>
                 <field name="last_scanned_code" 
-                       readonly="1" optional="hide"
+                       readonly="1" optional="show"
                        groups="hdi_wms.group_wms_user"/>
                 <field name="scanned_count" 
-                       readonly="1" optional="hide"
+                       readonly="1" optional="show"
                        groups="hdi_wms.group_wms_user"/>
             </field>
         </field>
