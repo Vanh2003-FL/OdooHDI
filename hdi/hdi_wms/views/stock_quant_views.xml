@@ -18,17 +18,16 @@
         <field name="model">stock.quant</field>
         <field name="priority">20</field>
         <field name="arch" type="xml">
-            <list string="Kiểm kê theo Batch" editable="bottom" create="1" delete="1" default_order="location_id, product_id">
-                <field name="check_type" column_invisible="1" default="batch"/>
+            <tree string="Kiểm kê theo Batch" editable="bottom" create="1" delete="1" default_order="location_id, product_id">
+                <field name="check_type" invisible="1"/>
                 <field name="location_id" domain="[('usage', 'in', ['internal', 'transit'])]" required="1"/>
                 <field name="batch_id" 
                        domain="[('location_id', '=', location_id)]" 
                        required="1"
-                       placeholder="Chọn Batch/LPN..."
                        options="{'no_create': True}"/>
                 <field name="product_id" readonly="1" options="{'no_create': True}"/>
-                <field name="lot_id" groups="stock.group_production_lot" readonly="1"/>
-                <field name="package_id" groups="stock.group_tracking_lot" readonly="1"/>
+                <field name="lot_id" groups="stock.group_production_lot" readonly="1" optional="hide"/>
+                <field name="package_id" groups="stock.group_tracking_lot" readonly="1" optional="hide"/>
                 <field name="quantity" string="Số lượng hệ thống" readonly="1"/>
                 <field name="inventory_quantity" string="Số lượng kiểm đếm" required="1"/>
                 <field name="inventory_diff_quantity" 
@@ -36,13 +35,13 @@
                        readonly="1"
                        decoration-danger="inventory_diff_quantity &lt; 0"
                        decoration-success="inventory_diff_quantity &gt; 0"/>
-                <field name="product_uom_id" groups="uom.group_uom"/>
+                <field name="product_uom_id" groups="uom.group_uom" optional="hide"/>
                 <button name="action_apply_inventory" 
                         type="object" 
                         string="Áp dụng" 
                         class="btn-primary" 
                         icon="fa-save"/>
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -52,15 +51,14 @@
         <field name="model">stock.quant</field>
         <field name="priority">20</field>
         <field name="arch" type="xml">
-            <list string="Kiểm kê quét Barcode" editable="bottom" create="1" delete="1" default_order="location_id, product_id">
-                <field name="check_type" column_invisible="1" default="barcode"/>
+            <tree string="Kiểm kê quét Barcode" editable="bottom" create="1" delete="1" default_order="location_id, product_id">
+                <field name="check_type" invisible="1"/>
                 <field name="location_id" domain="[('usage', 'in', ['internal', 'transit'])]" required="1"/>
                 <field name="product_id" options="{'no_create': True}"/>
-                <field name="lot_id" groups="stock.group_production_lot" optional="show"/>
+                <field name="lot_id" groups="stock.group_production_lot" optional="hide"/>
                 <field name="scan_mode" 
                        widget="boolean_toggle" 
-                       string="🔍 Chế độ quét"
-                       decoration-success="scan_mode"/>
+                       string="🔍 Chế độ quét"/>
                 <field name="last_scanned_code" 
                        readonly="1"
                        string="Mã vừa quét"
@@ -76,13 +74,13 @@
                        readonly="1"
                        decoration-danger="inventory_diff_quantity &lt; 0"
                        decoration-success="inventory_diff_quantity &gt; 0"/>
-                <field name="product_uom_id" groups="uom.group_uom"/>
+                <field name="product_uom_id" groups="uom.group_uom" optional="hide"/>
                 <button name="action_apply_inventory" 
                         type="object" 
                         string="Áp dụng" 
                         class="btn-primary" 
                         icon="fa-save"/>
-            </list>
+            </tree>
         </field>
     </record>
 
