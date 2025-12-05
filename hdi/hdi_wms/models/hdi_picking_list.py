@@ -37,6 +37,24 @@ class HdiPickingList(models.Model):
         store=True,
     )
 
+    # ===== PHÂN LOẠI XUẤT KHO =====
+    outgoing_type = fields.Selection([
+        ('sale', 'Xuất bán hàng'),
+        ('transfer', 'Chuyển kho thành phẩm khác'),
+        ('production', 'Chuyển về kho sản xuất'),
+        ('other', 'Xuất khác'),
+    ], string='Loại xuất kho', 
+       compute='_compute_outgoing_type',
+       store=True,
+       tracking=True,
+       help="Phân loại theo mục đích xuất kho")
+
+    destination_warehouse_id = fields.Many2one(
+        'stock.warehouse',
+        string='Kho đích',
+        help="Kho thành phẩm đích (nếu chuyển kho)"
+    )
+
     # ===== NGƯỜI THỰC HIỆN =====
     created_by_id = fields.Many2one(
         'res.users',
@@ -136,6 +154,29 @@ class HdiPickingList(models.Model):
         default=lambda self: self.env.company,
         required=True,
     )
+
+    @api.depends('picking_id', 'picking_id.location_dest_id', 'picking_id.partner_id')
+    def _compute_outgoing_type(self):
+        """Tự động phân loại xuất kho dựa vào destination"""
+        for rec in self:
+            if not rec.picking_id:
+                rec.outgoing_type = 'other'
+                continue
+            
+            dest_location = rec.picking_id.location_dest_id
+            
+            # Xuất bán hàng: customer location
+            if dest_location.usage == 'customer':
+                rec.outgoing_type = 'sale'
+            # Chuyển kho: internal location của warehouse khác
+            elif dest_location.usage == 'internal' and dest_location.warehouse_id != rec.picking_id.location_id.warehouse_id:
+                rec.outgoing_type = 'transfer'
+                rec.destination_warehouse_id = dest_location.warehouse_id
+            # Chuyển về sản xuất: production location
+            elif dest_location.usage == 'production':
+                rec.outgoing_type = 'production'
+            else:
+                rec.outgoing_type = 'other'
 
     @api.model
     def create(self, vals):

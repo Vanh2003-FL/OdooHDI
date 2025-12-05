@@ -7,21 +7,26 @@
         <field name="arch" type="xml">
             <form string="Gợi ý lấy hàng theo FIFO">
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="picking_id" readonly="1" class="oe_inline"/>
+                        </h1>
+                    </div>
+                    
                     <group>
-                        <field name="picking_id" readonly="1"/>
-                        <field name="picking_type" invisible="1"/>
-                    </group>
-                    
-                    <group string="Thống kê">
                         <group>
-                            <field name="total_qty_needed"/>
+                            <field name="picking_type" invisible="1"/>
+                            <label for="picking_id" invisible="1"/>
                         </group>
                         <group>
-                            <field name="total_qty_suggested"/>
+                            <field name="total_qty_needed" class="oe_inline"/>
+                            <field name="total_qty_suggested" class="oe_inline"/>
                         </group>
                     </group>
                     
-                    <field name="notes" readonly="1" class="alert alert-info"/>
+                    <group>
+                        <field name="notes" readonly="1" class="alert alert-info" nolabel="1"/>
+                    </group>
                     
                     <notebook>
                         <page string="Gợi ý lấy hàng (FIFO)" name="suggestions">
