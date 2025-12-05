@@ -80,7 +80,10 @@ class PickingSuggestionWizard(models.TransientModel):
                 ('product_id', '=', product.id),
                 ('state', '=', 'stored'),
                 ('available_quantity', '>', 0),
-            ], order='create_date asc, location_id.location_priority asc')  # FIFO + Priority
+            ], order='create_date asc')  # FIFO only
+            
+            # Sort by location priority manually (if location has priority field)
+            batches = batches.sorted(key=lambda b: (b.create_date, b.location_id.location_priority or 999))
 
             # Phân bổ số lượng vào các batch
             for batch in batches:
