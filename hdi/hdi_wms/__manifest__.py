@@ -32,6 +32,7 @@ HDI Warehouse Management System
         'views/hdi_putaway_suggestion_views.xml',
         'views/hdi_loose_line_views.xml',
         'views/hdi_picking_list_views.xml',
+        'views/hdi_inventory_check_views.xml',
 
         # Wizards
         'wizard/batch_creation_wizard_views.xml',
