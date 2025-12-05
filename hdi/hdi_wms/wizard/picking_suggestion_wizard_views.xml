@@ -25,11 +25,9 @@
                     
                     <notebook>
                         <page string="Gợi ý lấy hàng (FIFO)" name="suggestions">
-                            <field name="suggestion_line_ids" widget="one2many" readonly="1">
-                                <tree decoration-success="is_sufficient"
-                                      decoration-danger="warning"
-                                      decoration-info="not warning and not is_sufficient">
-                                    <field name="sequence" widget="handle"/>
+                            <field name="suggestion_line_ids" mode="tree">
+                                <tree create="false" delete="false" edit="false">
+                                    <field name="sequence"/>
                                     <field name="product_id"/>
                                     <field name="batch_id"/>
                                     <field name="location_id"/>
@@ -38,7 +36,6 @@
                                     <field name="qty_needed"/>
                                     <field name="available_qty"/>
                                     <field name="suggested_qty"/>
-                                    <field name="is_sufficient" invisible="1"/>
                                     <field name="warning" optional="show"/>
                                 </tree>
                             </field>
