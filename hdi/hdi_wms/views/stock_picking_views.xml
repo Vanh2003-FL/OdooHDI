@@ -22,11 +22,19 @@
                         class="btn-warning"
                         groups="hdi_wms.group_wms_user"/>
                 <button name="action_create_batch" type="object" string="Tạo Lô hàng"
-                        invisible="state != 'assigned' or not use_batch_management"
+                        invisible="state != 'assigned' or not use_batch_management or picking_type_code != 'incoming'"
                         class="btn-primary"
                         groups="hdi_wms.group_wms_user"/>
                 <button name="action_suggest_putaway_all" type="object" string="Gợi ý Vị trí"
-                        invisible="wms_state not in ('batch_creation', 'putaway_pending')"
+                        invisible="wms_state not in ('batch_creation', 'putaway_pending') or picking_type_code != 'incoming'"
+                        class="btn-secondary"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_suggest_picking" type="object" string="Gợi ý lấy hàng (FIFO)"
+                        invisible="state not in ('assigned', 'confirmed') or picking_type_code != 'outgoing'"
+                        class="btn-primary"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_view_picking_lists" type="object" string="Bảng kê lấy hàng"
+                        invisible="picking_list_count == 0"
                         class="btn-secondary"
                         groups="hdi_wms.group_wms_user"/>
                 <button name="action_open_scanner" type="object" string="Quét Mã vạch"
@@ -36,6 +44,8 @@
             </button>
 
             <xpath expr="//form/sheet/notebook" position="before">
+                <field name="picking_type_code" invisible="1"/>
+                <field name="picking_list_count" invisible="1"/>
                 <group string="Cấu hình lô" groups="hdi_wms.group_wms_user">
                     <group>
                         <field name="use_batch_management" string=" Quản lý theo Lô hàng/Pallet"/>

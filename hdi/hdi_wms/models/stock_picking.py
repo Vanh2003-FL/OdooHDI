@@ -89,6 +89,25 @@ class StockPicking(models.Model):
         help="Thời điểm sản xuất bàn giao hàng cho kho"
     )
 
+    # ===== PICKING LIST FIELDS =====
+    picking_list_ids = fields.One2many(
+        'hdi.picking.list',
+        'picking_id',
+        string='Bảng kê lấy hàng',
+        help="Danh sách bảng kê lấy hàng cho phiếu xuất này"
+    )
+
+    picking_list_count = fields.Integer(
+        compute='_compute_picking_list_count',
+        string='Số bảng kê',
+    )
+
+    picking_type_code = fields.Selection(
+        related='picking_type_id.code',
+        string='Loại phiếu',
+        store=True,
+    )
+
     @api.depends('picking_type_id', 'picking_type_id.code')
     def _compute_require_putaway(self):
         """Auto-enable putaway for incoming pickings"""
@@ -102,6 +121,12 @@ class StockPicking(models.Model):
         """Count batches in this picking"""
         for picking in self:
             picking.batch_count = len(picking.batch_ids)
+
+    @api.depends('picking_list_ids')
+    def _compute_picking_list_count(self):
+        """Count picking lists"""
+        for picking in self:
+            picking.picking_list_count = len(picking.picking_list_ids)
 
     def action_create_batch(self):
         self.ensure_one()
@@ -131,6 +156,37 @@ class StockPicking(models.Model):
             'context': {
                 'default_picking_id': self.id,
                 'default_batch_ids': [(6, 0, self.batch_ids.ids)],
+            }
+        }
+
+    def action_suggest_picking(self):
+        """Gợi ý lấy hàng theo FIFO - Bước 3"""
+        self.ensure_one()
+        if self.picking_type_id.code != 'outgoing':
+            raise UserError(_('Chỉ áp dụng cho phiếu xuất kho.'))
+
+        return {
+            'name': _('Gợi ý lấy hàng theo FIFO'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hdi.picking.suggestion.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_picking_id': self.id,
+            }
+        }
+
+    def action_view_picking_lists(self):
+        """Xem tất cả bảng kê lấy hàng"""
+        self.ensure_one()
+        return {
+            'name': _('Bảng kê lấy hàng - %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'hdi.picking.list',
+            'view_mode': 'kanban,tree,form',
+            'domain': [('picking_id', '=', self.id)],
+            'context': {
+                'default_picking_id': self.id,
             }
         }
 

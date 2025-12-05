@@ -278,6 +278,37 @@ class HdiBatch(models.Model):
         self.location_id = self.location_dest_id
         self.state = 'stored'
 
+    # ===== OUTGOING / PICKING OPERATIONS =====
+    def action_start_picking(self):
+        """Bắt đầu lấy hàng cho xuất kho"""
+        self.ensure_one()
+        if self.state != 'stored':
+            raise UserError(_('Chỉ có thể lấy hàng từ batch đã lưu kho (stored).'))
+        
+        if self.available_quantity <= 0:
+            raise UserError(_('Batch này không có hàng khả dụng để lấy.'))
+        
+        self.state = 'in_picking'
+
+    def action_confirm_picked(self):
+        """Xác nhận đã lấy hàng xong, sẵn sàng xuất kho"""
+        self.ensure_one()
+        if self.state != 'in_picking':
+            raise UserError(_('Batch phải ở trạng thái "Đang lấy hàng".'))
+        
+        # Không chuyển sang shipped ngay, đợi stock.move done
+        # State shipped sẽ được set tự động trong stock_move._action_done()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Đã xác nhận'),
+                'message': _('Batch %s đã sẵn sàng xuất kho') % self.name,
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
     def action_suggest_putaway(self):
         self.ensure_one()
         return {

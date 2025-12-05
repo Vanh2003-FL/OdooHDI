@@ -33,6 +33,7 @@
         <field name="arch" type="xml">
             <form string="Lô hàng">
                 <header>
+                    <!-- Incoming workflow -->
                     <button name="action_start_receiving" string="Bắt đầu Nhập hàng"
                             type="object" invisible="state != 'draft'"
                             class="btn-primary"/>
@@ -45,6 +46,15 @@
                     <button name="action_suggest_putaway" string="Gợi ý Vị trí"
                             type="object" invisible="state not in ('in_receiving', 'in_putaway')"
                             class="btn-secondary"/>
+                    
+                    <!-- Outgoing workflow -->
+                    <button name="action_start_picking" string="Bắt đầu lấy hàng"
+                            type="object" invisible="state != 'stored'"
+                            class="btn-primary"/>
+                    <button name="action_confirm_picked" string="Xác nhận đã lấy"
+                            type="object" invisible="state != 'in_picking'"
+                            class="btn-success"/>
+                    
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>

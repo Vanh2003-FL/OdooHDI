@@ -19,6 +19,13 @@
               action="action_batch"
               sequence="10"/>
 
+    <!-- Picking Lists -->
+    <menuitem id="menu_picking_list"
+              name="Bảng kê lấy hàng"
+              parent="menu_wms_root"
+              action="action_picking_list"
+              sequence="15"/>
+
     <!-- Putaway Suggestions -->
     <menuitem id="menu_putaway_suggestion"
               name="Gợi ý Đặt hàng"
