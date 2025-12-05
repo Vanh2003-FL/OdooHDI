@@ -52,11 +52,13 @@ class PickingSuggestionWizard(models.TransientModel):
             wizard.total_qty_needed = sum(wizard.suggestion_line_ids.mapped('qty_needed'))
             wizard.total_qty_suggested = sum(wizard.suggestion_line_ids.mapped('suggested_qty'))
 
-    @api.onchange('picking_id')
-    def _onchange_picking_id(self):
-        """Tự động generate suggestions khi chọn picking"""
-        if self.picking_id:
-            self._generate_suggestions()
+    @api.model
+    def create(self, vals):
+        """Auto-generate suggestions when wizard is created"""
+        wizard = super().create(vals)
+        if wizard.picking_id:
+            wizard._generate_suggestions()
+        return wizard
 
     def _generate_suggestions(self):
         """Generate FIFO-based picking suggestions"""

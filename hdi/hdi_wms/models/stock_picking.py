@@ -210,11 +210,15 @@ class StockPicking(models.Model):
         if self.picking_type_id.code != 'outgoing':
             raise UserError(_('Chỉ áp dụng cho phiếu xuất kho.'))
 
+        # Tìm form view của wizard
+        view_id = self.env.ref('hdi_wms.view_picking_suggestion_wizard_form').id
+
         return {
             'name': _('Gợi ý lấy hàng theo FIFO'),
             'type': 'ir.actions.act_window',
             'res_model': 'hdi.picking.suggestion.wizard',
             'view_mode': 'form',
+            'views': [(view_id, 'form')],
             'target': 'new',
             'context': {
                 'default_picking_id': self.id,
