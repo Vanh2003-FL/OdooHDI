@@ -73,9 +73,12 @@
                     </group>
                 </group>
                 
-                <group string="Cấu hình lô" groups="hdi_wms.group_wms_user">
+                <!-- Cấu hình lô (chỉ cho incoming) -->
+                <group string="Cấu hình lô" 
+                       invisible="picking_type_code != 'incoming'"
+                       groups="hdi_wms.group_wms_user">
                     <group>
-                        <field name="use_batch_management" string=" Quản lý theo Lô hàng/Pallet"/>
+                        <field name="use_batch_management" string="Quản lý theo Lô hàng/Pallet"/>
                         <field name="scan_detail_level" invisible="not use_batch_management" string="Chi tiết quét mã"/>
                     </group>
                     <group>

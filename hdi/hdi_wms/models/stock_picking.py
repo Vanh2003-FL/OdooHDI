@@ -117,6 +117,7 @@ class StockPicking(models.Model):
     ], string='Loại xuất kho',
        compute='_compute_outgoing_type',
        store=True,
+       readonly=False,  # Cho phép chỉnh sửa thủ công
        tracking=True,
        help="Phân loại theo mục đích xuất kho")
 
