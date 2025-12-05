@@ -16,10 +16,10 @@
     <record id="view_inventory_form_wms_check" model="ir.ui.view">
         <field name="name">stock.quant.inventory.form.wms.check</field>
         <field name="model">stock.quant</field>
-        <field name="inherit_id" ref="stock.view_inventory_tree_editable"/>
+        <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
         <field name="arch" type="xml">
-            <!-- Add check_type selector at top -->
-            <xpath expr="//tree" position="before">
+            <!-- Add check_type selector at top before header -->
+            <xpath expr="//list/header" position="before">
                 <group name="check_type_group">
                     <field name="check_type" widget="radio" options="{'horizontal': true}"/>
                 </group>
@@ -28,22 +28,23 @@
             <!-- KK_NV_01: Show batch_id for batch check -->
             <field name="product_id" position="after">
                 <field name="batch_id" 
-                       invisible="check_type != 'batch'" 
+                       column_invisible="check_type != 'batch'" 
                        required="check_type == 'batch'"
-                       domain="[('location_id', '=', location_id)]"/>
+                       domain="[('location_id', '=', location_id)]"
+                       optional="show"/>
             </field>
             
-            <!-- KK_NV_02: Show barcode scanning fields -->
-            <field name="inventory_quantity" position="after">
+            <!-- KK_NV_02: Show barcode scanning fields before inventory_quantity -->
+            <field name="inventory_quantity" position="before">
                 <field name="scan_mode" widget="boolean_toggle" 
-                       invisible="check_type != 'barcode'"
-                       string="Quét Barcode"/>
+                       column_invisible="check_type != 'barcode'"
+                       string="Quét" optional="show"/>
                 <field name="last_scanned_code" 
-                       invisible="check_type != 'barcode'"
-                       readonly="1"/>
+                       column_invisible="check_type != 'barcode'"
+                       readonly="1" optional="show"/>
                 <field name="scanned_count" 
-                       invisible="check_type != 'barcode'"
-                       readonly="1"/>
+                       column_invisible="check_type != 'barcode'"
+                       readonly="1" optional="show"/>
             </field>
         </field>
     </record>
