@@ -127,6 +127,130 @@ class StockPicking(models.Model):
         help="Kho thành phẩm đích (nếu chuyển kho)"
     )
 
+    # ===== PHÂN LOẠI NHẬP KHO (cho incoming) =====
+    receiving_type = fields.Selection([
+        ('production_export', 'NK_NV_01: Sản xuất hàng trong nước'),
+        ('production_export_high_value', 'NK_NV_02: Sản xuất hàng xuất khẩu'),
+        ('import', 'NK_NV_03: Nhập khẩu'),
+        ('transfer_return', 'NK_NV_04: Chuyển kho - Hàng trả lại'),
+        ('other', 'Nhập khác'),
+    ], string='Loại nhập kho',
+       tracking=True,
+       help="Phân loại loại nhập kho theo quy trình")
+
+    # ===== QC & APPROVAL FIELDS (cho NK_NV_02, 03, 04) =====
+    require_batch_qc = fields.Boolean(
+        string='Yêu cầu QC Batch',
+        compute='_compute_qc_requirements',
+        store=True,
+        help="Tự động bật cho NK_NV_02, 03, 04"
+    )
+    
+    require_product_qc = fields.Boolean(
+        string='Yêu cầu QC Hàng',
+        compute='_compute_qc_requirements',
+        store=True,
+        help="Tự động bật cho NK_NV_03, 04"
+    )
+    
+    require_return_check = fields.Boolean(
+        string='Yêu cầu kiểm tra hàng trả',
+        compute='_compute_qc_requirements',
+        store=True,
+        help="Tự động bật cho NK_NV_04"
+    )
+
+    require_officer_approval = fields.Boolean(
+        string='Yêu cầu ký xác nhận',
+        compute='_compute_qc_requirements',
+        store=True,
+        help="Tự động bật cho NK_NV_02, 03, 04"
+    )
+
+    # QC Status fields
+    batch_qc_status = fields.Selection([
+        ('pending', 'Chờ kiểm tra'),
+        ('in_progress', 'Đang kiểm tra'),
+        ('passed', 'Đạt'),
+        ('failed', 'Không đạt'),
+    ], string='Trạng thái QC Batch', default='pending', tracking=True)
+
+    product_qc_status = fields.Selection([
+        ('pending', 'Chờ kiểm tra'),
+        ('in_progress', 'Đang kiểm tra'),
+        ('passed', 'Đạt'),
+        ('failed', 'Không đạt'),
+        ('partial', 'Đạt một phần'),
+    ], string='Trạng thái QC Hàng', default='pending', tracking=True)
+
+    # Return check fields (NK_NV_04)
+    return_reason = fields.Selection([
+        ('defect', 'Lỗi sản phẩm'),
+        ('wrong_item', 'Sai hàng'),
+        ('excess', 'Thừa hàng'),
+        ('customer_return', 'Khách hàng trả'),
+        ('other', 'Khác'),
+    ], string='Lý do trả hàng')
+
+    return_condition = fields.Selection([
+        ('new', 'Mới - Có thể bán lại'),
+        ('good', 'Tốt - Cần kiểm tra nhỏ'),
+        ('damaged', 'Hư hỏng - Cần sửa chữa'),
+        ('scrap', 'Hỏng hoàn toàn - Thanh lý'),
+    ], string='Tình trạng hàng trả')
+
+    can_restock = fields.Boolean(string='Có thể nhập kho lại', default=True)
+
+    # Approval fields (NK_NV_02, 03, 04)
+    warehouse_officer_id = fields.Many2one(
+        'res.users',
+        string='Nhân viên kho ký',
+        help="Nhân viên kho ký xác nhận"
+    )
+    
+    officer_signature = fields.Binary(
+        string='Chữ ký xác nhận',
+        help="Chữ ký điện tử xác nhận"
+    )
+    
+    approval_date = fields.Datetime(
+        string='Ngày ký',
+        readonly=True,
+        help="Thời điểm ký xác nhận"
+    )
+
+    # Odoo receipt reference (NK_NV_02, 03, 04)
+    odoo_receipt_number = fields.Char(
+        string='Số phiếu mã Odoo',
+        readonly=True,
+        help="Mã phiếu được tạo tự động"
+    )
+
+    @api.depends('receiving_type', 'picking_type_code')
+    def _compute_qc_requirements(self):
+        """Tự động set yêu cầu QC dựa vào loại nhập kho"""
+        for picking in self:
+            if picking.picking_type_code != 'incoming':
+                picking.require_batch_qc = False
+                picking.require_product_qc = False
+                picking.require_return_check = False
+                picking.require_officer_approval = False
+                continue
+            
+            rec_type = picking.receiving_type
+            
+            # NK_NV_02, 03, 04 cần QC Batch
+            picking.require_batch_qc = rec_type in ['production_export_high_value', 'import', 'transfer_return']
+            
+            # NK_NV_03, 04 cần QC Hàng
+            picking.require_product_qc = rec_type in ['import', 'transfer_return']
+            
+            # NK_NV_04 cần kiểm tra hàng trả
+            picking.require_return_check = rec_type == 'transfer_return'
+            
+            # NK_NV_02, 03, 04 cần ký xác nhận
+            picking.require_officer_approval = rec_type in ['production_export_high_value', 'import', 'transfer_return']
+
     @api.depends('picking_type_id', 'picking_type_id.code')
     def _compute_require_putaway(self):
         """Auto-enable putaway for incoming pickings"""
@@ -201,6 +325,84 @@ class StockPicking(models.Model):
             'context': {
                 'default_picking_id': self.id,
                 'default_batch_ids': [(6, 0, self.batch_ids.ids)],
+            }
+        }
+
+    # ===== QC & APPROVAL ACTIONS =====
+    def action_start_batch_qc(self):
+        """Bắt đầu QC Batch - NK_NV_02, 03, 04"""
+        self.ensure_one()
+        self.batch_qc_status = 'in_progress'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('QC Batch'),
+                'message': _('Bắt đầu kiểm tra chất lượng batch'),
+                'type': 'info',
+            }
+        }
+
+    def action_pass_batch_qc(self):
+        """QC Batch đạt"""
+        self.ensure_one()
+        self.batch_qc_status = 'passed'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('QC Batch Đạt'),
+                'message': _('Batch đã qua kiểm tra chất lượng'),
+                'type': 'success',
+            }
+        }
+
+    def action_start_product_qc(self):
+        """Bắt đầu QC Hàng - NK_NV_03, 04"""
+        self.ensure_one()
+        self.product_qc_status = 'in_progress'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('QC Hàng'),
+                'message': _('Bắt đầu kiểm tra chất lượng sản phẩm'),
+                'type': 'info',
+            }
+        }
+
+    def action_pass_product_qc(self):
+        """QC Hàng đạt"""
+        self.ensure_one()
+        self.product_qc_status = 'passed'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('QC Hàng Đạt'),
+                'message': _('Sản phẩm đã qua kiểm tra chất lượng'),
+                'type': 'success',
+            }
+        }
+
+    def action_approve_receiving(self):
+        """Ký xác nhận nhập kho - NK_NV_02, 03, 04"""
+        self.ensure_one()
+        if not self.warehouse_officer_id:
+            self.warehouse_officer_id = self.env.user
+        self.approval_date = fields.Datetime.now()
+        
+        # Generate Odoo receipt number
+        if not self.odoo_receipt_number:
+            self.odoo_receipt_number = self.env['ir.sequence'].next_by_code('hdi.wms.receipt') or self.name
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Đã ký xác nhận'),
+                'message': _('Phiếu nhập kho đã được ký bởi %s') % self.warehouse_officer_id.name,
+                'type': 'success',
             }
         }
 

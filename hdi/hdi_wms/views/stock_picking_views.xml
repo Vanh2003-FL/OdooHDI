@@ -24,18 +24,48 @@
 
             <!-- Add WMS buttons in header -->
             <button name="button_validate" position="before">
+                <!-- Incoming buttons -->
                 <button name="action_confirm_handover" type="object" string="Xác nhận bàn giao"
-                        invisible="production_handover_signed_by or state not in ('assigned', 'confirmed')"
+                        invisible="production_handover_signed_by or state not in ('assigned', 'confirmed') or picking_type_code != 'incoming'"
                         class="btn-warning"
                         groups="hdi_wms.group_wms_user"/>
                 <button name="action_create_batch" type="object" string="Tạo Lô hàng"
                         invisible="state != 'assigned' or not use_batch_management or picking_type_code != 'incoming'"
                         class="btn-primary"
                         groups="hdi_wms.group_wms_user"/>
+                        
+                <!-- QC Batch button (NK_NV_02, 03, 04) -->
+                <button name="action_start_batch_qc" type="object" string="QC Batch"
+                        invisible="not require_batch_qc or batch_qc_status != 'pending'"
+                        class="btn-info"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_pass_batch_qc" type="object" string="✓ QC Batch Đạt"
+                        invisible="not require_batch_qc or batch_qc_status != 'in_progress'"
+                        class="btn-success"
+                        groups="hdi_wms.group_wms_user"/>
+                        
+                <!-- QC Hàng button (NK_NV_03, 04) -->
+                <button name="action_start_product_qc" type="object" string="QC Hàng"
+                        invisible="not require_product_qc or product_qc_status != 'pending'"
+                        class="btn-info"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_pass_product_qc" type="object" string="✓ QC Hàng Đạt"
+                        invisible="not require_product_qc or product_qc_status != 'in_progress'"
+                        class="btn-success"
+                        groups="hdi_wms.group_wms_user"/>
+                        
                 <button name="action_suggest_putaway_all" type="object" string="Gợi ý Vị trí"
                         invisible="wms_state not in ('batch_creation', 'putaway_pending') or picking_type_code != 'incoming'"
                         class="btn-secondary"
                         groups="hdi_wms.group_wms_user"/>
+                        
+                <!-- Approval button (NK_NV_02, 03, 04) -->
+                <button name="action_approve_receiving" type="object" string="✍ Ký xác nhận"
+                        invisible="not require_officer_approval or approval_date or picking_type_code != 'incoming'"
+                        class="btn-primary"
+                        groups="hdi_wms.group_wms_user"/>
+                
+                <!-- Outgoing buttons -->
                 <button name="action_suggest_picking" type="object" string="Gợi ý lấy hàng (FIFO)"
                         invisible="state not in ('assigned', 'confirmed') or picking_type_code != 'outgoing'"
                         class="btn-primary"
@@ -44,6 +74,8 @@
                         invisible="picking_list_count == 0"
                         class="btn-secondary"
                         groups="hdi_wms.group_wms_user"/>
+                        
+                <!-- Scanner -->
                 <button name="action_open_scanner" type="object" string="Quét Mã vạch"
                         invisible="state not in ('assigned', 'confirmed')"
                         class="btn-info"
@@ -73,6 +105,15 @@
                     </group>
                 </group>
                 
+                <!-- Thông tin nhập kho (chỉ cho incoming) -->
+                <group string="Thông tin nhập kho" 
+                       invisible="picking_type_code != 'incoming'"
+                       groups="hdi_wms.group_wms_user">
+                    <group colspan="2">
+                        <field name="receiving_type" widget="radio"/>
+                    </group>
+                </group>
+                
                 <!-- Cấu hình lô (chỉ cho incoming) -->
                 <group string="Cấu hình lô" 
                        invisible="picking_type_code != 'incoming'"
@@ -84,6 +125,81 @@
                     <group>
                         <field name="production_handover_signed_by" readonly="1" invisible="not production_handover_signed_by" string="Người bàn giao"/>
                         <field name="production_handover_date" readonly="1" invisible="not production_handover_date" string="Thời gian bàn giao"/>
+                    </group>
+                </group>
+                
+                <!-- QC Batch (NK_NV_02, 03, 04) -->
+                <group string="Kiểm tra chất lượng Batch" 
+                       invisible="not require_batch_qc"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_batch_qc" invisible="1"/>
+                        <field name="batch_qc_status" widget="badge"
+                               decoration-info="batch_qc_status == 'pending'"
+                               decoration-warning="batch_qc_status == 'in_progress'"
+                               decoration-success="batch_qc_status == 'passed'"
+                               decoration-danger="batch_qc_status == 'failed'"/>
+                    </group>
+                    <group>
+                        <button name="action_start_batch_qc" string="Bắt đầu QC Batch"
+                                type="object" class="btn-info"
+                                invisible="batch_qc_status != 'pending'"/>
+                        <button name="action_pass_batch_qc" string="✓ QC Đạt"
+                                type="object" class="btn-success"
+                                invisible="batch_qc_status != 'in_progress'"/>
+                    </group>
+                </group>
+                
+                <!-- QC Hàng (NK_NV_03, 04) -->
+                <group string="Kiểm tra chất lượng Hàng" 
+                       invisible="not require_product_qc"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_product_qc" invisible="1"/>
+                        <field name="product_qc_status" widget="badge"
+                               decoration-info="product_qc_status == 'pending'"
+                               decoration-warning="product_qc_status == 'in_progress'"
+                               decoration-success="product_qc_status == 'passed'"
+                               decoration-danger="product_qc_status == 'failed'"/>
+                    </group>
+                    <group>
+                        <button name="action_start_product_qc" string="Bắt đầu QC Hàng"
+                                type="object" class="btn-info"
+                                invisible="product_qc_status != 'pending'"/>
+                        <button name="action_pass_product_qc" string="✓ QC Đạt"
+                                type="object" class="btn-success"
+                                invisible="product_qc_status != 'in_progress'"/>
+                    </group>
+                </group>
+                
+                <!-- Kiểm tra hàng trả (NK_NV_04) -->
+                <group string="Thông tin hàng trả lại" 
+                       invisible="not require_return_check"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_return_check" invisible="1"/>
+                        <field name="return_reason"/>
+                        <field name="return_condition"/>
+                    </group>
+                    <group>
+                        <field name="can_restock"/>
+                    </group>
+                </group>
+                
+                <!-- Chứng vụ ký xác nhận (NK_NV_02, 03, 04) -->
+                <group string="Chứng vụ ký xác nhận" 
+                       invisible="not require_officer_approval"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_officer_approval" invisible="1"/>
+                        <field name="warehouse_officer_id"/>
+                        <field name="approval_date" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="odoo_receipt_number" readonly="1"/>
+                        <button name="action_approve_receiving" string="✍ Ký xác nhận"
+                                type="object" class="btn-primary"
+                                invisible="approval_date"/>
                     </group>
                 </group>
                 <field name="require_putaway_suggestion" invisible="1"/>
