@@ -90,10 +90,10 @@
                 <field name="batch_count" invisible="1"/>
             </xpath>
 
-            <!-- Add Batch tab -->
+            <!-- Add Batch tab (CHỈ cho incoming) -->
             <notebook position="inside">
                 <page string="Lô hàng" name="wms_batches"
-                      invisible="not use_batch_management"
+                      invisible="not use_batch_management or picking_type_code != 'incoming'"
                       groups="hdi_wms.group_wms_user">
                     <group>
                         <group string="Cấu hình Quét">
@@ -118,9 +118,9 @@
                     <field name="batch_ids" nolabel="1" context="{'form_view_ref': 'hdi_wms.view_batch_form', 'tree_view_ref': 'hdi_wms.view_batch_tree'}"/>
                 </page>
 
-                <!-- Loose Items tab -->
+                <!-- Loose Items tab (CHỈ cho incoming) -->
                 <page string="Hàng lẻ" name="wms_loose_items"
-                      invisible="not use_batch_management"
+                      invisible="not use_batch_management or picking_type_code != 'incoming'"
                       groups="hdi_wms.group_wms_user">
                     <field name="loose_line_ids" widget="one2many" string="Danh sách hàng lẻ"/>
                 </page>
