@@ -18,30 +18,47 @@
         <field name="model">stock.quant</field>
         <field name="inherit_id" ref="stock.view_stock_quant_tree_inventory_editable"/>
         <field name="arch" type="xml">
-            <!-- Add check_type visible field for workflow selection -->
+            <!-- Disable direct quant creation -->
+            <xpath expr="//list" position="attributes">
+                <attribute name="create">0</attribute>
+            </xpath>
+            
+            <!-- Add check_type after location_id with better visibility -->
             <field name="location_id" position="after">
-                <field name="check_type" optional="show" groups="hdi_wms.group_wms_user"/>
+                <field name="check_type" 
+                       optional="show" 
+                       groups="hdi_wms.group_wms_user"
+                       widget="badge"
+                       decoration-info="check_type == 'batch'"
+                       decoration-success="check_type == 'barcode'"/>
             </field>
             
             <!-- KK_NV_01: Show batch_id for batch check -->
             <field name="product_id" position="after">
                 <field name="batch_id" 
                        domain="[('location_id', '=', location_id)]"
-                       optional="show"
-                       groups="hdi_wms.group_wms_user"/>
+                       optional="hide"
+                       groups="hdi_wms.group_wms_user"
+                       placeholder="Chọn Batch..."/>
             </field>
             
             <!-- KK_NV_02: Show barcode scanning fields before inventory_quantity -->
             <field name="inventory_quantity" position="before">
-                <field name="scan_mode" widget="boolean_toggle" 
-                       string="Quét" optional="show"
+                <field name="scan_mode" 
+                       widget="boolean_toggle" 
+                       string="🔍 Quét" 
+                       optional="hide"
                        groups="hdi_wms.group_wms_user"/>
                 <field name="last_scanned_code" 
-                       readonly="1" optional="show"
-                       groups="hdi_wms.group_wms_user"/>
+                       readonly="1" 
+                       optional="hide"
+                       groups="hdi_wms.group_wms_user"
+                       placeholder="Chưa quét"/>
                 <field name="scanned_count" 
-                       readonly="1" optional="show"
-                       groups="hdi_wms.group_wms_user"/>
+                       readonly="1" 
+                       optional="hide"
+                       groups="hdi_wms.group_wms_user"
+                       string="Đã quét"/>
             </field>
         </field>
     </record>
