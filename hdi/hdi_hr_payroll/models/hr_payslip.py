@@ -309,7 +309,14 @@ class HrPayslip(models.Model):
         """Tạo dictionary cho Python expression trong rules"""
         self.ensure_one()
         
-        # Worked days - dict với key = code
+        # Worked days - BrowsableObject để dùng worked_days.WORK100
+        class BrowsableObject(object):
+            def __init__(self, data_dict):
+                self.__dict__.update(data_dict)
+            
+            def __getattr__(self, attr):
+                return self.__dict__.get(attr, None)
+        
         worked_days_dict = {}
         for wd in self.worked_days_line_ids:
             worked_days_dict[wd.code] = wd
@@ -323,8 +330,8 @@ class HrPayslip(models.Model):
             'payslip': self,
             'employee': self.employee_id,
             'contract': self.contract_id,
-            'worked_days': type('obj', (object,), worked_days_dict),  # Để dùng worked_days.WORK100
-            'inputs': type('obj', (object,), inputs_dict),
+            'worked_days': BrowsableObject(worked_days_dict),
+            'inputs': BrowsableObject(inputs_dict),
             'rules': {},  # Sẽ được fill dần khi tính
             'categories': {},  # Tổng theo category
         }

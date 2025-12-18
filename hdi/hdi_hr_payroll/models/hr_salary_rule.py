@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import api, fields, models, tools, _
+from odoo import api, fields, models, _
+from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -110,7 +111,7 @@ result = contract.wage
                 raise UserError(_('Lỗi điều kiện range của rule %s: %s') % (self.code, str(e)))
         else:  # python
             try:
-                tools.safe_eval(self.condition_python, localdict, mode='exec', nocopy=True)
+                safe_eval(self.condition_python, localdict, mode='exec', nocopy=True)
                 return localdict.get('result', False)
             except Exception as e:
                 raise UserError(_('Lỗi điều kiện Python của rule %s: %s') % (self.code, str(e)))
@@ -140,7 +141,7 @@ result = contract.wage
             
         else:  # code
             try:
-                tools.safe_eval(self.amount_python_compute, localdict, mode='exec', nocopy=True)
+                safe_eval(self.amount_python_compute, localdict, mode='exec', nocopy=True)
                 return localdict.get('result', 0), localdict.get('quantity', 1.0), localdict.get('rate', 100.0)
             except Exception as e:
                 raise UserError(_('Lỗi tính toán Python của rule %s: %s\n\nCode:\n%s') % (

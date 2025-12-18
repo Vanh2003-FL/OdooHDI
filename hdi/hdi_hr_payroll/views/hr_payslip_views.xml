@@ -29,16 +29,21 @@
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="VD: Lương tháng 12/2025" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
                     <group>
                         <group>
-                            <field name="employee_id"/>
-                            <field name="contract_id"/>
-                            <field name="struct_id"/>
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="contract_id" readonly="state != 'draft'" context="{'default_employee_id': employee_id}" domain="[('employee_id', '=', employee_id), ('state', 'in', ['open', 'close'])]"/>
+                            <field name="struct_id" readonly="state != 'draft'"/>
                         </group>
                         <group>
-                            <field name="date_from"/>
-                            <field name="date_to"/>
-                            <field name="standard_days"/>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
+                            <field name="standard_days" readonly="state != 'draft'"/>
                         </group>
                     </group>
                     <notebook>
