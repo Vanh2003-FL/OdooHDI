@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Placeholder -->
+    
+    <record id="action_hr_allowance_type" model="ir.actions.act_window">
+        <field name="name">Loại phụ cấp</field>
+        <field name="res_model">hr.allowance.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
 </odoo>

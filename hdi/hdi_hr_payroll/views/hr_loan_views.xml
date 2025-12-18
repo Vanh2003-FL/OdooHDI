@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Placeholder -->
+    
+    <record id="action_hr_loan" model="ir.actions.act_window">
+        <field name="name">Tạm ứng &amp; Vay</field>
+        <field name="res_model">hr.loan</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
 </odoo>

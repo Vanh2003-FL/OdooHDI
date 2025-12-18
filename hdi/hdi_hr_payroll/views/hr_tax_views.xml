@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Placeholder -->
+    
+    <record id="action_hr_tax_bracket" model="ir.actions.act_window">
+        <field name="name">Biểu thuế TNCN</field>
+        <field name="res_model">hr.tax.bracket</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
 </odoo>
