@@ -353,6 +353,18 @@ class HrPayslip(models.Model):
             'inputs': BrowsableObject(inputs_dict),
             'rules': BrowsableObject({}),  # Sẽ được fill dần khi tính
             'categories': BrowsableObject({}),  # Tổng theo category
+            # Built-in functions cần thiết cho Python code trong rules
+            'hasattr': hasattr,
+            'len': len,
+            'sum': sum,
+            'abs': abs,
+            'min': min,
+            'max': max,
+            'round': round,
+            'float': float,
+            'int': int,
+            'str': str,
+            'bool': bool,
         }
 
     def action_print_payslip(self):
