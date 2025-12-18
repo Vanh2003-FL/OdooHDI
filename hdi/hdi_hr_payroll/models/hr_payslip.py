@@ -192,6 +192,14 @@ class HrPayslip(models.Model):
     def compute_sheet(self):
         """Tính toán phiếu lương - CORE FUNCTION"""
         for payslip in self:
+            # Validate dữ liệu bắt buộc
+            if not payslip.employee_id:
+                raise UserError(_('Vui lòng chọn Nhân viên trước khi tính lương!'))
+            if not payslip.contract_id:
+                raise UserError(_('Vui lòng chọn Hợp đồng trước khi tính lương!'))
+            if not payslip.struct_id:
+                raise UserError(_('Vui lòng chọn Cấu trúc lương trước khi tính lương!'))
+            
             # Xóa dữ liệu cũ
             payslip.line_ids.unlink()
             payslip.worked_days_line_ids.unlink()
