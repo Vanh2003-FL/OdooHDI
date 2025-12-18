@@ -263,6 +263,9 @@ class HrPayslip(models.Model):
         # Lấy tất cả rules từ structure, sắp xếp theo sequence
         rules = self.struct_id.rule_ids.sorted(key=lambda r: r.sequence)
         
+        if not rules:
+            raise UserError(_('Cấu trúc lương "%s" chưa có quy tắc tính lương nào!\n\nVui lòng kiểm tra: Payroll → Cấu hình → Cấu trúc lương') % self.struct_id.name)
+        
         # Chuẩn bị context để tính toán
         localdict = self._get_localdict()
         

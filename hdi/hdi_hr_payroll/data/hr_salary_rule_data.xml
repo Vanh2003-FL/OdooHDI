@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
 
         <!-- ============================================ -->
         <!-- 1. LƯƠNG CƠ BẢN                              -->
@@ -51,7 +51,7 @@ if worked_days_work and payslip.standard_days > 0:
     result = daily_allowance * worked_days_work.number_of_days
 else:
     result = contract.meal_allowance
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -134,7 +134,7 @@ else:
             <field name="amount_python_compute"><![CDATA[
 # Tổng = BASIC + Tất cả ALW + BONUS
 result = categories.BASIC + categories.ALW + categories.BONUS
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -154,7 +154,7 @@ result = categories.BASIC + categories.ALW + categories.BONUS
             <field name="amount_python_compute"><![CDATA[
 # BHXH nhân viên = Mức đóng BH * 8%
 result = -(contract.insurance_salary * contract.si_employee_rate / 100.0)
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -169,7 +169,7 @@ result = -(contract.insurance_salary * contract.si_employee_rate / 100.0)
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 result = -(contract.insurance_salary * contract.hi_employee_rate / 100.0)
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -184,7 +184,7 @@ result = -(contract.insurance_salary * contract.hi_employee_rate / 100.0)
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 result = -(contract.insurance_salary * contract.ui_employee_rate / 100.0)
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -208,7 +208,7 @@ loans = payslip.env['hr.loan'].search([
     ('installment_method', '=', 'auto')
 ])
 result = len(loans) > 0
-</field>]]></field>
+]]></field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 # Tính tổng số tiền cần trừ trong tháng này
@@ -234,7 +234,7 @@ for loan in loans:
         })
 
 result = -total_deduction
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -314,7 +314,7 @@ else:
     TaxBracket = payslip.env['hr.tax.bracket']
     tax_amount = TaxBracket.calculate_tax(taxable_income, year=payslip.date_to.year)
     result = -tax_amount  # Số âm vì là khấu trừ
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -339,7 +339,7 @@ rewards = payslip.env['hr.reward'].search([
     ('is_paid', '=', False)
 ])
 result = len(rewards) > 0
-</field>]]></field>
+]]></field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 # Tổng số tiền thưởng
@@ -359,7 +359,7 @@ for reward in rewards:
     reward.write({'payslip_id': payslip.id})
 
 result = total_reward
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -377,7 +377,7 @@ result = total_reward
             <field name="amount_python_compute"><![CDATA[
 # NET = GROSS + DED (DED là số âm) + INSURANCE + TAX
 result = categories.GROSS + categories.INSURANCE + categories.DED + categories.TAX
-</field>]]></field>
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
