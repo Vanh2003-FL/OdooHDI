@@ -1,4 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Placeholder - sẽ implement đầy đủ sau -->
+    <!-- Inherit hr.employee form view -->
+    <record id="hr_employee_view_form_inherit_payroll" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.payroll</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Thêm Smart Buttons vào button_box -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                
+                <!-- Smart Button: Phiếu lương -->
+                <button name="action_view_payslips"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-money">
+                    <field name="payslip_count" widget="statinfo" string="Phiếu lương"/>
+                </button>
+                
+                <!-- Smart Button: Tạo phiếu lương mới -->
+                <button name="action_create_payslip"
+                    type="object"
+                    class="oe_stat_button btn-success"
+                    icon="fa-plus-square"
+                    string="Tạo phiếu lương"
+                    invisible="not active"/>
+                
+                <!-- Smart Button: Người phụ thuộc (cho tính thuế) -->
+                <button name="action_view_dependents"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-users">
+                    <field name="dependent_count" widget="statinfo" string="Người phụ thuộc"/>
+                </button>
+                
+                <!-- Smart Button: Khoản vay/Tạm ứng -->
+                <button name="action_view_loans"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-bank">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="active_loan_count"/>
+                        </span>
+                        <span class="o_stat_text">Khoản vay</span>
+                        <span class="o_stat_value text-danger" invisible="total_loan_balance == 0">
+                            <field name="total_loan_balance" widget="monetary"/>
+                        </span>
+                    </div>
+                </button>
+                
+                <!-- Smart Button: Khen thưởng & Kỷ luật -->
+                <button name="action_view_rewards"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-trophy"
+                    string="Khen thưởng"/>
+                
+                <button name="action_view_disciplines"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-warning"
+                    string="Kỷ luật"/>
+            </xpath>
+            
+            <!-- Thêm tab "Lương & Thuế" vào notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Lương &amp; Thuế" name="payroll_tax">
+                    <group>
+                        <group string="Thông tin thuế TNCN">
+                            <field name="tax_id"/>
+                            <field name="tax_registration_date"/>
+                            <field name="personal_deduction"/>
+                            <field name="dependent_deduction"/>
+                            <field name="total_deduction" readonly="1"/>
+                        </group>
+                        
+                        <group string="Thông tin bảo hiểm">
+                            <field name="social_insurance_number"/>
+                            <field name="social_insurance_date"/>
+                            <field name="health_insurance_number"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Lịch sử phiếu lương gần đây"/>
+                    <field name="payslip_ids" nolabel="1" mode="tree">
+                        <tree limit="5" decoration-success="state == 'done'" decoration-info="state == 'draft'">
+                            <field name="name"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="struct_id"/>
+                            <field name="basic_wage" widget="monetary"/>
+                            <field name="gross_wage" widget="monetary"/>
+                            <field name="net_wage" widget="monetary"/>
+                            <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'draft'"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
 </odoo>
