@@ -269,6 +269,14 @@ class HrPayslip(models.Model):
         # Chuẩn bị context để tính toán
         localdict = self._get_localdict()
         
+        # BrowsableObject class
+        class BrowsableObject(object):
+            def __init__(self, data_dict):
+                self.__dict__.update(data_dict)
+            
+            def __getattr__(self, attr):
+                return self.__dict__.get(attr, 0)  # Return 0 nếu không tồn tại
+        
         # Dictionary lưu kết quả các rule đã tính
         rule_results = {}
         category_totals = {}
@@ -288,12 +296,12 @@ class HrPayslip(models.Model):
             
             # Lưu vào dict để rules sau có thể dùng
             rule_results[rule.code] = amount
-            localdict['rules'] = rule_results
+            localdict['rules'] = BrowsableObject(rule_results)
             
             # Cộng vào category
             cat_code = rule.category_id.code
             category_totals[cat_code] = category_totals.get(cat_code, 0) + amount
-            localdict['categories'] = category_totals
+            localdict['categories'] = BrowsableObject(category_totals)
             
             # Tạo line
             result_lines.append({
@@ -326,7 +334,7 @@ class HrPayslip(models.Model):
                 self.__dict__.update(data_dict)
             
             def __getattr__(self, attr):
-                return self.__dict__.get(attr, None)
+                return self.__dict__.get(attr, 0)  # Return 0 nếu không tồn tại
         
         worked_days_dict = {}
         for wd in self.worked_days_line_ids:
@@ -343,8 +351,8 @@ class HrPayslip(models.Model):
             'contract': self.contract_id,
             'worked_days': BrowsableObject(worked_days_dict),
             'inputs': BrowsableObject(inputs_dict),
-            'rules': {},  # Sẽ được fill dần khi tính
-            'categories': {},  # Tổng theo category
+            'rules': BrowsableObject({}),  # Sẽ được fill dần khi tính
+            'categories': BrowsableObject({}),  # Tổng theo category
         }
 
     def action_print_payslip(self):
