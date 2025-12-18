@@ -6,13 +6,13 @@
         <field name="name">hr.payslip.tree</field>
         <field name="model">hr.payslip</field>
         <field name="arch" type="xml">
-            <tree string="Phiếu lương">
+            <list string="Phiếu lương">
                 <field name="employee_id"/>
                 <field name="date_from"/>
                 <field name="date_to"/>
                 <field name="struct_id"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -44,23 +44,23 @@
                     <notebook>
                         <page string="Chi tiết lương">
                             <field name="line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="name"/>
                                     <field name="code"/>
                                     <field name="quantity"/>
                                     <field name="rate"/>
                                     <field name="amount"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Ngày công">
                             <field name="worked_days_line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="name"/>
                                     <field name="code"/>
                                     <field name="number_of_days"/>
                                     <field name="number_of_hours"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -73,7 +73,7 @@
     <record id="action_hr_payslip" model="ir.actions.act_window">
         <field name="name">Phiếu lương</field>
         <field name="res_model">hr.payslip</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>
