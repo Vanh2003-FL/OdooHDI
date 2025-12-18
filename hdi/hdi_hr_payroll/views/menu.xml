@@ -59,7 +59,7 @@
     
     <!-- Other -->
     <menuitem id="menu_hr_loan"
-        name="Tạm ứng & Vay"
+        name="Tạm ứng &amp; Vay"
         parent="menu_hr_payroll_root"
         action="action_hr_loan"
         sequence="30"/>
