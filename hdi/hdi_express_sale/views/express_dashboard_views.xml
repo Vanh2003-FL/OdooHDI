@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Real-time Dashboard Action using Owl Component -->
+  <record id="action_shipping_dashboard_owl" model="ir.actions.client">
+    <field name="name">HDI Express Dashboard</field>
+    <field name="tag">hdi_sale.dashboard_action</field>
+    <field name="target">current</field>
+  </record>
+</odoo>

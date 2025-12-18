@@ -43,11 +43,11 @@ class HdiPickingList(models.Model):
         ('transfer', 'Chuyển kho thành phẩm khác'),
         ('production', 'Chuyển về kho sản xuất'),
         ('other', 'Xuất khác'),
-    ], string='Loại xuất kho', 
-       compute='_compute_outgoing_type',
-       store=True,
-       tracking=True,
-       help="Phân loại theo mục đích xuất kho")
+    ], string='Loại xuất kho',
+        compute='_compute_outgoing_type',
+        store=True,
+        tracking=True,
+        help="Phân loại theo mục đích xuất kho")
 
     destination_warehouse_id = fields.Many2one(
         'stock.warehouse',
@@ -162,9 +162,9 @@ class HdiPickingList(models.Model):
             if not rec.picking_id:
                 rec.outgoing_type = 'other'
                 continue
-            
+
             dest_location = rec.picking_id.location_dest_id
-            
+
             # Xuất bán hàng: customer location
             if dest_location.usage == 'customer':
                 rec.outgoing_type = 'sale'
@@ -215,12 +215,12 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if not self.assigned_user_id:
             raise UserError(_('Vui lòng chọn người thực hiện.'))
-        
+
         self.write({
             'state': 'waiting',
             'assigned_date': fields.Datetime.now(),
         })
-        
+
         # Gửi thông báo cho nhân viên kho
         self.message_post(
             body=_('Bảng kê lấy hàng đã được gán cho %s') % self.assigned_user_id.name,
@@ -233,7 +233,7 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if self.state != 'waiting':
             raise UserError(_('Chỉ có thể bắt đầu với bảng kê ở trạng thái "Chờ thực hiện".'))
-        
+
         self.write({
             'state': 'in_progress',
             'start_date': fields.Datetime.now(),
@@ -244,7 +244,7 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if self.state != 'in_progress':
             raise UserError(_('Chỉ có thể xác nhận với bảng kê đang thực hiện.'))
-        
+
         # Kiểm tra các line đã được xác nhận
         unpicked_lines = self.line_ids.filtered(lambda l: not l.is_picked)
         if unpicked_lines:
@@ -252,12 +252,12 @@ class HdiPickingList(models.Model):
                 'Vẫn còn %d vị trí chưa xác nhận lấy hàng.\n'
                 'Vui lòng xác nhận tất cả các vị trí hoặc đánh dấu "Không có hàng".'
             ) % len(unpicked_lines))
-        
+
         self.write({
             'state': 'done',
             'done_date': fields.Datetime.now(),
         })
-        
+
         # Thông báo cho quản lý kho
         self.message_post(
             body=_('Đã hoàn thành lấy hàng. Tổng SL: %d') % self.total_picked_qty,
@@ -270,7 +270,7 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if self.state != 'done':
             raise UserError(_('Chỉ có thể quét barcode sau khi hoàn thành lấy hàng.'))
-        
+
         return {
             'name': _('Quét Barcode - %s') % self.name,
             'type': 'ir.actions.act_window',
@@ -286,19 +286,19 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if self.state != 'done':
             raise UserError(_('Chỉ có thể xác nhận quét sau khi hoàn thành lấy hàng.'))
-        
+
         # Kiểm tra đã quét đủ barcode
         if self.total_scanned_qty < self.total_picked_qty:
             raise UserError(_(
                 'Chưa quét đủ barcode.\n'
                 'Đã quét: %d / Cần quét: %d'
             ) % (self.total_scanned_qty, self.total_picked_qty))
-        
+
         self.write({
             'state': 'scanned',
             'scanned_date': fields.Datetime.now(),
         })
-        
+
         # Thông báo sẵn sàng xuất kho
         self.message_post(
             body=_('Đã quét barcode xong. Sẵn sàng xuất kho.'),
@@ -311,7 +311,7 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if self.state != 'scanned':
             raise UserError(_('Chỉ có thể hoàn thành sau khi quét barcode xong.'))
-        
+
         self.state = 'completed'
 
     def action_cancel(self):
@@ -319,18 +319,18 @@ class HdiPickingList(models.Model):
         self.ensure_one()
         if self.state == 'completed':
             raise UserError(_('Không thể hủy bảng kê đã hoàn thành.'))
-        
+
         self.state = 'cancel'
 
     def action_create_supplementary_list(self):
         """Tạo bảng kê bổ sung - Bước 11.1"""
         self.ensure_one()
-        
+
         # Tính số lượng thiếu
         shortage_lines = self.line_ids.filtered(lambda l: l.picked_qty < l.planned_qty)
         if not shortage_lines:
             raise UserError(_('Không có vị trí nào thiếu hàng.'))
-        
+
         # Tạo bảng kê mới
         new_list = self.copy({
             'name': _('New'),
@@ -338,7 +338,7 @@ class HdiPickingList(models.Model):
             'line_ids': False,
             'notes': _('Bảng kê bổ sung từ %s') % self.name,
         })
-        
+
         # Tạo các line thiếu
         for line in shortage_lines:
             shortage_qty = line.planned_qty - line.picked_qty
@@ -351,7 +351,7 @@ class HdiPickingList(models.Model):
                     'planned_qty': shortage_qty,
                     'sequence': line.sequence,
                 })
-        
+
         return {
             'name': _('Bảng kê bổ sung'),
             'type': 'ir.actions.act_window',
@@ -505,9 +505,9 @@ class HdiPickingListLine(models.Model):
         self.ensure_one()
         if self.picked_qty <= 0:
             self.picked_qty = self.planned_qty
-        
+
         self.is_picked = True
-        
+
         # Chuyển batch sang trạng thái picking
         if self.batch_id and self.batch_id.state == 'stored':
             self.batch_id.action_start_picking()
@@ -526,12 +526,12 @@ class HdiPickingListLine(models.Model):
         self.ensure_one()
         if not self.new_location_id:
             raise UserError(_('Vui lòng chọn vị trí mới.'))
-        
+
         self.write({
             'location_id': self.new_location_id.id,
             'is_location_changed': True,
             'new_location_id': False,
         })
-        
+
         # Tính lại available_qty
         self._compute_available_qty()

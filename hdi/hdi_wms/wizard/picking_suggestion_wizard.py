@@ -63,12 +63,12 @@ class PickingSuggestionWizard(models.TransientModel):
     def _generate_suggestions(self):
         """Generate FIFO-based picking suggestions"""
         self.suggestion_line_ids.unlink()
-        
+
         if not self.picking_id or not self.picking_id.move_ids_without_package:
             return
 
         suggestions = []
-        
+
         # Duyệt qua từng move cần xuất
         for move in self.picking_id.move_ids_without_package:
             product = move.product_id
@@ -81,7 +81,7 @@ class PickingSuggestionWizard(models.TransientModel):
                 ('state', '=', 'stored'),
                 ('available_quantity', '>', 0),
             ], order='create_date asc')  # FIFO only
-            
+
             # Sort by location priority manually (if location has priority field)
             batches = batches.sorted(key=lambda b: (b.create_date, b.location_id.location_priority or 999))
 

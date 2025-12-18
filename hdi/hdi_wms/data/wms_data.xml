@@ -20,15 +20,7 @@
         <field name="company_id" eval="False"/>
     </record>
 
-    <!-- Sequence for WMS Receipt (for NK_NV_02, 03, 04) -->
-    <record id="seq_hdi_wms_receipt" model="ir.sequence">
-        <field name="name">WMS Receipt Sequence</field>
-        <field name="code">hdi.wms.receipt</field>
-        <field name="prefix">WMS-REC-</field>
-        <field name="padding">6</field>
-        <field name="number_increment">1</field>
-        <field name="company_id" eval="False"/>
-    </record>
-
+    <!-- Default Product ABC Classification (if not exists) -->
+    <!-- Add to product.product if needed -->
+    
 </odoo>
-

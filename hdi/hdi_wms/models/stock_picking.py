@@ -5,7 +5,6 @@ from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
-
     _inherit = 'stock.picking'
 
     batch_ids = fields.One2many(
@@ -58,23 +57,22 @@ class StockPicking(models.Model):
     )
 
     scan_mode = fields.Selection([
-        ('none', 'Không quét / No Scanning'),
-        ('batch', 'Quét Lô / Scan Batch'),
-        ('product', 'Quét Sản phẩm / Scan Product'),
-        ('location', 'Quét Vị trí / Scan Location'),
+        ('none', 'Không quét'),
+        ('batch', 'Quét Lô'),
+        ('product', 'Quét Sản phẩm'),
+        ('location', 'Quét Vị trí'),
     ], string='Chế độ Quét / Scan Mode', default='none')
 
     scan_detail_level = fields.Selection([
-        ('batch_only', 'Chỉ quét Lô / Batch Only'),
-        ('batch_plus_products', 'Quét Lô + Sản phẩm / Batch + Products'),
-        ('full_item', 'Quét Chi tiết từng Kiện / Full Item Scan'),
-    ], string='Mức độ Quét / Scan Detail Level', default='batch_only',
+        ('batch_only', 'Chỉ quét Lô '),
+        ('batch_plus_products', 'Quét Lô + Sản phẩm'),
+        ('full_item', 'Quét Chi tiết từng Kiện'),
+    ], string='Mức độ Quét', default='batch_only',
         help="Kiểm soát mức độ chi tiết khi quét:\n"
              "• Chỉ quét Lô: Chỉ quét mã vạch lô hàng/pallet (nhanh nhất, dùng cho hàng đồng nhất)\n"
              "• Quét Lô + Sản phẩm: Quét mã lô + xác nhận từng loại sản phẩm (kiểm soát vừa phải)\n"
              "• Quét Chi tiết từng Kiện: Quét từng kiện với serial/lot riêng (kiểm soát cao nhất, dùng cho hàng có số lô/serial)")
 
-    # ===== HANDOVER / SIGNATURE =====
     production_handover_signed_by = fields.Many2one(
         'res.users',
         string='Người Bàn giao',
@@ -89,7 +87,6 @@ class StockPicking(models.Model):
         help="Thời điểm sản xuất bàn giao hàng cho kho"
     )
 
-    # ===== PICKING LIST FIELDS =====
     picking_list_ids = fields.One2many(
         'hdi.picking.list',
         'picking_id',
@@ -108,18 +105,16 @@ class StockPicking(models.Model):
         store=True,
     )
 
-    # ===== PHÂN LOẠI XUẤT KHO (cho outgoing) =====
     outgoing_type = fields.Selection([
         ('sale', 'Xuất bán hàng'),
         ('transfer', 'Chuyển kho thành phẩm khác'),
         ('production', 'Chuyển về kho sản xuất'),
-        ('other', 'Xuất khác'),
     ], string='Loại xuất kho',
-       compute='_compute_outgoing_type',
-       store=True,
-       readonly=False,  # Cho phép chỉnh sửa thủ công
-       tracking=True,
-       help="Phân loại theo mục đích xuất kho")
+        compute='_compute_outgoing_type',
+        store=True,
+        readonly=False,
+        tracking=True,
+        help="Phân loại theo mục đích xuất kho")
 
     destination_warehouse_id = fields.Many2one(
         'stock.warehouse',
@@ -127,32 +122,29 @@ class StockPicking(models.Model):
         help="Kho thành phẩm đích (nếu chuyển kho)"
     )
 
-    # ===== PHÂN LOẠI NHẬP KHO (cho incoming) =====
     receiving_type = fields.Selection([
-        ('production_export', 'NK_NV_01: Sản xuất hàng trong nước'),
-        ('production_export_high_value', 'NK_NV_02: Sản xuất hàng xuất khẩu'),
-        ('import', 'NK_NV_03: Nhập khẩu'),
-        ('transfer_return', 'NK_NV_04: Chuyển kho - Hàng trả lại'),
-        ('other', 'Nhập khác'),
+        ('production_export', 'Sản xuất hàng trong nước'),
+        ('production_export_high_value', 'Sản xuất hàng xuất khẩu'),
+        ('import', ' Nhập khẩu'),
+        ('transfer_return', 'Chuyển kho - Hàng trả lại'),
     ], string='Loại nhập kho',
-       tracking=True,
-       help="Phân loại loại nhập kho theo quy trình")
+        tracking=True,
+        help="Phân loại loại nhập kho theo quy trình")
 
-    # ===== QC & APPROVAL FIELDS (cho NK_NV_02, 03, 04) =====
     require_batch_qc = fields.Boolean(
         string='Yêu cầu QC Batch',
         compute='_compute_qc_requirements',
         store=True,
         help="Tự động bật cho NK_NV_02, 03, 04"
     )
-    
+
     require_product_qc = fields.Boolean(
         string='Yêu cầu QC Hàng',
         compute='_compute_qc_requirements',
         store=True,
         help="Tự động bật cho NK_NV_03, 04"
     )
-    
+
     require_return_check = fields.Boolean(
         string='Yêu cầu kiểm tra hàng trả',
         compute='_compute_qc_requirements',
@@ -183,7 +175,6 @@ class StockPicking(models.Model):
         ('partial', 'Đạt một phần'),
     ], string='Trạng thái QC Hàng', default='pending', tracking=True)
 
-    # Return check fields (NK_NV_04)
     return_reason = fields.Selection([
         ('defect', 'Lỗi sản phẩm'),
         ('wrong_item', 'Sai hàng'),
@@ -193,9 +184,9 @@ class StockPicking(models.Model):
     ], string='Lý do trả hàng')
 
     return_condition = fields.Selection([
-        ('new', 'Mới - Có thể bán lại'),
-        ('good', 'Tốt - Cần kiểm tra nhỏ'),
-        ('damaged', 'Hư hỏng - Cần sửa chữa'),
+        ('new', 'Mới '),
+        ('good', 'Tốt'),
+        ('damaged', 'Hư hỏng '),
         ('scrap', 'Hỏng hoàn toàn - Thanh lý'),
     ], string='Tình trạng hàng trả')
 
@@ -207,19 +198,18 @@ class StockPicking(models.Model):
         string='Nhân viên kho ký',
         help="Nhân viên kho ký xác nhận"
     )
-    
+
     officer_signature = fields.Binary(
         string='Chữ ký xác nhận',
         help="Chữ ký điện tử xác nhận"
     )
-    
+
     approval_date = fields.Datetime(
         string='Ngày ký',
         readonly=True,
         help="Thời điểm ký xác nhận"
     )
 
-    # Odoo receipt reference (NK_NV_02, 03, 04)
     odoo_receipt_number = fields.Char(
         string='Số phiếu mã Odoo',
         readonly=True,
@@ -228,7 +218,6 @@ class StockPicking(models.Model):
 
     @api.depends('receiving_type', 'picking_type_code')
     def _compute_qc_requirements(self):
-        """Tự động set yêu cầu QC dựa vào loại nhập kho"""
         for picking in self:
             if picking.picking_type_code != 'incoming':
                 picking.require_batch_qc = False
@@ -236,18 +225,18 @@ class StockPicking(models.Model):
                 picking.require_return_check = False
                 picking.require_officer_approval = False
                 continue
-            
+
             rec_type = picking.receiving_type
-            
+
             # NK_NV_02, 03, 04 cần QC Batch
             picking.require_batch_qc = rec_type in ['production_export_high_value', 'import', 'transfer_return']
-            
+
             # NK_NV_03, 04 cần QC Hàng
             picking.require_product_qc = rec_type in ['import', 'transfer_return']
-            
+
             # NK_NV_04 cần kiểm tra hàng trả
             picking.require_return_check = rec_type == 'transfer_return'
-            
+
             # NK_NV_02, 03, 04 cần ký xác nhận
             picking.require_officer_approval = rec_type in ['production_export_high_value', 'import', 'transfer_return']
 
@@ -261,17 +250,16 @@ class StockPicking(models.Model):
 
     @api.depends('location_dest_id', 'location_dest_id.usage', 'location_dest_id.warehouse_id', 'picking_type_code')
     def _compute_outgoing_type(self):
-        """Tự động phân loại xuất kho dựa vào destination"""
         for picking in self:
             if picking.picking_type_code != 'outgoing':
                 picking.outgoing_type = False
                 continue
-            
+
             dest_location = picking.location_dest_id
             if not dest_location:
                 picking.outgoing_type = 'other'
                 continue
-            
+
             # Xuất bán hàng: customer location
             if dest_location.usage == 'customer':
                 picking.outgoing_type = 'sale'
@@ -287,7 +275,6 @@ class StockPicking(models.Model):
 
     @api.depends('batch_ids')
     def _compute_batch_count(self):
-        """Count batches in this picking"""
         for picking in self:
             picking.batch_count = len(picking.batch_ids)
 
@@ -330,7 +317,6 @@ class StockPicking(models.Model):
 
     # ===== QC & APPROVAL ACTIONS =====
     def action_start_batch_qc(self):
-        """Bắt đầu QC Batch - NK_NV_02, 03, 04"""
         self.ensure_one()
         self.batch_qc_status = 'in_progress'
         return {
@@ -358,7 +344,6 @@ class StockPicking(models.Model):
         }
 
     def action_start_product_qc(self):
-        """Bắt đầu QC Hàng - NK_NV_03, 04"""
         self.ensure_one()
         self.product_qc_status = 'in_progress'
         return {
@@ -372,7 +357,6 @@ class StockPicking(models.Model):
         }
 
     def action_pass_product_qc(self):
-        """QC Hàng đạt"""
         self.ensure_one()
         self.product_qc_status = 'passed'
         return {
@@ -386,16 +370,15 @@ class StockPicking(models.Model):
         }
 
     def action_approve_receiving(self):
-        """Ký xác nhận nhập kho - NK_NV_02, 03, 04"""
         self.ensure_one()
         if not self.warehouse_officer_id:
             self.warehouse_officer_id = self.env.user
         self.approval_date = fields.Datetime.now()
-        
+
         # Generate Odoo receipt number
         if not self.odoo_receipt_number:
             self.odoo_receipt_number = self.env['ir.sequence'].next_by_code('hdi.wms.receipt') or self.name
-        
+
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -407,7 +390,6 @@ class StockPicking(models.Model):
         }
 
     def action_suggest_picking(self):
-        """Gợi ý lấy hàng theo FIFO - Bước 3"""
         self.ensure_one()
         if self.picking_type_id.code != 'outgoing':
             raise UserError(_('Chỉ áp dụng cho phiếu xuất kho.'))
@@ -482,7 +464,6 @@ class StockPicking(models.Model):
 
         result = super().button_validate()
 
-        # WMS post-validation
         for picking in self:
             if picking.use_batch_management and picking.state == 'done':
                 picking.wms_state = 'wms_done'
@@ -492,7 +473,6 @@ class StockPicking(models.Model):
     def action_assign(self):
         result = super().action_assign()
 
-        # Update WMS state after assignment
         for picking in self:
             if picking.use_batch_management and picking.state == 'assigned':
                 picking.wms_state = 'picking_ready'
@@ -500,7 +480,6 @@ class StockPicking(models.Model):
         return result
 
     def action_confirm_handover(self):
-        """Confirm handover from production to warehouse"""
         self.ensure_one()
         self.production_handover_signed_by = self.env.user
         self.production_handover_date = fields.Datetime.now()
@@ -538,12 +517,10 @@ class StockPicking(models.Model):
                 }
 
         elif self.scan_mode == 'product':
-            # Find product by barcode
             product = self.env['product.product'].search([
                 ('barcode', '=', barcode),
             ], limit=1)
             if product:
-                # Check if product is in move lines
                 move_line = self.move_line_ids.filtered(
                     lambda ml: ml.product_id == product
                 )
@@ -559,7 +536,6 @@ class StockPicking(models.Model):
                         }
                     }
 
-        # Barcode not found
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

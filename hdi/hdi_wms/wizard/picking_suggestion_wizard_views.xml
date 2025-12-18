@@ -45,7 +45,7 @@
                             <field name="picking_id" readonly="1" class="oe_inline"/>
                         </h1>
                     </div>
-                    
+
                     <group>
                         <group>
                             <field name="picking_type" invisible="1"/>
@@ -56,11 +56,11 @@
                             <field name="total_qty_suggested" class="oe_inline"/>
                         </group>
                     </group>
-                    
+
                     <group>
                         <field name="notes" readonly="1" class="alert alert-info" nolabel="1"/>
                     </group>
-                    
+
                     <notebook>
                         <page string="Gợi ý lấy hàng (FIFO)" name="suggestions">
                             <field name="suggestion_line_ids" mode="list">

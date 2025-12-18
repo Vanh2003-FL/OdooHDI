@@ -20,4 +20,3 @@ access_hdi_batch_creation_wizard_user,hdi.batch.creation.wizard.user,model_hdi_b
 access_hdi_batch_creation_wizard_manager,hdi.batch.creation.wizard.manager,model_hdi_batch_creation_wizard,group_wms_manager,1,1,1,1
 access_hdi_picking_suggestion_wizard_user,hdi.picking.suggestion.wizard.user,model_hdi_picking_suggestion_wizard,group_wms_user,1,1,1,1
 access_hdi_picking_suggestion_line_user,hdi.picking.suggestion.line.user,model_hdi_picking_suggestion_line,group_wms_user,1,1,1,1
-

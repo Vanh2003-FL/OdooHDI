@@ -4,96 +4,89 @@ from odoo import models, fields, api, _
 
 
 class HdiLooseLine(models.Model):
-
     _name = 'hdi.loose.line'
-    _description = 'Loose Items Line'
+    _description = 'Dòng hàng lẻ'
     _order = 'picking_id, sequence, id'
-    
-    # ===== REFERENCE =====
-    sequence = fields.Integer(string='Sequence', default=10)
-    
+
+    sequence = fields.Integer(string='Thứ tự', default=10)
+
     picking_id = fields.Many2one(
         'stock.picking',
-        string='Picking',
+        string='Phiếu kho',
         required=True,
         ondelete='cascade',
         index=True,
     )
-    
+
     move_id = fields.Many2one(
         'stock.move',
-        string='Stock Move',
-        help="Link to core stock.move"
+        string='Dòng dịch chuyển kho',
+        help="Liên kết với bản ghi stock.move"
     )
-    
-    # ===== PRODUCT INFO =====
+
+    # ===== THÔNG TIN SẢN PHẨM =====
     product_id = fields.Many2one(
         'product.product',
-        string='Product',
+        string='Sản phẩm',
         required=True,
     )
-    
+
     product_uom_id = fields.Many2one(
         'uom.uom',
-        string='Unit of Measure',
+        string='Đơn vị tính',
         required=True,
     )
-    
+
     quantity = fields.Float(
-        string='Quantity',
+        string='Số lượng',
         required=True,
         digits='Product Unit of Measure',
     )
-    
-    # ===== LOCATION =====
+
+    # ===== KHO VẬN =====
     location_id = fields.Many2one(
         'stock.location',
-        string='Source Location',
+        string='Vị trí nguồn',
         required=True,
     )
-    
+
     location_dest_id = fields.Many2one(
         'stock.location',
-        string='Destination Location',
+        string='Vị trí đích',
         required=True,
     )
-    
-    # ===== TRACKING =====
+
+    # ===== THEO DÕI =====
     lot_id = fields.Many2one(
         'stock.lot',
-        string='Lot/Serial Number',
+        string='Lô/Số Serial',
     )
-    
+
     barcode_scanned = fields.Char(
-        string='Scanned Barcode',
+        string='Mã vạch quét được',
     )
-    
-    # ===== STATUS =====
+
+    # ===== TRẠNG THÁI =====
     state = fields.Selection([
-        ('pending', 'Pending'),
-        ('processing', 'Processing'),
-        ('done', 'Done'),
-        ('cancel', 'Cancelled'),
-    ], string='State', default='pending')
-    
-    notes = fields.Text(string='Notes')
-    
+        ('pending', 'Chờ xử lý'),
+        ('processing', 'Đang xử lý'),
+        ('done', 'Hoàn thành'),
+        ('cancel', 'Hủy'),
+    ], string='Trạng thái', default='pending')
+
+    notes = fields.Text(string='Ghi chú')
+
     company_id = fields.Many2one(
         'res.company',
         related='picking_id.company_id',
         store=True,
         readonly=True,
+        string="Công ty",
     )
-    
+
     @api.model
     def create(self, vals):
-        """
-        ✅ Khi tạo loose line, tạo stock.move tương ứng (core)
-        Không được tách rời khỏi core inventory flow
-        """
         result = super().create(vals)
-        
-        # Create corresponding stock.move if not exists
         if not result.move_id and result.picking_id:
             move_vals = {
                 'name': result.product_id.name,
@@ -108,16 +101,13 @@ class HdiLooseLine(models.Model):
             }
             move = self.env['stock.move'].create(move_vals)
             result.move_id = move.id
-        
+
         return result
-    
+
     def write(self, vals):
-        """
-        ✅ Update stock.move khi loose line thay đổi
-        """
         result = super().write(vals)
-        
-        # Sync changes to stock.move
+
+        # Đồng bộ thông tin sang stock.move
         move_vals = {}
         if 'quantity' in vals:
             move_vals['product_uom_qty'] = vals['quantity']
@@ -125,23 +115,18 @@ class HdiLooseLine(models.Model):
             move_vals['location_id'] = vals['location_id']
         if 'location_dest_id' in vals:
             move_vals['location_dest_id'] = vals['location_dest_id']
-        
+
         if move_vals:
             for line in self:
                 if line.move_id:
                     line.move_id.write(move_vals)
-        
+
         return result
-    
+
     def action_process(self):
-        """Mark as processing"""
         self.write({'state': 'processing'})
-    
+
     def action_done(self):
-        """
-        Mark as done
-        ✅ Trigger stock.move done (core)
-        """
         for line in self:
             if line.move_id and line.move_id.state not in ['done', 'cancel']:
                 line.move_id._action_done()
