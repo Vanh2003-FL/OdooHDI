@@ -10,6 +10,10 @@ class HrContract(models.Model):
     # ==================== LƯƠNG CƠ BẢN ====================
     # wage đã có sẵn từ core
     
+    # Lương năng suất
+    performance_wage = fields.Monetary('Lương năng suất', default=0, tracking=True, 
+        help='Lương năng suất theo KPI/Performance')
+    
     # Lương thử việc
     is_probation = fields.Boolean('Đang thử việc', tracking=True)
     probation_wage_rate = fields.Float(

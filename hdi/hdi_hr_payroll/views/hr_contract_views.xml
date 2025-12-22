@@ -13,6 +13,7 @@
                     <group>
                         <group string="Lương cơ bản">
                             <field name="wage" string="Lương cơ bản/tháng"/>
+                            <field name="performance_wage"/>
                             <field name="is_probation"/>
                             <field name="probation_wage_rate" invisible="not is_probation"/>
                             <field name="probation_wage" invisible="not is_probation"/>

@@ -30,7 +30,32 @@ else:
         </record>
 
         <!-- ============================================ -->
-        <!-- 2. PHỤ CẤP                                   -->
+        <!-- 2. LƯƠNG NĂNG SUẤT                           -->
+        <!-- ============================================ -->
+        
+        <record id="rule_performance_wage" model="hr.salary.rule">
+            <field name="name">Lương năng suất</field>
+            <field name="code">PERFORMANCE</field>
+            <field name="sequence">2</field>
+            <field name="category_id" ref="category_basic"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.performance_wage > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Lương năng suất theo ngày công (tương tự BASIC)
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+
+if worked_days_work and payslip.standard_days > 0:
+    daily_wage = contract.performance_wage / payslip.standard_days
+    result = daily_wage * worked_days_work.number_of_days
+else:
+    result = contract.performance_wage
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 3. PHỤ CẤP                                   -->
         <!-- ============================================ -->
 
         <!-- Phụ cấp ăn trưa -->
