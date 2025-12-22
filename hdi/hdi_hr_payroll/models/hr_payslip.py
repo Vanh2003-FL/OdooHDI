@@ -214,12 +214,20 @@ class HrPayslip(models.Model):
         return True
 
     def _get_worked_days_lines(self):
-        """Lấy số ngày công từ hr.work.entry"""
+        """
+        Lấy số ngày công từ hr.work.entry và hr.attendance
+        
+        Các loại ngày công:
+        - WORK100: Ngày công thực tế (từ attendance/work entry)
+        - LEAVE: Nghỉ phép hưởng lương
+        - UNPAID: Nghỉ không lương
+        - PENALTY: Đi muộn/về sớm (nếu có)
+        """
         self.ensure_one()
 
         res = []
 
-        # Tìm work entries trong kỳ
+        # 1. Lấy từ Work Entries (nếu có)
         work_entries = self.env['hr.work.entry'].search([
             ('employee_id', '=', self.employee_id.id),
             ('date_start', '>=', self.date_from),
@@ -227,30 +235,115 @@ class HrPayslip(models.Model):
             ('state', '=', 'validated')
         ])
 
-        # Group theo loại
-        work_entry_types = work_entries.mapped('work_entry_type_id')
+        if work_entries:
+            # Group theo loại work entry
+            work_entry_types = work_entries.mapped('work_entry_type_id')
 
-        for wet in work_entry_types:
-            entries = work_entries.filtered(lambda e: e.work_entry_type_id == wet)
+            for wet in work_entry_types:
+                entries = work_entries.filtered(lambda e: e.work_entry_type_id == wet)
 
-            # Tính tổng giờ
-            total_hours = sum(entries.mapped('duration'))
+                # Tính tổng giờ
+                total_hours = sum(entries.mapped('duration'))
 
-            # Quy đổi ra ngày (8 giờ = 1 ngày)
-            number_of_days = total_hours / 8.0
+                # Quy đổi ra ngày (8 giờ = 1 ngày)
+                number_of_days = total_hours / 8.0
 
-            res.append({
-                'slip_id': self.id,
-                'work_entry_type_id': wet.id,
-                'name': wet.name,
-                'code': wet.code,
-                'number_of_days': number_of_days,
-                'number_of_hours': total_hours,
-            })
+                res.append({
+                    'slip_id': self.id,
+                    'work_entry_type_id': wet.id,
+                    'name': wet.name,
+                    'code': wet.code,
+                    'number_of_days': number_of_days,
+                    'number_of_hours': total_hours,
+                    'sequence': 1 if wet.code == 'WORK100' else 10,
+                })
+        
+        else:
+            # 2. Nếu không có work entry, tính từ Attendance
+            attendances = self.env['hr.attendance'].search([
+                ('employee_id', '=', self.employee_id.id),
+                ('check_in', '>=', self.date_from),
+                ('check_in', '<=', self.date_to),
+            ])
+
+            # Đếm số ngày có chấm công (unique dates)
+            attendance_dates = set()
+            for att in attendances:
+                if att.check_in:
+                    attendance_dates.add(att.check_in.date())
+
+            attendance_days = len(attendance_dates)
+
+            # Tổng giờ làm việc
+            total_hours = sum(attendances.mapped('worked_hours'))
+
+            # Thêm WORK100 - Ngày công thực tế
+            if attendance_days > 0:
+                res.append({
+                    'slip_id': self.id,
+                    'work_entry_type_id': False,
+                    'name': 'Ngày công thực tế',
+                    'code': 'WORK100',
+                    'number_of_days': attendance_days,
+                    'number_of_hours': total_hours,
+                    'sequence': 1,
+                })
+
+            # 3. Nghỉ phép hưởng lương (từ hr.leave)
+            leaves = self.env['hr.leave'].search([
+                ('employee_id', '=', self.employee_id.id),
+                ('date_from', '>=', self.date_from),
+                ('date_to', '<=', self.date_to),
+                ('state', '=', 'validate'),
+                ('holiday_status_id.unpaid', '=', False),  # Phép có lương
+            ])
+
+            if leaves:
+                leave_days = sum(leaves.mapped('number_of_days'))
+                res.append({
+                    'slip_id': self.id,
+                    'work_entry_type_id': False,
+                    'name': 'Nghỉ phép hưởng lương',
+                    'code': 'LEAVE',
+                    'number_of_days': leave_days,
+                    'number_of_hours': leave_days * 8,
+                    'sequence': 2,
+                })
+
+            # 4. Nghỉ không lương
+            unpaid_leaves = self.env['hr.leave'].search([
+                ('employee_id', '=', self.employee_id.id),
+                ('date_from', '>=', self.date_from),
+                ('date_to', '<=', self.date_to),
+                ('state', '=', 'validate'),
+                ('holiday_status_id.unpaid', '=', True),  # Phép không lương
+            ])
+
+            if unpaid_leaves:
+                unpaid_days = sum(unpaid_leaves.mapped('number_of_days'))
+                res.append({
+                    'slip_id': self.id,
+                    'work_entry_type_id': False,
+                    'name': 'Nghỉ không lương',
+                    'code': 'UNPAID',
+                    'number_of_days': unpaid_days,
+                    'number_of_hours': unpaid_days * 8,
+                    'sequence': 3,
+                })
 
         # Tạo worked days lines
         if res:
             self.env['hr.payslip.worked.days'].create(res)
+        else:
+            # Nếu không có dữ liệu nào, tạo mặc định với công chuẩn
+            self.env['hr.payslip.worked.days'].create({
+                'slip_id': self.id,
+                'name': 'Ngày công (mặc định)',
+                'code': 'WORK100',
+                'number_of_days': self.standard_days,
+                'number_of_hours': self.standard_days * 8,
+                'sequence': 1,
+            })
 
         return res
 
