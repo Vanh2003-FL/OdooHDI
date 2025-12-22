@@ -89,6 +89,11 @@ class HrContract(models.Model):
         """Mức đóng BH = Chỉ lương cơ bản (theo ví dụ)"""
         for contract in self:
             contract.insurance_salary = contract.wage
+    
+    @api.onchange('wage')
+    def _onchange_wage(self):
+        """Trigger recalculation when wage changes"""
+        self.insurance_salary = self.wage
 
     @api.depends('insurance_salary', 'si_company_rate', 'hi_company_rate', 'ui_company_rate',
                  'si_employee_rate', 'hi_employee_rate', 'ui_employee_rate')
