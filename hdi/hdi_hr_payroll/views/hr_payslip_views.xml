@@ -46,6 +46,17 @@
                             <field name="standard_days" readonly="state != 'draft'"/>
                         </group>
                     </group>
+                    
+                    <group>
+                        <group string="Lương năng suất">
+                            <field name="performance_wage_total" readonly="state != 'draft'" widget="monetary"/>
+                            <div class="text-muted">
+                                <small>💡 Nhập tổng lương NS → Hệ thống tự tính theo công thực tế</small>
+                            </div>
+                        </group>
+                        <group>
+                        </group>
+                    </group>
                     <notebook>
                         <page string="Ngày công">
                             <field name="worked_days_line_ids">

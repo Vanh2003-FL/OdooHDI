@@ -92,6 +92,12 @@ class HrPayslip(models.Model):
     net_wage = fields.Monetary('Thực lĩnh', compute='_compute_summary', store=True, tracking=True)
     total_deduction = fields.Monetary('Tổng khấu trừ', compute='_compute_summary', store=True)
 
+    # ==================== LƯƠNG NĂNG SUẤT ====================
+    performance_wage_total = fields.Monetary(
+        'Tổng lương năng suất',
+        help='Nhập tổng lương năng suất trong tháng. Hệ thống sẽ tự động tính theo công thực tế.'
+    )
+
     # ==================== KHÁC ====================
     company_id = fields.Many2one('res.company', 'Công ty', default=lambda self: self.env.company, required=True)
     currency_id = fields.Many2one('res.currency', related='company_id.currency_id')
@@ -204,6 +210,20 @@ class HrPayslip(models.Model):
             # Xóa dữ liệu cũ
             payslip.line_ids.unlink()
             payslip.worked_days_line_ids.unlink()
+
+            # Tạo/cập nhật input cho lương năng suất
+            if payslip.performance_wage_total > 0:
+                # Xóa input PERFORMANCE cũ (nếu có)
+                payslip.input_line_ids.filtered(lambda x: x.code == 'PERFORMANCE').unlink()
+                
+                # Tạo input mới
+                self.env['hr.payslip.input'].create({
+                    'slip_id': payslip.id,
+                    'name': 'Lương năng suất',
+                    'code': 'PERFORMANCE',
+                    'amount': payslip.performance_wage_total,
+                    'sequence': 1,
+                })
 
             # 1. Lấy worked days từ work entries
             payslip._get_worked_days_lines()
