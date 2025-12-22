@@ -1,4 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Placeholder -->
+    <!-- Inherit hr.contract form view -->
+    <record id="hr_contract_view_form_inherit_payroll" model="ir.ui.view">
+        <field name="name">hr.contract.form.inherit.payroll</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Thêm tab "Thông tin lương" -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Thông tin lương" name="salary_info">
+                    <group>
+                        <group string="Lương cơ bản">
+                            <field name="wage" string="Lương cơ bản/tháng"/>
+                            <field name="is_probation"/>
+                            <field name="probation_wage_rate" invisible="not is_probation"/>
+                            <field name="probation_wage" invisible="not is_probation"/>
+                        </group>
+                        
+                        <group string="Tổng quan">
+                            <field name="total_allowance" readonly="1"/>
+                            <field name="insurance_salary" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Phụ cấp cố định hàng tháng">
+                        <group>
+                            <field name="meal_allowance"/>
+                            <field name="transport_allowance"/>
+                            <field name="phone_allowance"/>
+                        </group>
+                        <group>
+                            <field name="housing_allowance"/>
+                            <field name="position_allowance"/>
+                            <field name="responsibility_allowance"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Phụ cấp theo loại" colspan="4"/>
+                    <field name="allowance_assignment_ids" nolabel="1">
+                        <tree editable="bottom">
+                            <field name="allowance_type_id"/>
+                            <field name="amount" widget="monetary"/>
+                            <field name="note"/>
+                        </tree>
+                    </field>
+                </page>
+                
+                <page string="Bảo hiểm" name="insurance_info">
+                    <group>
+                        <group string="Mức lương đóng bảo hiểm">
+                            <field name="insurance_salary"/>
+                            <label for="insurance_salary" string="Công thức: Lương CB + PC ăn" class="text-muted"/>
+                        </group>
+                        
+                        <group string="Tổng chi phí">
+                            <field name="total_insurance_company" widget="monetary"/>
+                            <field name="total_insurance_employee" widget="monetary"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Tỷ lệ đóng bảo hiểm (%)">
+                        <group string="Công ty đóng">
+                            <field name="si_company_rate"/>
+                            <field name="hi_company_rate"/>
+                            <field name="ui_company_rate"/>
+                        </group>
+                        
+                        <group string="Nhân viên đóng">
+                            <field name="si_employee_rate"/>
+                            <field name="hi_employee_rate"/>
+                            <field name="ui_employee_rate"/>
+                        </group>
+                    </group>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <strong>Lưu ý:</strong>
+                        <ul>
+                            <li>BHXH = Bảo hiểm xã hội</li>
+                            <li>BHYT = Bảo hiểm y tế</li>
+                            <li>BHTN = Bảo hiểm thất nghiệp</li>
+                            <li>Tỷ lệ mặc định theo quy định Việt Nam năm 2024</li>
+                        </ul>
+                    </div>
+                </page>
+                
+                <page string="KPI &amp; Thưởng" name="kpi_bonus">
+                    <group>
+                        <group string="Cài đặt KPI">
+                            <field name="has_kpi"/>
+                            <field name="kpi_target" invisible="not has_kpi"/>
+                            <field name="kpi_rate" invisible="not has_kpi"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
 </odoo>
