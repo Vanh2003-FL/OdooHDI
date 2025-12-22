@@ -47,17 +47,6 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Chi tiết lương">
-                            <field name="line_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="code"/>
-                                    <field name="quantity"/>
-                                    <field name="rate"/>
-                                    <field name="amount"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Ngày công">
                             <field name="worked_days_line_ids">
                                 <list editable="bottom">
@@ -65,6 +54,36 @@
                                     <field name="code"/>
                                     <field name="number_of_days"/>
                                     <field name="number_of_hours"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Các khoản khác" name="inputs">
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Hướng dẫn:</strong> Nhập các khoản bổ sung theo tháng như:
+                                <ul>
+                                    <li><b>PERFORMANCE</b> - Lương năng suất (tính theo công thực tế)</li>
+                                    <li><b>BONUS</b> - Thưởng</li>
+                                    <li><b>DEDUCTION</b> - Phạt</li>
+                                    <li><b>ADVANCE</b> - Tạm ứng</li>
+                                </ul>
+                            </div>
+                            <field name="input_line_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="amount" sum="Tổng"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Chi tiết lương" name="salary_lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="quantity"/>
+                                    <field name="rate"/>
+                                    <field name="amount"/>
+                                    <field name="total" sum="Tổng cộng"/>
                                 </list>
                             </field>
                         </page>

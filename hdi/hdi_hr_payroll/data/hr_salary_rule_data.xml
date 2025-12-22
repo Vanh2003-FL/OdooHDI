@@ -50,25 +50,27 @@ else:
             <field name="sequence">2</field>
             <field name="category_id" ref="category_basic"/>
             <field name="condition_select">python</field>
-            <field name="condition_python">result = contract.performance_wage > 0</field>
+            <field name="condition_python">result = inputs.PERFORMANCE and inputs.PERFORMANCE.amount > 0</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
-# Lương năng suất theo ngày công (tương tự BASIC)
+# Lương năng suất tính theo công thực tế (không tính nghỉ phép)
+# Lấy từ input_line_ids của payslip
+
+performance_amount = 0
+if inputs.PERFORMANCE:
+    performance_amount = inputs.PERFORMANCE.amount
+
+# Lấy số công thực tế (WORK100)
 work_days = 0
 if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
     work_days = worked_days.WORK100.number_of_days
 
-leave_days = 0
-if hasattr(worked_days, 'LEAVE') and hasattr(worked_days.LEAVE, 'number_of_days'):
-    leave_days = worked_days.LEAVE.number_of_days
-
-total_paid_days = work_days + leave_days
-
-if total_paid_days > 0 and payslip.standard_days > 0:
-    daily_wage = contract.performance_wage / payslip.standard_days
-    result = daily_wage * total_paid_days
+# Tính theo công thực tế
+if work_days > 0 and payslip.standard_days > 0:
+    daily_performance = performance_amount / payslip.standard_days
+    result = daily_performance * work_days
 else:
-    result = contract.performance_wage
+    result = 0
 ]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
