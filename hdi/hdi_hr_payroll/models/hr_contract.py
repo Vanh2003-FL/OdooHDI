@@ -30,13 +30,6 @@ class HrContract(models.Model):
     
     total_allowance = fields.Monetary('Tổng phụ cấp', compute='_compute_total_allowance', store=True)
     
-    # Phụ cấp linh hoạt
-    allowance_assignment_ids = fields.One2many(
-        'hr.allowance.assignment',
-        'contract_id',
-        string='Phụ cấp được hưởng'
-    )
-    
     # ==================== BẢO HIỂM XÃ HỘI ====================
     # Mức lương đóng bảo hiểm
     insurance_salary = fields.Monetary(

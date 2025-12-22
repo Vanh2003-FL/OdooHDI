@@ -34,17 +34,9 @@
                             <field name="housing_allowance"/>
                             <field name="position_allowance"/>
                             <field name="responsibility_allowance"/>
+                            <field name="other_allowance"/>
                         </group>
                     </group>
-                    
-                    <separator string="Phụ cấp theo loại" colspan="4"/>
-                    <field name="allowance_assignment_ids" nolabel="1">
-                        <tree editable="bottom">
-                            <field name="allowance_type_id"/>
-                            <field name="amount" widget="monetary"/>
-                            <field name="note"/>
-                        </tree>
-                    </field>
                 </page>
                 
                 <page string="Bảo hiểm" name="insurance_info">
