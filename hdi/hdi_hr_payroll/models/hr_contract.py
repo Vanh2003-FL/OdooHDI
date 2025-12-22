@@ -28,6 +28,8 @@ class HrContract(models.Model):
     transport_allowance = fields.Monetary('Phụ cấp xăng xe', default=0, tracking=True)
     phone_allowance = fields.Monetary('Phụ cấp điện thoại', default=0, tracking=True)
     housing_allowance = fields.Monetary('Phụ cấp nhà ở', default=0, tracking=True)
+    onsite_allowance = fields.Monetary('Phụ cấp onsite', default=0, tracking=True)
+    uniform_allowance = fields.Monetary('Phụ cấp đồng phục', default=0, tracking=True)
     position_allowance = fields.Monetary('Phụ cấp chức vụ', default=0, tracking=True)
     responsibility_allowance = fields.Monetary('Phụ cấp trách nhiệm', default=0, tracking=True)
     other_allowance = fields.Monetary('Phụ cấp khác', default=0, tracking=True)
@@ -70,7 +72,8 @@ class HrContract(models.Model):
 
     @api.depends(
         'meal_allowance', 'transport_allowance', 'phone_allowance',
-        'housing_allowance', 'position_allowance', 'responsibility_allowance', 'other_allowance'
+        'housing_allowance', 'onsite_allowance', 'uniform_allowance',
+        'position_allowance', 'responsibility_allowance', 'other_allowance'
     )
     def _compute_total_allowance(self):
         for contract in self:
@@ -79,6 +82,8 @@ class HrContract(models.Model):
                 contract.transport_allowance +
                 contract.phone_allowance +
                 contract.housing_allowance +
+                contract.onsite_allowance +
+                contract.uniform_allowance +
                 contract.position_allowance +
                 contract.responsibility_allowance +
                 contract.other_allowance

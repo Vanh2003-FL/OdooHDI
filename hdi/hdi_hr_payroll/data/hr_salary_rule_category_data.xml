@@ -30,6 +30,13 @@
             <field name="sequence">90</field>
         </record>
 
+        <!-- THU NHẬP CHỊU THUẾ (loại trừ phụ cấp miễn thuế) -->
+        <record id="category_taxable" model="hr.salary.rule.category">
+            <field name="name">Thu nhập chịu thuế</field>
+            <field name="code">TAXABLE</field>
+            <field name="sequence">95</field>
+        </record>
+
         <!-- BẢO HIỂM -->
         <record id="category_insurance" model="hr.salary.rule.category">
             <field name="name">Bảo hiểm</field>

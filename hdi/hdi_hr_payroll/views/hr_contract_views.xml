@@ -30,9 +30,11 @@
                             <field name="meal_allowance"/>
                             <field name="transport_allowance"/>
                             <field name="phone_allowance"/>
+                            <field name="housing_allowance"/>
                         </group>
                         <group>
-                            <field name="housing_allowance"/>
+                            <field name="onsite_allowance"/>
+                            <field name="uniform_allowance"/>
                             <field name="position_allowance"/>
                             <field name="responsibility_allowance"/>
                             <field name="other_allowance"/>

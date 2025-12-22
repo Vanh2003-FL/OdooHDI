@@ -119,6 +119,32 @@ else:
             <field name="appears_on_payslip">True</field>
         </record>
 
+        <!-- Phụ cấp onsite -->
+        <record id="rule_onsite_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp onsite</field>
+            <field name="code">ALW_ONSITE</field>
+            <field name="sequence">13.5</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.onsite_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.onsite_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp đồng phục -->
+        <record id="rule_uniform_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp đồng phục</field>
+            <field name="code">ALW_UNIFORM</field>
+            <field name="sequence">13.7</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.uniform_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.uniform_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
         <!-- Phụ cấp chức vụ -->
         <record id="rule_position_allowance" model="hr.salary.rule">
             <field name="name">Phụ cấp chức vụ</field>
@@ -159,6 +185,40 @@ else:
             <field name="amount_python_compute"><![CDATA[
 # Tổng = BASIC + Tất cả ALW + BONUS
 result = categories.BASIC + categories.ALW + categories.BONUS
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 3.1. THU NHẬP CHỊU THUẾ                      -->
+        <!-- ============================================ -->
+        <!-- Một số phụ cấp được miễn thuế theo QĐ 111/2013/TT-BTC:
+             - Phụ cấp ăn trưa (trong giới hạn)
+             - Phụ cấp điện thoại, xăng xe (trong giới hạn)
+             - Phụ cấp đồng phục
+        -->
+        
+        <record id="rule_taxable_income" model="hr.salary.rule">
+            <field name="name">Thu nhập chịu thuế</field>
+            <field name="code">TAXABLE</field>
+            <field name="sequence">95</field>
+            <field name="category_id" ref="category_taxable"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Thu nhập chịu thuế = GROSS - các phụ cấp miễn thuế
+# Theo Excel: trừ phụ cấp ăn trưa (730k), điện thoại (1M), đồng phục (415k)
+gross = categories.GROSS
+
+# Lấy từng phụ cấp miễn thuế
+meal_allowance = rules.ALW_MEAL if hasattr(rules, 'ALW_MEAL') else 0
+phone_allowance = rules.ALW_PHONE if hasattr(rules, 'ALW_PHONE') else 0
+uniform_allowance = rules.ALW_UNIFORM if hasattr(rules, 'ALW_UNIFORM') else 0
+
+# Tổng phụ cấp miễn thuế
+tax_exempt_allowances = meal_allowance + phone_allowance + uniform_allowance
+
+result = gross - tax_exempt_allowances
 ]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
@@ -319,20 +379,22 @@ result = -total_fine
             <field name="amount_python_compute"><![CDATA[
 # TÍNH THUẾ TNCN LŨY TIẾN THEO BIỂU THUẾ VIỆT NAM
 
-# 1. Thu nhập tính thuế = GROSS - BH nhân viên đóng
-gross_income = categories.GROSS
+# 1. Thu nhập chịu thuế = TAXABLE (đã trừ phụ cấp miễn thuế)
+taxable_gross = categories.TAXABLE
+
+# 2. Trừ BH nhân viên đóng
 insurance_employee = abs(categories.INSURANCE)  # Số âm → dương
 
-# 2. Giảm trừ gia cảnh
+# 3. Giảm trừ gia cảnh
 personal_deduction = employee.personal_deduction if hasattr(employee, 'personal_deduction') else 11000000
 dependent_deduction = (employee.dependent_count if hasattr(employee, 'dependent_count') else 0) * 4400000
 
 total_deduction = personal_deduction + dependent_deduction
 
-# 3. Thu nhập tính thuế
-taxable_income = gross_income - insurance_employee - total_deduction
+# 4. Thu nhập tính thuế
+taxable_income = taxable_gross - insurance_employee - total_deduction
 
-# 4. Tính thuế lũy tiến theo biểu thuế VN
+# 5. Tính thuế lũy tiến theo biểu thuế VN
 if taxable_income <= 0:
     result = 0
 else:
