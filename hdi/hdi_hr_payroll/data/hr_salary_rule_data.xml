@@ -17,9 +17,14 @@
 # Tính lương theo công thực tế
 # Công thức: Lương = (Lương CB / Công chuẩn) × (Công thực tế + Phép hưởng lương)
 
-# Lấy các loại ngày công
-work_days = worked_days.WORK100.number_of_days if hasattr(worked_days, 'WORK100') else 0
-leave_days = worked_days.LEAVE.number_of_days if hasattr(worked_days, 'LEAVE') else 0
+# Lấy các loại ngày công - kiểm tra object có number_of_days attribute
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+leave_days = 0
+if hasattr(worked_days, 'LEAVE') and hasattr(worked_days.LEAVE, 'number_of_days'):
+    leave_days = worked_days.LEAVE.number_of_days
 
 # Tổng công được trả lương = Công thực tế + Nghỉ phép hưởng lương
 total_paid_days = work_days + leave_days
@@ -49,8 +54,13 @@ else:
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 # Lương năng suất theo ngày công (tương tự BASIC)
-work_days = worked_days.WORK100.number_of_days if hasattr(worked_days, 'WORK100') else 0
-leave_days = worked_days.LEAVE.number_of_days if hasattr(worked_days, 'LEAVE') else 0
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+leave_days = 0
+if hasattr(worked_days, 'LEAVE') and hasattr(worked_days.LEAVE, 'number_of_days'):
+    leave_days = worked_days.LEAVE.number_of_days
 
 total_paid_days = work_days + leave_days
 
@@ -78,7 +88,9 @@ else:
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 # Phụ cấp ăn theo ngày công thực tế (không tính phép)
-work_days = worked_days.WORK100.number_of_days if hasattr(worked_days, 'WORK100') else 0
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
 
 if work_days > 0 and payslip.standard_days > 0:
     daily_allowance = contract.meal_allowance / payslip.standard_days
@@ -192,13 +204,17 @@ else:
             <field name="condition_select">python</field>
             <field name="condition_python"><![CDATA[
 # Chỉ trừ nếu có ngày nghỉ không lương
-unpaid_days = worked_days.UNPAID.number_of_days if hasattr(worked_days, 'UNPAID') else 0
+unpaid_days = 0
+if hasattr(worked_days, 'UNPAID') and hasattr(worked_days.UNPAID, 'number_of_days'):
+    unpaid_days = worked_days.UNPAID.number_of_days
 result = unpaid_days > 0
 ]]></field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 # Trừ lương theo ngày nghỉ không lương
-unpaid_days = worked_days.UNPAID.number_of_days if hasattr(worked_days, 'UNPAID') else 0
+unpaid_days = 0
+if hasattr(worked_days, 'UNPAID') and hasattr(worked_days.UNPAID, 'number_of_days'):
+    unpaid_days = worked_days.UNPAID.number_of_days
 
 if unpaid_days > 0 and payslip.standard_days > 0:
     # Tính lương mất mát = (Lương CB / Công chuẩn) × Số ngày nghỉ
