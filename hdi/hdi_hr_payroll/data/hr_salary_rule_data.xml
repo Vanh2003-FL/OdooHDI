@@ -53,24 +53,20 @@ else:
             <field name="condition_python">result = inputs.PERFORMANCE and inputs.PERFORMANCE.amount > 0</field>
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
-# Lương năng suất tính theo công thực tế (không tính nghỉ phép)
-# Lấy từ input_line_ids của payslip
+# Lương năng suất = Lương NS/ngày × Công thực tế
+# Số tiền nhập vào đã là lương năng suất trên 1 ngày công
 
-performance_amount = 0
+performance_daily = 0
 if inputs.PERFORMANCE:
-    performance_amount = inputs.PERFORMANCE.amount
+    performance_daily = inputs.PERFORMANCE.amount
 
 # Lấy số công thực tế (WORK100)
 work_days = 0
 if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
     work_days = worked_days.WORK100.number_of_days
 
-# Tính theo công thực tế
-if work_days > 0 and payslip.standard_days > 0:
-    daily_performance = performance_amount / payslip.standard_days
-    result = daily_performance * work_days
-else:
-    result = 0
+# Tính: Lương NS/ngày × Công thực tế
+result = performance_daily * work_days
 ]]></field>
             <field name="appears_on_payslip">True</field>
         </record>

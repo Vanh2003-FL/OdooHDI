@@ -59,13 +59,14 @@
                         </page>
                         <page string="Các khoản khác" name="inputs">
                             <div class="alert alert-info" role="alert">
-                                <strong>💡 Hướng dẫn:</strong> Nhập các khoản bổ sung theo tháng như:
+                                <strong>💡 Hướng dẫn:</strong> Nhập các khoản bổ sung:
                                 <ul>
-                                    <li><b>PERFORMANCE</b> - Lương năng suất (tính theo công thực tế)</li>
+                                    <li><b>PERFORMANCE</b> - Lương năng suất/ngày (sẽ nhân với công thực tế)</li>
                                     <li><b>BONUS</b> - Thưởng</li>
                                     <li><b>DEDUCTION</b> - Phạt</li>
                                     <li><b>ADVANCE</b> - Tạm ứng</li>
                                 </ul>
+                                <p class="mb-0"><i>VD: Nhập PERFORMANCE = 300,000 với 20 công → Nhận 6,000,000</i></p>
                             </div>
                             <field name="input_line_ids">
                                 <list editable="bottom">
