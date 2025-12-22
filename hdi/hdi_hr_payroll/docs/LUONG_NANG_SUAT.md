@@ -63,8 +63,9 @@ Click **"Tính lương"** → Hệ thống sẽ tự động tính:
 Lương CB = (15,000,000 / 22.5) × (20 + 2) = 14,666,667 VNĐ
 
 # Lương năng suất  
-Lương NS = 250,000 × 20 = 5,000,000 VNĐ
-           ↑ Lương NS/ngày × Công thực tế
+Lương NS = (5,000,000 / 22.5) × 20 = 4,444,444 VNĐ
+           ↑ (Tổng lương NS / Công chuẩn) × Công thực tế
+           ↑ CHỈ tính 20 công thực tế (KHÔNG tính 2 công phép)
 ```
 
 ---
@@ -77,9 +78,9 @@ Lương NS = 250,000 × 20 = 5,000,000 VNĐ
 Công chuẩn: 22.5
 Công thực tế: 22
 Nghỉ phép: 0.5
-Lương NS/ngày: 300,000
+Tổng lương NS: 6,000,000
 
-→ Lương NS nhận được = 300,000 × 22 = 6,600,000 VNĐ
+→ Lương NS nhận được = (6,000,000 / 22.5) × 22 = 5,866,667 VNĐ
 ```
 
 ### Case 2: Nhân viên nghỉ nhiều
@@ -89,9 +90,9 @@ Công chuẩn: 22.5
 Công thực tế: 15
 Nghỉ phép: 3
 Nghỉ không lương: 4.5
-Lương NS/ngày: 250,000
+Tổng lương NS: 5,000,000
 
-→ Lương NS nhận được = 250,000 × 15 = 3,750,000 VNĐ
+→ Lương NS nhận được = (5,000,000 / 22.5) × 15 = 3,333,333 VNĐ
    (Chỉ tính 15 công thực tế)
 ```
 
@@ -118,7 +119,7 @@ Lương NS/ngày: 250,000
      result = inputs.PERFORMANCE and inputs.PERFORMANCE.amount > 0
      
      # Tính toán: CHỈ theo công thực tế
-     result = inputs.PERFORMANCE.amount × work_days
+     result = (inputs.PERFORMANCE.amount / standard_days) × work_days
      ```
 
 3. **views/hr_payslip_views.xml**
@@ -132,7 +133,7 @@ Lương NS/ngày: 250,000
 {
     'name': 'Lương năng suất',
     'code': 'PERFORMANCE',  # ← Quan trọng! Phải đúng mã này
-    'amount': 250000,       # Lương NS trên 1 ngày công
+    'amount': 5000000,      # Tổng lương NS trong tháng
 }
 ```
 
@@ -159,10 +160,11 @@ Lương NS/ngày: 250,000
 - Lương năng suất → KHÔNG tính BHXH (vì thuộc category BASIC, không phải INSURANCE)
 
 ### Q5: Công thức tính như thế nào?
-**A:** Rất đơn giản:
-- Nhập lương năng suất **trên 1 ngày công**
-- Hệ thống tự động nhân với **công thực tế**
-- **Công thức:** Lương NS = Lương NS/ngày × Công thực tế
+**A:** 
+- Nhập **TỔNG lương năng suất** trong tháng
+- Hệ thống tự động: (Tổng lương NS ÷ Công chuẩn) × Công thực tế
+- **Công thức:** Lương NS = (Tổng / 22.5) × Công thực tế
+- **CHỈ** tính công thực tế, **KHÔNG** tính nghỉ phép
 
 ---
 
