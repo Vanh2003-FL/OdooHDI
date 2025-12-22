@@ -6,30 +6,6 @@
     'summary': 'Quản lý tính lương theo chuẩn Việt Nam - HDI',
     'description': """
 HDI Payroll Management System
-==============================
-
-Module tính lương tích hợp đầy đủ cho Việt Nam:
-
-Tính năng chính:
-----------------
-* Quản lý cấu trúc lương và quy tắc tính lương
-* Tính lương cơ bản theo công thực tế
-* Quản lý phụ cấp (ăn trưa, xăng xe, điện thoại...)
-* Tính BHXH, BHYT, BHTN theo quy định VN
-* Tính thuế TNCN lũy tiến (7 bậc thuế)
-* Quản lý người phụ thuộc giảm trừ thuế
-* Quản lý tạm ứng lương và khoản vay
-* Quản lý khen thưởng và kỷ luật
-* In phiếu lương cá nhân
-* Báo cáo tổng hợp lương theo phòng ban
-* Xuất Excel bảng lương
-
-Nghiệp vụ:
-----------
-* Chấm công → Work Entry → Tính lương → Duyệt → Xuất báo cáo
-* Hỗ trợ lương thử việc, lương chính thức
-* Tự động tính khấu trừ và thuế
-* Tích hợp với kế toán (tùy chọn)
     """,
     'author': 'HDI Development Team',
     'website': 'https://hdi.com.vn',

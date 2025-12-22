@@ -32,7 +32,7 @@ else:
         <!-- ============================================ -->
         <!-- 2. LƯƠNG NĂNG SUẤT                           -->
         <!-- ============================================ -->
-        
+
         <record id="rule_performance_wage" model="hr.salary.rule">
             <field name="name">Lương năng suất</field>
             <field name="code">PERFORMANCE</field>
@@ -174,7 +174,7 @@ else:
         <!-- ============================================ -->
         <!-- 3. TỔNG THU NHẬP (GROSS)                     -->
         <!-- ============================================ -->
-        
+
         <record id="rule_gross_salary" model="hr.salary.rule">
             <field name="name">Tổng thu nhập (GROSS)</field>
             <field name="code">GROSS</field>
@@ -197,7 +197,7 @@ result = categories.BASIC + categories.ALW + categories.BONUS
              - Phụ cấp điện thoại, xăng xe (trong giới hạn)
              - Phụ cấp đồng phục
         -->
-        
+
         <record id="rule_taxable_income" model="hr.salary.rule">
             <field name="name">Thu nhập chịu thuế</field>
             <field name="code">TAXABLE</field>
@@ -234,7 +234,7 @@ result = gross - tax_exempt_allowances
         <!-- ============================================ -->
         <!-- 4. BẢO HIỂM - NHÂN VIÊN ĐÓNG                 -->
         <!-- ============================================ -->
-        
+
         <!-- BHXH nhân viên -->
         <record id="rule_social_insurance_employee" model="hr.salary.rule">
             <field name="name">BHXH (8%)</field>
@@ -284,7 +284,7 @@ result = -(contract.insurance_salary * contract.ui_employee_rate / 100.0)
         <!-- ============================================ -->
         <!-- 5. KHẤU TRỪ KHÁC                             -->
         <!-- ============================================ -->
-        
+
         <!-- Tạm ứng lương -->
         <record id="rule_loan_deduction" model="hr.salary.rule">
             <field name="name">Trừ tạm ứng</field>
@@ -376,7 +376,7 @@ result = -total_fine
         <!-- ============================================ -->
         <!-- 6. THUẾ THU NHẬP CÁ NHÂN                     -->
         <!-- ============================================ -->
-        
+
         <record id="rule_personal_income_tax" model="hr.salary.rule">
             <field name="name">Thuế TNCN</field>
             <field name="code">PIT</field>
@@ -421,7 +421,7 @@ if taxable_income <= 0:
 else:
     tax = 0
     remaining = taxable_income
-    
+
     # Biểu thuế lũy tiến
     brackets = [
         (5000000, 0.05),      # Đến 5 triệu: 5%
@@ -432,15 +432,15 @@ else:
         (28000000, 0.30),     # 52-80 triệu: 30%
         (float('inf'), 0.35)  # Trên 80 triệu: 35%
     ]
-    
+
     for bracket_amount, rate in brackets:
         if remaining <= 0:
             break
-        
+
         taxable_in_bracket = min(remaining, bracket_amount)
         tax += taxable_in_bracket * rate
         remaining -= taxable_in_bracket
-    
+
     result = -tax  # Số âm vì là khấu trừ
 ]]></field>
             <field name="appears_on_payslip">True</field>
@@ -449,7 +449,7 @@ else:
         <!-- ============================================ -->
         <!-- 7. THƯỞNG                                    -->
         <!-- ============================================ -->
-        
+
         <record id="rule_reward_bonus" model="hr.salary.rule">
             <field name="name">Thưởng</field>
             <field name="code">REWARD</field>
@@ -494,7 +494,7 @@ result = total_reward
         <!-- ============================================ -->
         <!-- 8. LƯƠNG THỰC LĨNH (NET)                     -->
         <!-- ============================================ -->
-        
+
         <record id="rule_net_salary" model="hr.salary.rule">
             <field name="name">THỰC LĨNH</field>
             <field name="code">NET</field>
@@ -512,7 +512,7 @@ result = categories.GROSS + categories.INSURANCE + categories.DED + categories.T
         <!-- ============================================ -->
         <!-- GÁN RULES VÀO STRUCTURE                      -->
         <!-- ============================================ -->
-        
+
         <record id="payroll_structure_vn_employee" model="hr.payroll.structure">
             <field name="rule_ids" eval="[(6, 0, [
                 ref('rule_basic_salary'),

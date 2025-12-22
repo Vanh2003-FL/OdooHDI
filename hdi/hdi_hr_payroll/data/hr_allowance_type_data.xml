@@ -17,7 +17,7 @@
 
         <!-- Phụ cấp xăng xe -->
         <record id="allowance_type_transport" model="hr.allowance.type">
-            <field name="name">Phụ cấp xăng xe</field>
+            <field name="name">Phụ cấp Onsite</field>
             <field name="code">TRANSPORT</field>
             <field name="sequence">20</field>
             <field name="amount_type">fixed</field>
@@ -39,7 +39,7 @@
 
         <!-- Phụ cấp nhà ở -->
         <record id="allowance_type_housing" model="hr.allowance.type">
-            <field name="name">Phụ cấp nhà ở</field>
+            <field name="name">Phụ cấp đồng phục</field>
             <field name="code">HOUSING</field>
             <field name="sequence">40</field>
             <field name="amount_type">fixed</field>

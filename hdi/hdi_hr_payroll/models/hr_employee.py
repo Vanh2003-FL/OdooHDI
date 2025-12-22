@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
 
 
 class HrEmployee(models.Model):
@@ -74,85 +73,6 @@ class HrEmployee(models.Model):
             'name': _('Phiếu lương'),
             'type': 'ir.actions.act_window',
             'res_model': 'hr.payslip',
-            'view_mode': 'tree,form',
-            'domain': [('employee_id', '=', self.id)],
-            'context': {'default_employee_id': self.id},
-        }
-
-    def action_create_payslip(self):
-        """Tạo phiếu lương mới nhanh từ nhân viên"""
-        self.ensure_one()
-        
-        # Tìm hợp đồng đang chạy
-        contract = self.env['hr.contract'].search([
-            ('employee_id', '=', self.id),
-            ('state', '=', 'open')
-        ], limit=1)
-        
-        if not contract:
-            raise UserError(_('Nhân viên %s chưa có hợp đồng đang chạy. Vui lòng tạo hợp đồng trước.') % self.name)
-        
-        # Lấy tháng hiện tại
-        import datetime
-        today = fields.Date.today()
-        date_from = today.replace(day=1)
-        # Ngày cuối tháng
-        if today.month == 12:
-            date_to = today.replace(day=31)
-        else:
-            date_to = (today.replace(month=today.month + 1, day=1) - datetime.timedelta(days=1))
-        
-        # Tạo phiếu lương
-        payslip = self.env['hr.payslip'].create({
-            'employee_id': self.id,
-            'contract_id': contract.id,
-            'struct_id': contract.struct_id.id,
-            'date_from': date_from,
-            'date_to': date_to,
-            'name': _('Lương tháng %s/%s - %s') % (today.month, today.year, self.name),
-        })
-        
-        # Tính lương luôn
-        payslip.compute_sheet()
-        
-        # Mở form phiếu lương vừa tạo
-        return {
-            'name': _('Phiếu lương mới'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.payslip',
-            'res_id': payslip.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-
-    def action_view_loans(self):
-        self.ensure_one()
-        return {
-            'name': _('Khoản vay/Tạm ứng'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.loan',
-            'view_mode': 'tree,form',
-            'domain': [('employee_id', '=', self.id)],
-            'context': {'default_employee_id': self.id},
-        }
-
-    def action_view_rewards(self):
-        self.ensure_one()
-        return {
-            'name': _('Khen thưởng'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.reward',
-            'view_mode': 'tree,form',
-            'domain': [('employee_id', '=', self.id)],
-            'context': {'default_employee_id': self.id},
-        }
-
-    def action_view_disciplines(self):
-        self.ensure_one()
-        return {
-            'name': _('Kỷ luật'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.discipline',
             'view_mode': 'tree,form',
             'domain': [('employee_id', '=', self.id)],
             'context': {'default_employee_id': self.id},
