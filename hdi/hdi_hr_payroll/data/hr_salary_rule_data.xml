@@ -207,16 +207,24 @@ result = categories.BASIC + categories.ALW + categories.BONUS
             <field name="amount_select">code</field>
             <field name="amount_python_compute"><![CDATA[
 # Thu nhập chịu thuế = GROSS - các phụ cấp miễn thuế
-# Theo Excel: trừ phụ cấp ăn trưa (730k), điện thoại (1M), đồng phục (415k)
+# Theo QĐ 111/2013/TT-BTC: Phụ cấp ăn, điện thoại, đồng phục được miễn thuế
 gross = categories.GROSS
 
-# Lấy từng phụ cấp miễn thuế
-meal_allowance = rules.ALW_MEAL if hasattr(rules, 'ALW_MEAL') else 0
-phone_allowance = rules.ALW_PHONE if hasattr(rules, 'ALW_PHONE') else 0
-uniform_allowance = rules.ALW_UNIFORM if hasattr(rules, 'ALW_UNIFORM') else 0
+# Tính phụ cấp miễn thuế theo ngày công (giống cách tính rules)
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+
+# Phụ cấp ăn trưa (theo ngày công)
+if worked_days_work and payslip.standard_days > 0:
+    meal = (contract.meal_allowance / payslip.standard_days) * worked_days_work.number_of_days
+else:
+    meal = contract.meal_allowance
+
+# Phụ cấp điện thoại và đồng phục (cố định)
+phone = contract.phone_allowance
+uniform = contract.uniform_allowance
 
 # Tổng phụ cấp miễn thuế
-tax_exempt_allowances = meal_allowance + phone_allowance + uniform_allowance
+tax_exempt_allowances = meal + phone + uniform
 
 result = gross - tax_exempt_allowances
 ]]></field>
@@ -495,14 +503,18 @@ result = categories.GROSS + categories.INSURANCE + categories.DED + categories.T
         <record id="payroll_structure_vn_employee" model="hr.payroll.structure">
             <field name="rule_ids" eval="[(6, 0, [
                 ref('rule_basic_salary'),
+                ref('rule_performance_wage'),
                 ref('rule_meal_allowance'),
                 ref('rule_transport_allowance'),
                 ref('rule_phone_allowance'),
                 ref('rule_housing_allowance'),
+                ref('rule_onsite_allowance'),
+                ref('rule_uniform_allowance'),
                 ref('rule_position_allowance'),
                 ref('rule_responsibility_allowance'),
                 ref('rule_reward_bonus'),
                 ref('rule_gross_salary'),
+                ref('rule_taxable_income'),
                 ref('rule_social_insurance_employee'),
                 ref('rule_health_insurance_employee'),
                 ref('rule_unemployment_insurance_employee'),
