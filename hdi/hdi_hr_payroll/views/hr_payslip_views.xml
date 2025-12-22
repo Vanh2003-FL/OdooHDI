@@ -58,6 +58,18 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Chi tiết lương" name="salary_lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="quantity"/>
+                                    <field name="rate"/>
+                                    <field name="amount"/>
+                                    <field name="total" sum="Tổng cộng"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Ngày công">
                             <field name="worked_days_line_ids">
                                 <list editable="bottom">
@@ -84,18 +96,6 @@
                                     <field name="name"/>
                                     <field name="code"/>
                                     <field name="amount" sum="Tổng"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Chi tiết lương" name="salary_lines">
-                            <field name="line_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="code"/>
-                                    <field name="quantity"/>
-                                    <field name="rate"/>
-                                    <field name="amount"/>
-                                    <field name="total" sum="Tổng cộng"/>
                                 </list>
                             </field>
                         </page>
