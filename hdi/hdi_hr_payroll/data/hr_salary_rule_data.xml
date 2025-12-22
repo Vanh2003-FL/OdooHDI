@@ -123,7 +123,7 @@ else:
         <record id="rule_onsite_allowance" model="hr.salary.rule">
             <field name="name">Phụ cấp onsite</field>
             <field name="code">ALW_ONSITE</field>
-            <field name="sequence">13.5</field>
+            <field name="sequence">14</field>
             <field name="category_id" ref="category_allowance"/>
             <field name="condition_select">python</field>
             <field name="condition_python">result = contract.onsite_allowance > 0</field>
@@ -136,7 +136,7 @@ else:
         <record id="rule_uniform_allowance" model="hr.salary.rule">
             <field name="name">Phụ cấp đồng phục</field>
             <field name="code">ALW_UNIFORM</field>
-            <field name="sequence">13.7</field>
+            <field name="sequence">15</field>
             <field name="category_id" ref="category_allowance"/>
             <field name="condition_select">python</field>
             <field name="condition_python">result = contract.uniform_allowance > 0</field>
@@ -149,7 +149,7 @@ else:
         <record id="rule_position_allowance" model="hr.salary.rule">
             <field name="name">Phụ cấp chức vụ</field>
             <field name="code">ALW_POSITION</field>
-            <field name="sequence">14</field>
+            <field name="sequence">16</field>
             <field name="category_id" ref="category_allowance"/>
             <field name="condition_select">python</field>
             <field name="condition_python">result = contract.position_allowance > 0</field>
@@ -162,7 +162,7 @@ else:
         <record id="rule_responsibility_allowance" model="hr.salary.rule">
             <field name="name">Phụ cấp trách nhiệm</field>
             <field name="code">ALW_RESPONSIBILITY</field>
-            <field name="sequence">15</field>
+            <field name="sequence">17</field>
             <field name="category_id" ref="category_allowance"/>
             <field name="condition_select">python</field>
             <field name="condition_python">result = contract.responsibility_allowance > 0</field>
