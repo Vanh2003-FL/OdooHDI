@@ -387,8 +387,21 @@ result = -total_fine
             <field name="amount_python_compute"><![CDATA[
 # TÍNH THUẾ TNCN LŨY TIẾN THEO BIỂU THUẾ VIỆT NAM
 
-# 1. Thu nhập chịu thuế = TAXABLE (đã trừ phụ cấp miễn thuế)
-taxable_gross = categories.TAXABLE
+# 1. Thu nhập chịu thuế = GROSS - phụ cấp miễn thuế
+gross = categories.GROSS
+
+# Tính phụ cấp miễn thuế (ăn trưa, điện thoại, đồng phục)
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+if worked_days_work and payslip.standard_days > 0:
+    meal = (contract.meal_allowance / payslip.standard_days) * worked_days_work.number_of_days
+else:
+    meal = contract.meal_allowance
+
+phone = contract.phone_allowance
+uniform = contract.uniform_allowance
+tax_exempt = meal + phone + uniform
+
+taxable_gross = gross - tax_exempt
 
 # 2. Trừ BH nhân viên đóng
 insurance_employee = abs(categories.INSURANCE)  # Số âm → dương
@@ -409,7 +422,7 @@ else:
     tax = 0
     remaining = taxable_income
     
-    # Biểu thuế lũy tiến (đơn vị: triệu)
+    # Biểu thuế lũy tiến
     brackets = [
         (5000000, 0.05),      # Đến 5 triệu: 5%
         (5000000, 0.10),      # 5-10 triệu: 10%
