@@ -36,15 +36,11 @@ HDI Payroll Management System
         'views/hr_employee_views.xml',
         'views/hr_contract_views.xml',
         'views/hr_payslip_views.xml',
-        'views/hr_payslip_run_views.xml',
         'views/hr_salary_rule_views.xml',
         'views/hr_allowance_views.xml',
         'views/hr_loan_views.xml',
         'views/hr_discipline_views.xml',
         'views/hr_tax_views.xml',
-        
-        # Wizard
-        'wizard/payslip_batch_create_views.xml',
         
         # Menu
         'views/menu.xml',

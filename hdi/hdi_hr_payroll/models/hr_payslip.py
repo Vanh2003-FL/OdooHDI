@@ -110,8 +110,6 @@ class HrPayslip(models.Model):
     company_id = fields.Many2one('res.company', 'Công ty', default=lambda self: self.env.company, required=True)
     currency_id = fields.Many2one('res.currency', related='company_id.currency_id')
 
-    payslip_run_id = fields.Many2one('hr.payslip.run', 'Batch lương', readonly=True, ondelete='cascade')
-
     note = fields.Text('Ghi chú nội bộ')
     payslip_note = fields.Html('Ghi chú trên phiếu lương', help='Hiển thị khi in phiếu lương')
 
