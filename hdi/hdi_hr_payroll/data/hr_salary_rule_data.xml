@@ -40,6 +40,45 @@ else:
             <field name="appears_on_payslip">True</field>
         </record>
 
+        <!-- Lương thử việc (theo tỷ lệ % của lương cơ bản) -->
+        <record id="rule_probation_salary" model="hr.salary.rule">
+            <field name="name">Lương thử việc</field>
+            <field name="code">PROBATION</field>
+            <field name="sequence">1</field>
+            <field name="category_id" ref="category_basic"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Tính lương thử việc theo công thực tế
+# Công thức: Lương = (Lương thử việc / Công chuẩn) × (Công thực tế + Phép hưởng lương)
+# Lương thử việc = Lương CB × Tỷ lệ thử việc (mặc định 85%)
+
+# Lấy các loại ngày công
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+leave_days = 0
+if hasattr(worked_days, 'LEAVE') and hasattr(worked_days.LEAVE, 'number_of_days'):
+    leave_days = worked_days.LEAVE.number_of_days
+
+# Tổng công được trả lương
+total_paid_days = work_days + leave_days
+
+# Tính lương thử việc
+probation_wage = contract.wage * (contract.probation_wage_rate / 100.0)
+
+if total_paid_days > 0 and payslip.standard_days > 0:
+    # Lương theo ngày = Lương thử việc / Công chuẩn
+    daily_wage = probation_wage / payslip.standard_days
+    result = daily_wage * total_paid_days
+else:
+    # Không có chấm công => lấy full lương thử việc
+    result = probation_wage
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
         <!-- ============================================ -->
         <!-- 2. LƯƠNG NĂNG SUẤT                           -->
         <!-- ============================================ -->
@@ -570,9 +609,36 @@ result = categories.GROSS + categories.INSURANCE + categories.DED + categories.T
         <!-- GÁN RULES VÀO STRUCTURE                      -->
         <!-- ============================================ -->
 
+        <!-- Cấu trúc lương nhân viên chính thức -->
         <record id="payroll_structure_vn_employee" model="hr.payroll.structure">
             <field name="rule_ids" eval="[(6, 0, [
                 ref('rule_basic_salary'),
+                ref('rule_performance_wage'),
+                ref('rule_meal_allowance'),
+                ref('rule_transport_allowance'),
+                ref('rule_phone_allowance'),
+                ref('rule_housing_allowance'),
+                ref('rule_onsite_allowance'),
+                ref('rule_uniform_allowance'),
+                ref('rule_position_allowance'),
+                ref('rule_responsibility_allowance'),
+                ref('rule_reward_bonus'),
+                ref('rule_gross_salary'),
+                ref('rule_taxable_income'),
+                ref('rule_social_insurance_employee'),
+                ref('rule_health_insurance_employee'),
+                ref('rule_unemployment_insurance_employee'),
+                ref('rule_loan_deduction'),
+                ref('rule_discipline_fine'),
+                ref('rule_personal_income_tax'),
+                ref('rule_net_salary'),
+            ])]"/>
+        </record>
+
+        <!-- Cấu trúc lương nhân viên thử việc -->
+        <record id="payroll_structure_vn_probation" model="hr.payroll.structure">
+            <field name="rule_ids" eval="[(6, 0, [
+                ref('rule_probation_salary'),
                 ref('rule_performance_wage'),
                 ref('rule_meal_allowance'),
                 ref('rule_transport_allowance'),

@@ -36,6 +36,14 @@ class HrPayslip(models.Model):
         readonly=True, states={'draft': [('readonly', False)]},
         help='Quyết định các rule nào được áp dụng'
     )
+    
+    # Trạng thái thử việc (từ contract)
+    is_probation = fields.Boolean(
+        'Đang thử việc', 
+        related='contract_id.is_probation',
+        store=True,
+        help='Trạng thái thử việc từ hợp đồng'
+    )
 
     # ==================== THỜI GIAN ====================
     date_from = fields.Date(
@@ -153,13 +161,36 @@ class HrPayslip(models.Model):
 
             if contract:
                 self.contract_id = contract
-                self.struct_id = contract.structure_type_id.default_struct_id if hasattr(contract.structure_type_id,
-                                                                                         'default_struct_id') else False
+                # Tự động chọn cấu trúc lương dựa trên trạng thái thử việc
+                self._auto_select_structure()
                 self.company_id = contract.company_id
 
             # Tự động tạo tên
             if self.date_from:
                 self.name = f"Lương {self.employee_id.name} - {self.date_from.strftime('%m/%Y')}"
+
+    @api.onchange('contract_id')
+    def _onchange_contract(self):
+        """Tự động chọn cấu trúc lương khi thay đổi contract"""
+        if self.contract_id:
+            self._auto_select_structure()
+
+    def _auto_select_structure(self):
+        """Tự động chọn cấu trúc lương dựa trên trạng thái thử việc trong contract"""
+        if not self.contract_id:
+            return
+        
+        # Kiểm tra trạng thái thử việc
+        if self.contract_id.is_probation:
+            # Nếu đang thử việc → Chọn cấu trúc "Thử việc Việt Nam"
+            probation_struct = self.env.ref('hdi_hr_payroll.payroll_structure_vn_probation', raise_if_not_found=False)
+            if probation_struct:
+                self.struct_id = probation_struct
+        else:
+            # Nếu chính thức → Chọn cấu trúc "Nhân viên Việt Nam"
+            employee_struct = self.env.ref('hdi_hr_payroll.payroll_structure_vn_employee', raise_if_not_found=False)
+            if employee_struct:
+                self.struct_id = employee_struct
 
     def action_payslip_draft(self):
         """Chuyển về nháp"""
