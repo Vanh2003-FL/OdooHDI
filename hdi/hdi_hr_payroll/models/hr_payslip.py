@@ -233,8 +233,14 @@ class HrPayslip(models.Model):
                 raise UserError(_('Vui lòng chọn Nhân viên trước khi tính lương!'))
             if not payslip.contract_id:
                 raise UserError(_('Vui lòng chọn Hợp đồng trước khi tính lương!'))
+            
+            # Tự động chọn cấu trúc lương nếu chưa có
             if not payslip.struct_id:
-                raise UserError(_('Vui lòng chọn Cấu trúc lương trước khi tính lương!'))
+                payslip._auto_select_structure()
+            
+            # Kiểm tra lại sau khi tự động chọn
+            if not payslip.struct_id:
+                raise UserError(_('Không tìm thấy Cấu trúc lương phù hợp. Vui lòng kiểm tra hợp đồng!'))
 
             # Xóa dữ liệu cũ
             payslip.line_ids.unlink()
