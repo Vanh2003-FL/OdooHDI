@@ -39,4 +39,22 @@ hdi_payroll/
 ├── views/                # Views (placeholder)
 ├── wizard/               # Wizard tạo hàng loạt payslips
 ├── report/               # Template in phiếu lương
-└── security/             # Phân quyền
+├── security/             # Phân quyền
+└── docs/                 # 📚 Tài liệu chi tiết
+    ├── LUONG_DUYET_PHIEU_LUONG.md      # Luồng duyệt phiếu lương
+    ├── PAYSLIP_WORKFLOW_DIAGRAM.md     # Sơ đồ luồng
+    └── FIX_APPROVAL_WORKFLOW.md        # Báo cáo sửa lỗi
+```
+
+## 📚 Tài liệu hướng dẫn
+
+- **[USAGE.md](USAGE.md)** - Hướng dẫn sử dụng chi tiết từng tính năng
+- **[QUICKSTART.md](QUICKSTART.md)** - Hướng dẫn khởi động nhanh
+- **[ATTENDANCE_PAYROLL_GUIDE.md](ATTENDANCE_PAYROLL_GUIDE.md)** - Tích hợp chấm công & lương
+- **[docs/LUONG_DUYET_PHIEU_LUONG.md](docs/LUONG_DUYET_PHIEU_LUONG.md)** - ⭐ Luồng duyệt phiếu lương
+- **[docs/PAYSLIP_WORKFLOW_DIAGRAM.md](docs/PAYSLIP_WORKFLOW_DIAGRAM.md)** - Sơ đồ luồng (Mermaid)
+- **[docs/FIX_APPROVAL_WORKFLOW.md](docs/FIX_APPROVAL_WORKFLOW.md)** - Báo cáo sửa lỗi
+
+## 🚀 Cài đặt & Sử dụng
+
+Xem [USAGE.md](USAGE.md) để biết chi tiết.

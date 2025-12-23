@@ -23,10 +23,25 @@
         <field name="arch" type="xml">
             <form string="Phiếu lương">
                 <header>
+                    <!-- Bước 1: Tính lương -->
                     <button name="compute_sheet" string="Tính lương" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_payslip_done" string="Xác nhận" type="object" class="oe_highlight" invisible="state != 'verify'"/>
+                    
+                    <!-- Bước 2: Gửi duyệt (draft → verify) -->
+                    <button name="action_payslip_verify" string="Gửi duyệt" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    
+                    <!-- Bước 3: Duyệt phiếu lương (verify → done) -->
+                    <button name="action_payslip_done" string="Duyệt" type="object" class="oe_highlight" invisible="state != 'verify'"/>
+                    
+                    <!-- Bước 4: Đánh dấu đã thanh toán (done → paid) -->
+                    <button name="action_payslip_paid" string="Đã thanh toán" type="object" class="oe_highlight" invisible="state != 'done'"/>
+                    
+                    <!-- Chuyển về nháp -->
+                    <button name="action_payslip_draft" string="Chuyển về nháp" type="object" invisible="state not in ('cancel',)"/>
+                    
+                    <!-- Hủy phiếu -->
                     <button name="action_payslip_cancel" string="Hủy" type="object" invisible="state not in ('draft', 'verify')"/>
-                    <field name="state" widget="statusbar"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,verify,done,paid"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
