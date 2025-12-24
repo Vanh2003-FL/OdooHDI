@@ -14,18 +14,23 @@ class HrEmployee(models.Model):
     dependent_ids = fields.One2many('hr.employee.dependent', 'employee_id', string='Người phụ thuộc')
     dependent_count = fields.Integer('Số người phụ thuộc', compute='_compute_dependent_count', store=True)
     
+    # Currency for monetary fields
+    currency_id = fields.Many2one('res.currency', related='company_id.currency_id', readonly=True)
+    
     # Giảm trừ thuế (theo quy định VN 2024)
     personal_deduction = fields.Monetary(
         'Giảm trừ bản thân',
         default=11000000,
+        currency_field='currency_id',
         help='Giảm trừ gia cảnh cho bản thân (11tr/tháng theo 2024)'
     )
     dependent_deduction = fields.Monetary(
         'Giảm trừ mỗi người PT',
         default=4400000,
+        currency_field='currency_id',
         help='Giảm trừ cho mỗi người phụ thuộc (4.4tr/tháng)'
     )
-    total_deduction = fields.Monetary('Tổng giảm trừ', compute='_compute_total_deduction', store=True)
+    total_deduction = fields.Monetary('Tổng giảm trừ', currency_field='currency_id', compute='_compute_total_deduction', store=True)
     
     # ==================== THÔNG TIN BẢO HIỂM ====================
     social_insurance_number = fields.Char('Số sổ BHXH', tracking=True)
@@ -35,7 +40,7 @@ class HrEmployee(models.Model):
     # ==================== KHOẢN VAY/TẠM ỨNG ====================
     loan_ids = fields.One2many('hr.loan', 'employee_id', string='Khoản vay/Tạm ứng')
     active_loan_count = fields.Integer('Số khoản vay đang trả', compute='_compute_loan_count')
-    total_loan_balance = fields.Monetary('Tổng nợ còn lại', compute='_compute_loan_balance')
+    total_loan_balance = fields.Monetary('Tổng nợ còn lại', currency_field='currency_id', compute='_compute_loan_balance')
     
     # ==================== KHEN THƯỞNG/KỶ LUẬT ====================
     discipline_ids = fields.One2many('hr.discipline', 'employee_id', string='Kỷ luật')

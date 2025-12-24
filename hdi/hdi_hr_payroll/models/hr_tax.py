@@ -88,11 +88,12 @@ class HrEmployeeDependent(models.Model):
     """Người phụ thuộc để giảm trừ thuế"""
     _name = 'hr.employee.dependent'
     _description = 'Người phụ thuộc'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'employee_id, relationship'
 
-    name = fields.Char('Họ và tên', required=True)
+    name = fields.Char('Họ và tên', required=True, tracking=True)
     
-    employee_id = fields.Many2one('hr.employee', 'Nhân viên', required=True, ondelete='cascade')
+    employee_id = fields.Many2one('hr.employee', 'Nhân viên', required=True, ondelete='cascade', tracking=True)
     
     relationship = fields.Selection([
         ('child', 'Con'),
@@ -100,21 +101,21 @@ class HrEmployeeDependent(models.Model):
         ('spouse', 'Vợ/Chồng'),
         ('sibling', 'Anh/Chị/Em'),
         ('other', 'Khác')
-    ], 'Quan hệ', required=True, default='child')
+    ], 'Quan hệ', required=True, default='child', tracking=True)
     
-    birth_date = fields.Date('Ngày sinh')
+    birth_date = fields.Date('Ngày sinh', tracking=True)
     age = fields.Integer('Tuổi', compute='_compute_age', store=True)
     
-    tax_id = fields.Char('Mã số thuế')
-    id_number = fields.Char('Số CMND/CCCD')
+    tax_id = fields.Char('Mã số thuế', tracking=True)
+    id_number = fields.Char('Số CMND/CCCD', tracking=True)
     
     # Điều kiện giảm trừ
-    is_student = fields.Boolean('Đang đi học')
-    is_disabled = fields.Boolean('Khuyết tật')
+    is_student = fields.Boolean('Đang đi học', tracking=True)
+    is_disabled = fields.Boolean('Khuyết tật', tracking=True)
     
     # Thời gian áp dụng giảm trừ
-    date_from = fields.Date('Giảm trừ từ ngày', required=True, default=fields.Date.today)
-    date_to = fields.Date('Giảm trừ đến ngày')
+    date_from = fields.Date('Giảm trừ từ ngày', required=True, default=fields.Date.today, tracking=True)
+    date_to = fields.Date('Giảm trừ đến ngày', tracking=True)
     
     is_active = fields.Boolean('Đang được giảm trừ', compute='_compute_is_active', store=True)
     

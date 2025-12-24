@@ -57,6 +57,12 @@
         action="action_hr_tax_bracket"
         sequence="20"/>
     
+    <menuitem id="menu_hr_employee_dependent"
+        name="Người phụ thuộc"
+        parent="menu_hr_payroll_config"
+        action="action_hr_employee_dependent"
+        sequence="21"/>
+    
     <!-- Other -->
     <menuitem id="menu_hr_loan"
         name="Tạm ứng &amp; Vay"
