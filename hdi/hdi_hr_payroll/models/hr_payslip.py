@@ -260,6 +260,87 @@ class HrPayslip(models.Model):
                     'sequence': 1,
                 })
 
+            # --- Bổ sung tự động tạo input tạm ứng, vay, kỷ luật, khen thưởng ---
+            # 1. Tạm ứng/vay: lấy các khoản trả góp kỳ này
+            loan_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('installment_method', '=', 'auto'),
+                ('balance', '>', 0),
+            ]
+            loan_lines = payslip.env['hr.loan.line'].search([
+                ('loan_id', 'in', payslip.env['hr.loan'].search(loan_domain).ids),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+                ('paid', '=', False),
+            ])
+            advance_total = sum(l.amount for l in loan_lines.filtered(lambda l: l.loan_id.loan_type == 'advance'))
+            loan_total = sum(l.amount for l in loan_lines.filtered(lambda l: l.loan_id.loan_type == 'loan'))
+            # Xóa input cũ
+            payslip.input_line_ids.filtered(lambda x: x.code in ['ADVANCE', 'LOAN']).unlink()
+            if advance_total > 0:
+                self.env['hr.payslip.input'].create({
+                    'slip_id': payslip.id,
+                    'name': 'Tạm ứng',
+                    'code': 'ADVANCE',
+                    'amount': advance_total,
+                    'sequence': 2,
+                })
+            if loan_total > 0:
+                self.env['hr.payslip.input'].create({
+                    'slip_id': payslip.id,
+                    'name': 'Khoản vay',
+                    'code': 'LOAN',
+                    'amount': loan_total,
+                    'sequence': 3,
+                })
+
+            # 2. Kỷ luật: lấy các quyết định phạt tiền chưa trừ vào lương
+            discipline_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('deduct_from_payslip', '=', True),
+                ('is_deducted', '=', False),
+                ('fine_amount', '>', 0),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+            ]
+            # Lấy các quyết định kỷ luật cần trừ
+            discipline_records = payslip.env['hr.discipline'].search(discipline_domain)
+            discipline_total = sum(p.fine_amount for p in discipline_records)
+            payslip.input_line_ids.filtered(lambda x: x.code == 'DEDUCTION').unlink()
+            if discipline_total > 0:
+                self.env['hr.payslip.input'].create({
+                    'slip_id': payslip.id,
+                    'name': 'Phạt/Kỷ luật',
+                    'code': 'DEDUCTION',
+                    'amount': discipline_total,
+                    'sequence': 4,
+                })
+                # Đánh dấu đã trừ vào lương
+                discipline_records.write({'payslip_id': payslip.id})
+
+            # 3. Khen thưởng: lấy các quyết định thưởng chưa cộng vào lương
+            reward_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('add_to_payslip', '=', True),
+                ('is_paid', '=', False),
+                ('amount', '>', 0),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+            ]
+            reward_total = sum(r.amount for r in payslip.env['hr.reward'].search(reward_domain))
+            payslip.input_line_ids.filtered(lambda x: x.code == 'BONUS').unlink()
+            if reward_total > 0:
+                self.env['hr.payslip.input'].create({
+                    'slip_id': payslip.id,
+                    'name': 'Khen thưởng',
+                    'code': 'BONUS',
+                    'amount': reward_total,
+                    'sequence': 5,
+                })
+
             # 1. Lấy worked days từ work entries
             payslip._get_worked_days_lines()
 
