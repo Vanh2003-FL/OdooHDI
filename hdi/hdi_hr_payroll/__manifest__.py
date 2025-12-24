@@ -8,7 +8,7 @@
 HDI Payroll Management System
     """,
     'author': 'HDI Development Team',
-    'website': 'https://hdi.com.vn',
+    'website': '',
     'license': 'LGPL-3',
     'depends': [
         'base',
@@ -23,7 +23,7 @@ HDI Payroll Management System
         # Security
         'security/payroll_security.xml',
         'security/ir.model.access.csv',
-        
+
         # Data - Load theo thứ tự QUAN TRỌNG
         'data/hr_salary_rule_category_data.xml',
         'data/hr_payroll_structure_type_data.xml',
@@ -31,7 +31,7 @@ HDI Payroll Management System
         'data/hr_tax_bracket_data.xml',
         'data/hr_allowance_type_data.xml',
         'data/hr_salary_rule_data.xml',
-        
+
         # Views - Placeholder
         'views/hr_employee_views.xml',
         'views/hr_contract_views.xml',
@@ -41,10 +41,10 @@ HDI Payroll Management System
         'views/hr_loan_views.xml',
         'views/hr_discipline_views.xml',
         'views/hr_tax_views.xml',
-        
+
         # Menu
         'views/menu.xml',
-        
+
         # Report
         'report/payroll_reports.xml',
         'report/payslip_report_template.xml',

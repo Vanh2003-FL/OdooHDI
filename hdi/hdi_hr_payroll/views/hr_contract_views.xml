@@ -9,7 +9,7 @@
 
             <!-- Thêm tab "Thông tin lương" -->
             <xpath expr="//notebook" position="inside">
-                <page string="Thông tin lương" name="salary_info">
+                <page string="Thiết lập lương theo hợp đồng" name="salary_info">
                     <group>
                         <group string="Lương cơ bản">
                             <field name="wage" string="Lương cơ bản/tháng"/>
@@ -24,7 +24,7 @@
                         </group>
                     </group>
 
-                    <group string="Phụ cấp cố định hàng tháng">
+                    <group string="Các khoản trợ cấp theo lương">
                         <group>
                             <field name="meal_allowance"/>
                             <field name="transport_allowance"/>

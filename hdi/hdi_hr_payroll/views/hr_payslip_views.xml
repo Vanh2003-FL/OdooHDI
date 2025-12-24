@@ -23,30 +23,19 @@
         <field name="arch" type="xml">
             <form string="Phiếu lương">
                 <header>
-                    <!-- Bước 1: Tính lương -->
                     <button name="compute_sheet" string="Tính lương" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    
-                    <!-- Bước 2: Gửi duyệt (draft → verify) -->
                     <button name="action_payslip_verify" string="Gửi duyệt" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    
-                    <!-- Bước 3: Duyệt phiếu lương (verify → done) -->
                     <button name="action_payslip_done" string="Duyệt" type="object" class="oe_highlight" invisible="state != 'verify'"/>
-                    
-                    <!-- Bước 4: Đánh dấu đã thanh toán (done → paid) -->
                     <button name="action_payslip_paid" string="Đã thanh toán" type="object" class="oe_highlight" invisible="state != 'done'"/>
-                    
-                    <!-- Chuyển về nháp -->
                     <button name="action_payslip_draft" string="Chuyển về nháp" type="object" invisible="state not in ('cancel',)"/>
-                    
-                    <!-- Hủy phiếu -->
                     <button name="action_payslip_cancel" string="Hủy" type="object" invisible="state not in ('draft', 'verify')"/>
-                    
+
                     <field name="state" widget="statusbar" statusbar_visible="draft,verify,done,paid"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" placeholder="VD: Lương tháng 12/2025" readonly="state != 'draft'"/>
+                            <field name="name" placeholder="VD: Lương tháng " readonly="state != 'draft'"/>
                         </h1>
                     </div>
                     <group>
@@ -55,18 +44,6 @@
                             <field name="contract_id" readonly="state != 'draft'" context="{'default_employee_id': employee_id}" domain="[('employee_id', '=', employee_id), ('state', 'in', ['open', 'close'])]"/>
                             <field name="struct_id" readonly="state != 'draft' or contract_id" options="{'no_create': True, 'no_open': True}"/>
                             <field name="is_probation" invisible="1"/>
-                            <div class="alert alert-info" role="alert" invisible="not contract_id">
-                                <div invisible="not is_probation">
-                                    <strong>🔵 Trạng thái:</strong> Đang thử việc
-                                    <br/>
-                                    <small>Cấu trúc lương "Thử việc Việt Nam" được áp dụng tự động</small>
-                                </div>
-                                <div invisible="is_probation">
-                                    <strong>✅ Trạng thái:</strong> Nhân viên chính thức
-                                    <br/>
-                                    <small>Cấu trúc lương "Nhân viên Việt Nam" được áp dụng tự động</small>
-                                </div>
-                            </div>
                         </group>
                         <group>
                             <field name="date_from" readonly="state != 'draft'"/>
@@ -74,13 +51,10 @@
                             <field name="standard_days" readonly="state != 'draft'"/>
                         </group>
                     </group>
-                    
+
                     <group>
                         <group string="Lương năng suất">
                             <field name="performance_wage_total" readonly="state != 'draft'" widget="monetary"/>
-                            <div class="text-muted">
-                                <small>💡 Nhập tổng lương NS → Hệ thống tự tính theo công thực tế</small>
-                            </div>
                         </group>
                         <group>
                         </group>
@@ -109,16 +83,6 @@
                             </field>
                         </page>
                         <page string="Các khoản khác" name="inputs">
-                            <div class="alert alert-info" role="alert">
-                                <strong>💡 Hướng dẫn:</strong> Nhập các khoản bổ sung:
-                                <ul>
-                                    <li><b>PERFORMANCE</b> - Tổng lương năng suất (hệ thống tự tính theo công thực tế)</li>
-                                    <li><b>BONUS</b> - Thưởng</li>
-                                    <li><b>DEDUCTION</b> - Phạt</li>
-                                    <li><b>ADVANCE</b> - Tạm ứng</li>
-                                </ul>
-                                <p class="mb-0"><i>VD: Nhập PERFORMANCE = 5,000,000 với 20/22.5 công → Nhận 4,444,444</i></p>
-                            </div>
                             <field name="input_line_ids">
                                 <list editable="bottom">
                                     <field name="name"/>

@@ -3,7 +3,7 @@
     
     <!-- Menu chính -->
     <menuitem id="menu_hr_payroll_root"
-        name="Payroll"
+        name="Tính Lương"
         sequence="75"
         groups="hr.group_hr_user"
         web_icon="hdi_payroll,static/description/icon.png"/>

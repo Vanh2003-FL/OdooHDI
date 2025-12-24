@@ -95,9 +95,6 @@ result = contract.wage
     def _satisfy_condition(self, localdict):
         """
         Kiểm tra điều kiện rule có được áp dụng không
-        
-        :param localdict: dictionary chứa {employee, contract, payslip, ...}
-        :return: True nếu thỏa điều kiện
         """
         self.ensure_one()
         
@@ -119,9 +116,6 @@ result = contract.wage
     def _compute_rule(self, localdict):
         """
         Tính toán số tiền của rule
-        
-        :param localdict: dictionary chứa context
-        :return: số tiền, qty (số lượng), rate (tỷ lệ)
         """
         self.ensure_one()
         

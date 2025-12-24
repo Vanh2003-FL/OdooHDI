@@ -36,10 +36,10 @@ class HrPayslip(models.Model):
         readonly=True, states={'draft': [('readonly', False)]},
         help='Quyết định các rule nào được áp dụng'
     )
-    
+
     # Trạng thái thử việc (từ contract)
     is_probation = fields.Boolean(
-        'Đang thử việc', 
+        'Đang thử việc',
         related='contract_id.is_probation',
         store=True,
         help='Trạng thái thử việc từ hợp đồng'
@@ -177,7 +177,7 @@ class HrPayslip(models.Model):
         """Tự động chọn cấu trúc lương dựa trên trạng thái thử việc trong contract"""
         if not self.contract_id:
             return
-        
+
         # Kiểm tra trạng thái thử việc
         if self.contract_id.is_probation:
             # Nếu đang thử việc → Chọn cấu trúc "Thử việc Việt Nam"
@@ -233,11 +233,11 @@ class HrPayslip(models.Model):
                 raise UserError(_('Vui lòng chọn Nhân viên trước khi tính lương!'))
             if not payslip.contract_id:
                 raise UserError(_('Vui lòng chọn Hợp đồng trước khi tính lương!'))
-            
+
             # Tự động chọn cấu trúc lương nếu chưa có
             if not payslip.struct_id:
                 payslip._auto_select_structure()
-            
+
             # Kiểm tra lại sau khi tự động chọn
             if not payslip.struct_id:
                 raise UserError(_('Không tìm thấy Cấu trúc lương phù hợp. Vui lòng kiểm tra hợp đồng!'))
@@ -250,7 +250,7 @@ class HrPayslip(models.Model):
             if payslip.performance_wage_total > 0:
                 # Xóa input PERFORMANCE cũ (nếu có)
                 payslip.input_line_ids.filtered(lambda x: x.code == 'PERFORMANCE').unlink()
-                
+
                 # Tạo input mới
                 self.env['hr.payslip.input'].create({
                     'slip_id': payslip.id,
@@ -271,7 +271,7 @@ class HrPayslip(models.Model):
     def _get_worked_days_lines(self):
         """
         Lấy số ngày công từ hr.work.entry và hr.attendance
-        
+
         Các loại ngày công:
         - WORK100: Ngày công thực tế (từ attendance/work entry)
         - LEAVE: Nghỉ phép hưởng lương
@@ -312,7 +312,7 @@ class HrPayslip(models.Model):
                     'number_of_hours': total_hours,
                     'sequence': 1 if wet.code == 'WORK100' else 10,
                 })
-        
+
         else:
             # 2. Nếu không có work entry, tính từ Attendance
             attendances = self.env['hr.attendance'].search([
