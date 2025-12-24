@@ -52,6 +52,7 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="installment_number"/>
+                                    <field name="installment_date"/>
                                     <field name="amount"/>
                                     <field name="paid"/>
                                     <field name="paid_date"/>

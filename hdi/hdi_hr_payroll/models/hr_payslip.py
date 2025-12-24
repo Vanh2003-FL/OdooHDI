@@ -270,8 +270,8 @@ class HrPayslip(models.Model):
             ]
             loan_lines = payslip.env['hr.loan.line'].search([
                 ('loan_id', 'in', payslip.env['hr.loan'].search(loan_domain).ids),
-                ('date', '>=', payslip.date_from),
-                ('date', '<=', payslip.date_to),
+                ('installment_date', '>=', payslip.date_from),
+                ('installment_date', '<=', payslip.date_to),
                 ('paid', '=', False),
             ])
             advance_total = sum(l.amount for l in loan_lines.filtered(lambda l: l.loan_id.loan_type == 'advance'))

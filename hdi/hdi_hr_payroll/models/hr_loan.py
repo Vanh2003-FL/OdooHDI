@@ -133,6 +133,7 @@ class HrLoanLine(models.Model):
     
     paid = fields.Boolean('Đã trả', default=False)
     paid_date = fields.Date('Ngày trả')
+    installment_date = fields.Date('Ngày kỳ trả', required=True, tracking=True)
     
     payslip_id = fields.Many2one('hr.payslip', 'Phiếu lương trừ', readonly=True)
     
