@@ -83,7 +83,7 @@ class HrEmployee(models.Model):
             'name': _('Phiếu lương'),
             'type': 'ir.actions.act_window',
             'res_model': 'hr.payslip',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('employee_id', '=', self.id)],
             'context': {'default_employee_id': self.id},
         }
@@ -94,7 +94,7 @@ class HrEmployee(models.Model):
             'name': _('Người phụ thuộc'),
             'type': 'ir.actions.act_window',
             'res_model': 'hr.employee.dependent',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('employee_id', '=', self.id)],
             'context': {'default_employee_id': self.id},
         }
