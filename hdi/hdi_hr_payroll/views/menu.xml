@@ -19,13 +19,7 @@
         parent="menu_hr_payroll_payslips"
         action="action_hr_payslip"
         sequence="1"/>
-    
-<!--    <menuitem id="menu_hr_payslip_run"-->
-<!--        name="Batch tính lương"-->
-<!--        parent="menu_hr_payroll_payslips"-->
-<!--        action="action_hr_payslip_run"-->
-<!--        sequence="2"/>-->
-    
+
     <!-- Configuration -->
     <menuitem id="menu_hr_payroll_config"
         name="Cấu hình"
@@ -62,7 +56,7 @@
         parent="menu_hr_payroll_config"
         action="action_hr_employee_dependent"
         sequence="21"/>
-    
+
     <!-- Other -->
     <menuitem id="menu_hr_loan"
         name="Tạm ứng &amp; Vay"

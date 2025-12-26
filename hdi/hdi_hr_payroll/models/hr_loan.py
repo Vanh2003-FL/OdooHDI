@@ -12,34 +12,34 @@ class HrLoan(models.Model):
     _order = 'date desc, id desc'
 
     name = fields.Char('Số chứng từ', required=True, copy=False, default='New', tracking=True)
-    
+
     employee_id = fields.Many2one('hr.employee', 'Nhân viên', required=True, tracking=True)
-    
+
     loan_type = fields.Selection([
         ('advance', 'Tạm ứng lương'),
         ('loan', 'Khoản vay')
     ], 'Loại', required=True, default='advance', tracking=True)
-    
+
     # Số tiền
     amount = fields.Monetary('Số tiền vay/tạm ứng', required=True, tracking=True)
     balance = fields.Monetary('Còn nợ', compute='_compute_balance', store=True)
     paid_amount = fields.Monetary('Đã trả', compute='_compute_balance', store=True)
-    
+
     # Thời gian
     date = fields.Date('Ngày', required=True, default=fields.Date.today, tracking=True)
-    
+
     # Trả góp
     installment_method = fields.Selection([
         ('manual', 'Thủ công'),
         ('auto', 'Tự động từ lương')
     ], 'Phương thức trả', default='auto', required=True)
-    
+
     installment_count = fields.Integer('Số kỳ trả', default=1)
     installment_amount = fields.Monetary('Số tiền mỗi kỳ', compute='_compute_installment_amount', store=True)
-    
+
     # Chi tiết trả góp
     line_ids = fields.One2many('hr.loan.line', 'loan_id', 'Chi tiết trả góp')
-    
+
     # Trạng thái
     state = fields.Selection([
         ('draft', 'Nháp'),
@@ -47,10 +47,10 @@ class HrLoan(models.Model):
         ('paid', 'Đã trả xong'),
         ('cancel', 'Đã hủy')
     ], 'Trạng thái', default='draft', tracking=True)
-    
+
     company_id = fields.Many2one('res.company', 'Công ty', default=lambda self: self.env.company, required=True)
     currency_id = fields.Many2one(related='company_id.currency_id')
-    
+
     note = fields.Text('Ghi chú')
 
     @api.depends('amount', 'installment_count')
@@ -72,16 +72,16 @@ class HrLoan(models.Model):
         for loan in self:
             if loan.state != 'draft':
                 continue
-            
+
             # Tạo sequence number
             if loan.name == 'New':
                 seq = 'hr.loan.advance' if loan.loan_type == 'advance' else 'hr.loan'
                 loan.name = self.env['ir.sequence'].next_by_code(seq) or 'New'
-            
+
             # Tạo các kỳ trả góp
             if loan.installment_method == 'auto' and not loan.line_ids:
                 loan._create_installment_lines()
-            
+
             loan.state = 'approved'
 
     def action_cancel(self):
@@ -98,7 +98,7 @@ class HrLoan(models.Model):
     def _create_installment_lines(self):
         """Tạo các kỳ trả góp tự động"""
         self.ensure_one()
-        
+
         lines = []
         for i in range(self.installment_count):
             lines.append({
@@ -107,7 +107,7 @@ class HrLoan(models.Model):
                 'amount': self.installment_amount,
                 'paid': False,
             })
-        
+
         self.env['hr.loan.line'].create(lines)
 
     @api.model
@@ -127,17 +127,17 @@ class HrLoanLine(models.Model):
     _order = 'installment_number'
 
     loan_id = fields.Many2one('hr.loan', 'Khoản vay', required=True, ondelete='cascade')
-    
+
     installment_number = fields.Integer('Kỳ thứ', required=True)
     amount = fields.Monetary('Số tiền', required=True)
-    
+
     paid = fields.Boolean('Đã trả', default=False)
     paid_date = fields.Date('Ngày trả')
     installment_date = fields.Date('Ngày kỳ trả', required=True, tracking=True)
-    
+
     payslip_id = fields.Many2one('hr.payslip', 'Phiếu lương trừ', readonly=True)
-    
+
     company_id = fields.Many2one(related='loan_id.company_id', store=True)
     currency_id = fields.Many2one(related='loan_id.currency_id')
-    
+
     note = fields.Char('Ghi chú')
