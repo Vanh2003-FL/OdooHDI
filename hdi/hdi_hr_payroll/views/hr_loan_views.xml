@@ -51,11 +51,11 @@
                         <page string="Chi tiết trả góp" invisible="installment_method == 'manual'">
                             <field name="line_ids">
                                 <list editable="bottom">
-                                    <field name="installment_number"/>
-                                    <field name="installment_date"/>
-                                    <field name="amount"/>
-                                    <field name="paid"/>
-                                    <field name="paid_date"/>
+                                            <field name="installment_number"/>
+                                            <field name="installment_date"/>
+                                            <field name="amount"/>
+                                            <field name="paid" readonly="1"/>
+                                            <field name="paid_date"/>
                                 </list>
                             </field>
                         </page>
