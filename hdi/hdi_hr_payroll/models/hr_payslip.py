@@ -212,10 +212,64 @@ class HrPayslip(models.Model):
 
     def action_payslip_paid(self):
         """Đánh dấu đã thanh toán"""
-        return self.write({
-            'state': 'paid',
-            'paid_date': fields.Date.today()
-        })
+        today = fields.Date.today()
+
+        for payslip in self:
+            # 1) Update payslip state/date
+            payslip.write({
+                'state': 'paid',
+                'paid_date': today
+            })
+
+            # 2) Mark related loan lines as paid (installment lines in the payslip period)
+            loan_line_domain = [
+                ('loan_id.employee_id', '=', payslip.employee_id.id),
+                ('installment_date', '>=', payslip.date_from),
+                ('installment_date', '<=', payslip.date_to),
+                ('paid', '=', False),
+            ]
+            loan_lines = self.env['hr.loan.line'].search(loan_line_domain)
+            if loan_lines:
+                loan_lines.write({
+                    'paid': True,
+                    'paid_date': payslip.date_to or today,
+                    'payslip_id': payslip.id,
+                })
+
+            # 3) Mark rewards as paid and link to payslip
+            reward_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('add_to_payslip', '=', True),
+                ('is_paid', '=', False),
+                ('amount', '>', 0),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+            ]
+            rewards = self.env['hr.reward'].search(reward_domain)
+            if rewards:
+                # link and mark paid
+                rewards.write({'payslip_id': payslip.id})
+                try:
+                    rewards.action_paid()
+                except Exception:
+                    rewards.write({'state': 'paid'})
+
+            # 4) Link discipline records (khấu trừ) to payslip => is_deducted computed
+            discipline_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('deduct_from_payslip', '=', True),
+                ('is_deducted', '=', False),
+                ('fine_amount', '>', 0),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+            ]
+            disciplines = self.env['hr.discipline'].search(discipline_domain)
+            if disciplines:
+                disciplines.write({'payslip_id': payslip.id})
+
+        return True
 
     def _validate_payslip(self):
         """Kiểm tra tính hợp lệ trước khi duyệt"""
@@ -317,8 +371,9 @@ class HrPayslip(models.Model):
                     'amount': discipline_total,
                     'sequence': 4,
                 })
-                # Đánh dấu đã trừ vào lương
-                discipline_records.write({'payslip_id': payslip.id})
+                # NOTE: Không đánh dấu `payslip_id` ở đây nữa.
+                # Việc gán/publish các bản ghi liên quan sẽ thực hiện
+                # khi payslip được chuyển sang trạng thái `paid`.
 
             # 3. Khen thưởng: lấy các quyết định thưởng chưa cộng vào lương
             reward_domain = [
