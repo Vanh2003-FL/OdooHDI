@@ -66,6 +66,13 @@ class HrLoan(models.Model):
         for loan in self:
             loan.paid_amount = sum(loan.line_ids.filtered('paid').mapped('amount'))
             loan.balance = loan.amount - loan.paid_amount
+            # Chỉ chuyển sang 'paid' nếu có giá trị khoản vay > 0
+            # và số tiền đã trả >= tổng khoản vay. Tránh trường hợp mới tạo (amount=0)
+            if loan.amount and loan.paid_amount >= loan.amount and loan.state != 'paid':
+                loan.state = 'paid'
+            # Nếu trước đó là 'paid' nhưng bây giờ chưa đủ trả, trả về 'approved'
+            elif loan.state == 'paid' and loan.paid_amount < loan.amount:
+                loan.state = 'approved'
 
     def action_approve(self):
         """Duyệt khoản vay"""
@@ -113,6 +120,10 @@ class HrLoan(models.Model):
     @api.model
     def create(self, vals):
         """Tự động tạo số chứng từ"""
+        # Ensure new loans start in 'draft' unless explicitly provided
+        if 'state' not in vals:
+            vals['state'] = 'draft'
+
         if vals.get('name', 'New') == 'New':
             loan_type = vals.get('loan_type', 'advance')
             seq_code = 'hr.loan.advance' if loan_type == 'advance' else 'hr.loan'

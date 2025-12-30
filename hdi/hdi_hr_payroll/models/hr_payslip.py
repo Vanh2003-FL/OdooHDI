@@ -235,6 +235,20 @@ class HrPayslip(models.Model):
                     'paid_date': payslip.date_to or today,
                     'payslip_id': payslip.id,
                 })
+                # Ensure parent loan states are updated when all lines paid
+                loans = loan_lines.mapped('loan_id')
+                if loans:
+                    try:
+                        loans._compute_balance()
+                    except Exception:
+                        # Fallback: compute and set state explicitly
+                        for loan in loans:
+                            paid_amount = sum(loan.line_ids.filtered('paid').mapped('amount'))
+                            balance = loan.amount - paid_amount
+                            if balance <= 0:
+                                loan.state = 'paid'
+                            elif loan.state == 'paid' and balance > 0:
+                                loan.state = 'approved'
 
             # 3) Mark rewards as paid and link to payslip
             reward_domain = [
