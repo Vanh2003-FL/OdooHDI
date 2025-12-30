@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_round
+from datetime import timedelta
 
 
 class HrPayslip(models.Model):
@@ -60,11 +61,35 @@ class HrPayslip(models.Model):
     # ==================== CÔNG CHUẨN ====================
     standard_days = fields.Float(
         'Công chuẩn trong tháng',
-        default=22.5,
-        readonly=True, states={'draft': [('readonly', False)]},
-        help='Số ngày công chuẩn trong tháng (VD: 22.5, 26...)'
+        compute='_compute_standard_days',
+        store=True,
+        readonly=True,
+        help='Số ngày công chuẩn trong tháng được tính tự động (Thứ 2 - Thứ 7 sáng)'
     )
 
+    @api.depends('date_from', 'date_to')
+    def _compute_standard_days(self):
+        for record in self:
+            if record.date_from and record.date_to:
+                standard_days = 0
+                current_date = record.date_from
+
+                while current_date <= record.date_to:
+                    weekday = current_date.weekday()
+
+                    # Thứ 2 đến Thứ 6: tính 1 ngày công
+                    if weekday <= 4:  # Monday to Friday
+                        standard_days += 1
+                    # Thứ 7: tính 0.5 ngày công
+                    elif weekday == 5:  # Saturday
+                        standard_days += 0.5
+                    # Chủ nhật: không tính
+
+                    current_date += timedelta(days=1)
+
+                record.standard_days = standard_days
+            else:
+                record.standard_days = 0
     # ==================== TRẠNG THÁI ====================
     state = fields.Selection([
         ('draft', 'Nháp'),
@@ -385,9 +410,6 @@ class HrPayslip(models.Model):
                     'amount': discipline_total,
                     'sequence': 4,
                 })
-                # NOTE: Không đánh dấu `payslip_id` ở đây nữa.
-                # Việc gán/publish các bản ghi liên quan sẽ thực hiện
-                # khi payslip được chuyển sang trạng thái `paid`.
 
             # 3. Khen thưởng: lấy các quyết định thưởng chưa cộng vào lương
             reward_domain = [

@@ -119,8 +119,6 @@ class HrLoan(models.Model):
 
     @api.model
     def create(self, vals):
-        """Tự động tạo số chứng từ"""
-        # Ensure new loans start in 'draft' unless explicitly provided
         if 'state' not in vals:
             vals['state'] = 'draft'
 
@@ -132,7 +130,6 @@ class HrLoan(models.Model):
 
 
 class HrLoanLine(models.Model):
-    """Chi tiết trả góp khoản vay"""
     _name = 'hr.loan.line'
     _description = 'Chi tiết trả góp'
     _order = 'installment_number'
