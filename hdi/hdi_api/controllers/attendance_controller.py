@@ -3,6 +3,7 @@ API Controller for Attendance
 Xử lý các endpoint API cho chức năng chấm công
 """
 import logging
+import json
 from datetime import datetime, timedelta
 from odoo import http
 from odoo.http import request
@@ -26,6 +27,24 @@ class AttendanceAPI(http.Controller):
         cr = registry.cursor()
         return odoo.api.Environment(cr, odoo.SUPERUSER_ID, {}), cr
 
+    def _get_request_data(self):
+        """Lấy dữ liệu từ request (hỗ trợ JSON và form data)"""
+        try:
+            # Thử lấy từ raw body JSON
+            body = request.httprequest.get_data(as_text=True)
+            if body:
+                data = json.loads(body)
+                _logger.info(f"Parsed JSON body: {data}")
+                return data
+        except Exception as e:
+            _logger.warning(f"Error parsing JSON body: {e}")
+            pass
+        
+        # Fallback sang form data
+        form_data = request.httprequest.form.to_dict()
+        _logger.info(f"Using form data: {form_data}")
+        return form_data
+
     # ========== CHECK-IN ==========
     @http.route('/api/v1/attendance/check-in', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -34,17 +53,22 @@ class AttendanceAPI(http.Controller):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = self._get_env()
-            
+
             try:
+                # Lấy GPS coordinates từ request (hỗ trợ cả JSON và form data)
+                data = self._get_request_data()
+                in_latitude = data.get('in_latitude')
+                in_longitude = data.get('in_longitude')
+
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_in(employee.id)
+                result = env['hr.attendance'].api_check_in(employee.id, in_latitude, in_longitude)
                 cr.commit()
-                
+
                 return ResponseFormatter.success_response('Chấm công vào thành công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
                 cr.rollback()
                 raise
-        
+
         except Exception as e:
             _logger.error(f"Check-in error: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR)
@@ -57,11 +81,20 @@ class AttendanceAPI(http.Controller):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = self._get_env()
-            
+
             try:
+                # Lấy GPS coordinates từ request
+                data = self._get_request_data()
+                out_latitude = data.get('out_latitude')
+                out_longitude = data.get('out_longitude')
+                
+                _logger.info(f"Check-out data received: out_latitude={out_latitude}, out_longitude={out_longitude}")
+                
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_out(employee.id)
+                result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude)
                 cr.commit()
+                
+                _logger.info(f"Check-out result: {result}")
                 
                 return ResponseFormatter.success_response('Chấm công ra thành công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
@@ -95,6 +128,8 @@ class AttendanceAPI(http.Controller):
                         'is_checked_in': True,
                         'attendance_id': current_attendance.id,
                         'check_in': current_attendance.check_in.isoformat() if current_attendance.check_in else None,
+                        'in_latitude': current_attendance.in_latitude,
+                        'in_longitude': current_attendance.in_longitude,
                         'employee_name': employee.name,
                     }
                 else:
@@ -154,6 +189,10 @@ class AttendanceAPI(http.Controller):
                         'id': att.id,
                         'check_in': att.check_in.isoformat() if att.check_in else None,
                         'check_out': att.check_out.isoformat() if att.check_out else None,
+                        'in_latitude': att.in_latitude,
+                        'in_longitude': att.in_longitude,
+                        'out_latitude': att.out_latitude,
+                        'out_longitude': att.out_longitude,
                         'worked_hours': worked_hours,
                     })
 

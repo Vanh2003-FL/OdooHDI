@@ -2,8 +2,8 @@
 {
     'name': 'HDI HR Payroll Management',
     'version': '18.0.1.0.0',
-    'category': 'Human Resources/Payroll',
-    'summary': 'Quản lý tính lương theo chuẩn Việt Nam - HDI',
+    'category': 'hdi',
+    'summary': 'Quản lý tính lương HDI',
     'description': """
 HDI Payroll Management System
     """,
