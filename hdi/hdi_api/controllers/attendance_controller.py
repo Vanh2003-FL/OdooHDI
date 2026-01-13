@@ -1,21 +1,15 @@
 import json
 from datetime import datetime, timedelta
-from odoo import http
 from odoo.http import request
 
+from .base_controller import BaseController
 from .auth_controller import _verify_token
 from ..utils.response_formatter import ResponseFormatter
 
 
-class AttendanceAPI(http.Controller):
-    def _get_env(self):
-        db_name = request.jwt_payload.get('db')
-        import odoo
-        from odoo.modules.registry import Registry
-
-        registry = Registry(db_name)
-        cr = registry.cursor()
-        return odoo.api.Environment(cr, odoo.SUPERUSER_ID, {}), cr
+class AttendanceAPI(BaseController):
+    """Controller để quản lý chấm công"""
+    pass
 
     def _get_request_data(self):
         try:

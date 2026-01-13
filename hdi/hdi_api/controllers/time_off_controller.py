@@ -1,20 +1,13 @@
-from odoo import http
 from odoo.http import request
 
+from .base_controller import BaseController
 from .auth_controller import _verify_token_http, _get_json_data
 from ..utils.response_formatter import ResponseFormatter
 
 
-class TimeOffController(http.Controller):
-
-    def _get_env(self):
-        db_name = request.jwt_payload.get('db')
-        import odoo
-        from odoo.modules.registry import Registry
-
-        registry = Registry(db_name)
-        cr = registry.cursor()
-        return odoo.api.Environment(cr, odoo.SUPERUSER_ID, {}), cr
+class TimeOffController(BaseController):
+    """Controller để quản lý đơn xin phép"""
+    pass
 
     @http.route('/api/v1/time-off/types', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http

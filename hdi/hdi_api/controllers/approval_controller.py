@@ -1,22 +1,15 @@
 import json
 from datetime import datetime
-from odoo import http
 from odoo.http import request
 
+from .base_controller import BaseController
 from .auth_controller import _verify_token_http, _get_json_data
 from ..utils.response_formatter import ResponseFormatter
 
 
-class ApprovalController(http.Controller):
-
-    def _get_env(self):
-        db_name = request.jwt_payload.get('db')
-        import odoo
-        from odoo.modules.registry import Registry
-
-        registry = Registry(db_name)
-        cr = registry.cursor()
-        return odoo.api.Environment(cr, odoo.SUPERUSER_ID, {}), cr
+class ApprovalController(BaseController):
+    """Controller để quản lý phê duyệt"""
+    pass
 
     def _can_approve_leave(self, leave, user, user_id):
         """
