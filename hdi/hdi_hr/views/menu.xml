@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main menu for HR Extensions -->
+    <menuitem
+            id="menu_hdi_hr_root"
+            name="Quản lý Nhân sự"
+            parent="hr.menu_hr_root"
+            sequence="5"/>
+</odoo>

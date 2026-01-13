@@ -1,0 +1,73 @@
+<odoo>
+  <!-- View 1: Search by Code (Single Record) -->
+  <record id="view_shipping_order_search_form" model="ir.ui.view">
+    <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
+    <field name="model">shipping.order.search</field>
+    <field name="arch" type="xml">
+      <form create="false" delete="false">
+        <sheet>
+          <group>
+            <group>
+              <field name="search_code" widget="char"/>
+              <button name="action_search"
+                string="Tìm kiếm"
+                type="object"
+                class="btn-primary"
+                icon="fa-search"/>
+            </group>
+          </group>
+
+          <div invisible="not order_id">
+            <group>
+              <group string="Thông tin chung">
+                <field name="order_code" readonly="1"/>
+                <field name="state" readonly="1"/>
+              </group>
+              <group string="Nội dung hàng">
+                <field name="goods_description" readonly="1"/>
+              </group>
+            </group>
+            <group>
+              <group string="Địa chỉ gửi hàng">
+                <field name="sender_name" readonly="1"/>
+                <field name="sender_phone" readonly="1"/>
+                <field name="sender_address" readonly="1"/>
+              </group>
+              <group string="Địa chỉ nhận hàng">
+                <field name="receiver_name" readonly="1"/>
+                <field name="receiver_phone" readonly="1"/>
+                <field name="receiver_address" readonly="1"/>
+              </group>
+            </group>
+            <group>
+              <group string="Thông tin đơn hàng">
+                <field name="goods_description" readonly="1"/>
+              </group>
+              <group string="Phí và tiền thu hộ">
+                <field name="total_shipping_fee" readonly="1"/>
+              </group>
+            </group>
+          </div>
+
+          <field name="order_id" invisible="1"/>
+          <field name="has_results" invisible="1"/>
+        </sheet>
+
+        <footer>
+          <button string="Đóng" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <!-- Action: Search by Code -->
+  <record id="action_shipping_order_search" model="ir.actions.act_window">
+    <field name="name">Tìm kiếm Phiếu gửi hàng</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">shipping.order.search</field>
+    <field name="view_mode">form</field>
+    <field name="views" eval="[(ref('view_shipping_order_search_form'), 'form')]"/>
+    <field name="target">current</field>
+    <field name="help">Tìm kiếm một phiếu gửi hàng theo mã</field>
+  </record>
+</odoo>

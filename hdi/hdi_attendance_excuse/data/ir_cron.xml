@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Cron Job: Auto checkout at midnight (23:59 UTC+7 = 16:59 UTC) -->
+    <record id="ir_cron_auto_checkout_midnight" model="ir.cron">
+        <field name="name">Tự động check-out vào 23:59 (UTC+7)</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">model.auto_checkout_at_midnight()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall">2025-12-24 16:59:00</field>
+        <field name="user_id" ref="base.user_admin"/>
+    </record>
+</odoo>

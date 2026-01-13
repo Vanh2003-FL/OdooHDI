@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Department Form View Extensions -->
+    <record id="view_department_form_hdi_hr" model="ir.ui.view">
+        <field name="name">HR Department - HDI Extensions</field>
+        <field name="model">hr.department</field>
+         <field name="inherit_id" ref="hr.view_department_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <separator string="Thông tin Mở rộng"/>
+                <group>
+                    <group>
+                        <field name="department_code"/>
+                        <field name="head_id"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

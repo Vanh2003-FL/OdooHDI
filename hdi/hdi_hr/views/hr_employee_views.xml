@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Employee Form View Extensions -->
+    <record id="view_employee_form_hdi_hr" model="ir.ui.view">
+        <field name="name">HR Employee - HDI Extensions</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Chèn vào ngay trong tab Work Information -->
+            <xpath expr="//page[@name='public']/div/div" position="inside">
+                <group>
+                    <group>
+                        <field name="start_work_date"/>
+                        <field name="seniority_text" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
