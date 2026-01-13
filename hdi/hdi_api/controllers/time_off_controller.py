@@ -1,3 +1,4 @@
+from odoo import http
 from odoo.http import request
 
 from .base_controller import BaseController
