@@ -2,14 +2,12 @@ from datetime import datetime
 from odoo import http
 from odoo.http import request
 
-from .base_controller import BaseController
 from .auth_controller import _verify_token_http, _get_json_data
 from ..utils.response_formatter import ResponseFormatter
+from ..utils.env_helper import get_env
 
 
-class EmployeeController(BaseController):
-    """Controller để quản lý thông tin nhân viên"""
-    pass
+class EmployeeController(http.Controller):
 
     @http.route('/api/v1/employee/list', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
@@ -17,7 +15,7 @@ class EmployeeController(BaseController):
         try:
             data = _get_json_data()
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             search_text = data.get('search', '')
             department_id = data.get('department_id', False)
@@ -121,7 +119,7 @@ class EmployeeController(BaseController):
             data = _get_json_data()
             employee_id = data.get('employee_id')
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 if not employee_id:

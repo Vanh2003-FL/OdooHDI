@@ -1,20 +1,18 @@
 from odoo import http
 from odoo.http import request
 
-from .base_controller import BaseController
 from .auth_controller import _verify_token_http, _get_json_data
 from ..utils.response_formatter import ResponseFormatter
+from ..utils.env_helper import get_env
 
 
-class TimeOffController(BaseController):
-    """Controller để quản lý đơn xin phép"""
-    pass
+class TimeOffController(http.Controller):
 
     @http.route('/api/v1/time-off/types', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
     def get_leave_types(self):
         try:
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 types_data = env['hr.leave'].sudo().api_get_leave_types()
@@ -34,7 +32,7 @@ class TimeOffController(BaseController):
     def get_remaining_days(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 result = env['hr.leave'].sudo().api_get_remaining_days(user_id)
@@ -59,7 +57,7 @@ class TimeOffController(BaseController):
             offset = int(data.get('offset', 0))
             state = data.get('state')
 
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 result = env['hr.leave'].sudo().api_get_leave_list(user_id, limit=limit, offset=offset, state=state)
@@ -81,7 +79,7 @@ class TimeOffController(BaseController):
             data = _get_json_data()
             leave_id = data.get('leave_id')
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 leave_data = env['hr.leave'].sudo().api_get_leave_detail(leave_id, user_id)
@@ -102,7 +100,7 @@ class TimeOffController(BaseController):
         try:
             data = _get_json_data()
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 result = env['hr.leave'].sudo().api_create_leave(data, user_id)
@@ -124,7 +122,7 @@ class TimeOffController(BaseController):
             data = _get_json_data()
             leave_id = data.get('leave_id')
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 leave = env['hr.leave'].sudo().browse(leave_id)

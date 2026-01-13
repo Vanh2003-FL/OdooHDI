@@ -2,21 +2,19 @@ from datetime import datetime
 from odoo import http
 from odoo.http import request
 
-from .base_controller import BaseController
 from .auth_controller import _verify_token
 from ..utils.response_formatter import ResponseFormatter
+from ..utils.env_helper import get_env
 
 
-class PayslipController(BaseController):
-    """Controller để quản lý bảng lương"""
-    pass
+class PayslipController(http.Controller):
 
     @http.route('/api/v1/payslip/list', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def get_payslip_list(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
@@ -68,7 +66,7 @@ class PayslipController(BaseController):
     def get_payslip_detail(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 import json
@@ -201,7 +199,7 @@ class PayslipController(BaseController):
     def get_payslip_data(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 import json

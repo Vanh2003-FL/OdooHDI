@@ -3,14 +3,12 @@ from datetime import datetime
 from odoo import http
 from odoo.http import request
 
-from .base_controller import BaseController
 from .auth_controller import _verify_token_http, _get_json_data
 from ..utils.response_formatter import ResponseFormatter
+from ..utils.env_helper import get_env
 
 
-class ApprovalController(BaseController):
-    """Controller để quản lý phê duyệt"""
-    pass
+class ApprovalController(http.Controller):
 
     def _can_approve_leave(self, leave, user, user_id):
         """
@@ -105,7 +103,7 @@ class ApprovalController(BaseController):
         try:
             data = _get_json_data()
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 from_date = data.get('from_date', '')
@@ -252,7 +250,7 @@ class ApprovalController(BaseController):
         try:
             data = _get_json_data()
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 from_date = data.get('from_date', '')
@@ -395,7 +393,7 @@ class ApprovalController(BaseController):
         try:
             data = _get_json_data()
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 model_name = data.get('model')

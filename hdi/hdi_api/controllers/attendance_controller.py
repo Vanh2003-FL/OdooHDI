@@ -3,15 +3,12 @@ from datetime import datetime, timedelta
 from odoo import http
 from odoo.http import request
 
-from .base_controller import BaseController
 from .auth_controller import _verify_token
 from ..utils.response_formatter import ResponseFormatter
+from ..utils.env_helper import get_env
 
 
-class AttendanceAPI(BaseController):
-    """Controller để quản lý chấm công"""
-    pass
-
+class AttendanceAPI(http.Controller):
     def _get_request_data(self):
         try:
             body = request.httprequest.get_data(as_text=True)
@@ -29,7 +26,7 @@ class AttendanceAPI(BaseController):
     def check_in(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 data = self._get_request_data()
@@ -55,7 +52,7 @@ class AttendanceAPI(BaseController):
     def check_out(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 data = self._get_request_data()
@@ -81,7 +78,7 @@ class AttendanceAPI(BaseController):
     def get_status(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
@@ -122,7 +119,7 @@ class AttendanceAPI(BaseController):
     def get_history(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 data = self._get_request_data()
@@ -185,7 +182,7 @@ class AttendanceAPI(BaseController):
     def get_summary(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 data = self._get_request_data()
@@ -244,7 +241,7 @@ class AttendanceAPI(BaseController):
     def get_detail(self):
         try:
             user_id = request.jwt_payload.get('user_id')
-            env, cr = self._get_env()
+            env, cr = get_env()
 
             try:
                 data = self._get_request_data()
