@@ -1,6 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError
-from datetime import date
+from datetime import date, datetime
 
 
 class HrEmployee(models.Model):
@@ -158,3 +158,184 @@ class HrEmployee(models.Model):
                 'name': employee.company_id.name if employee.company_id else ''
             }
         }
+
+    @api.model
+    def get_employee_list_api(self, search_text='', department_id=False, job_id=False,
+                              active=True, limit=20, offset=0):
+        """
+        Lấy danh sách nhân viên cho API với phân trang
+        
+        Args:
+            search_text: Tìm kiếm trong tên, email, điện thoại
+            department_id: Lọc theo phòng ban
+            job_id: Lọc theo vị trí
+            active: Lọc theo trạng thái hoạt động
+            limit: Số mục trên 1 trang
+            offset: Offset cho phân trang
+            
+        Returns:
+            dict: {
+                'employees': danh sách nhân viên,
+                'total_record': tổng số bản ghi,
+                'next_page': số trang tiếp theo hoặc None
+            }
+        """
+        domain = []
+
+        if active is not None:
+            domain.append(('active', '=', active))
+
+        if search_text:
+            domain.append('|')
+            domain.append('|')
+            domain.append(('name', 'ilike', search_text))
+            domain.append(('work_email', 'ilike', search_text))
+            domain.append(('mobile_phone', 'ilike', search_text))
+
+        if department_id:
+            domain.append(('department_id', '=', department_id))
+
+        if job_id:
+            domain.append(('job_id', '=', job_id))
+
+        employees = self.sudo().search(
+            domain,
+            limit=limit,
+            offset=offset,
+            order='name asc'
+        )
+
+        total_record = self.sudo().search_count(domain)
+        current_page = (offset // limit) + 1 if limit > 0 else 1
+        next_page = current_page + 1 if (offset + limit) < total_record else None
+
+        # Lấy base URL cho ảnh
+        base_url = self.env['ir.config_parameter'].sudo().get_param(
+            'web.base.url', 'http://localhost:8069'
+        ).rstrip('/')
+
+        employee_list = []
+        for emp in employees:
+            img_url = f"{base_url}/web/image/hr.employee/{emp.id}?timestamp={int(datetime.now().timestamp())}" \
+                if emp.image_1920 else False
+
+            employee_list.append({
+                'id': emp.id,
+                'code': emp.barcode or '',
+                'name': emp.name,
+                'mobile_phone': emp.mobile_phone or False,
+                'work_phone': emp.work_phone or False,
+                'work_email': emp.work_email or False,
+                'img_url': img_url,
+                'scale_area': {
+                    'name': '',
+                    'code': ''
+                },
+                'subsidiary': {
+                    'name': '',
+                    'code': ''
+                },
+                'department_id': {
+                    'name': emp.department_id.name if emp.department_id else '',
+                    'code': getattr(emp.department_id, 'code', '') if emp.department_id else ''
+                },
+                'job': {
+                    'name': emp.job_id.name if emp.job_id else '',
+                    'code': getattr(emp.job_id, 'code', '') if emp.job_id else ''
+                },
+                'position': emp.job_title or '',
+                'tax_code': emp.identification_id or False,
+                'insurance_code': emp.permit_no or False,
+                'social_insurance_code': emp.ssnid or False,
+            })
+
+        return {
+            'employees': employee_list,
+            'total_record': total_record,
+            'next_page': next_page,
+            'current_page': current_page,
+            'items_per_page': limit,
+        }
+
+    @api.model
+    def get_employee_detail_api(self, employee_id):
+        """
+        Lấy thông tin chi tiết nhân viên cho API
+        
+        Args:
+            employee_id: ID nhân viên
+            
+        Returns:
+            dict: Dữ liệu chi tiết nhân viên
+        """
+        employee = self.sudo().browse(employee_id)
+        if not employee.exists():
+            return None
+
+        # Lấy base URL cho ảnh
+        base_url = self.env['ir.config_parameter'].sudo().get_param(
+            'web.base.url', 'http://localhost:8069'
+        ).rstrip('/')
+        img_url = f"{base_url}/web/image/hr.employee/{employee.id}" if employee.image_1920 else False
+
+        # Helper để wrap giá trị field
+        def field_wrap(value, invisible=False):
+            return {'value': value, 'invisible': invisible}
+
+        employee_data = {
+            'id': field_wrap(employee.id),
+            'code': field_wrap(employee.barcode or ''),
+            'name': field_wrap(employee.name),
+            'birthday': field_wrap(employee.birthday.strftime('%d/%m/%Y') if employee.birthday else None),
+            'position': field_wrap(employee.job_title or ''),
+            'mobile_phone': field_wrap(employee.mobile_phone or ''),
+            'work_phone': field_wrap(employee.work_phone or ''),
+            'work_email': field_wrap(employee.work_email or ''),
+            'img_url': field_wrap(img_url),
+            'tax_code': field_wrap(employee.identification_id or ''),
+            'insurance_code': field_wrap(employee.permit_no or ''),
+            'social_insurance_code': field_wrap(employee.ssnid or ''),
+            'phone_other': field_wrap(employee.private_phone or ''),
+            'current_address': field_wrap({
+                'street': employee.private_street or '',
+                'street2': employee.private_street2 or '',
+                'city': employee.private_city or '',
+                'zip': employee.private_zip or '',
+                'country': employee.private_country_id.name if employee.private_country_id else '',
+            }),
+            'default_address': field_wrap(False),
+            # Nested objects
+            'subsidiary': field_wrap({
+                'name': employee.company_id.name if employee.company_id else '',
+                'code': getattr(employee.company_id, 'code', '') or ''
+            }),
+            'company': field_wrap({
+                'name': employee.company_id.name if employee.company_id else ''
+            }),
+            'department': field_wrap({
+                'name': employee.department_id.name if employee.department_id else '',
+                'code': getattr(employee.department_id, 'code', '') or ''
+            }),
+            'department_parent': field_wrap({
+                'name': employee.department_id.parent_id.name
+                    if employee.department_id and employee.department_id.parent_id else '',
+                'code': getattr(employee.department_id.parent_id, 'code', '') or ''
+                    if employee.department_id and employee.department_id.parent_id else ''
+            }),
+            'job': field_wrap({
+                'name': employee.job_id.name if employee.job_id else '',
+                'code': getattr(employee.job_id, 'code', '') or ''
+            }),
+            'scale_area': field_wrap({
+                'name': '',
+                'code': ''
+            }),
+            'relation_family': field_wrap([]),
+            'training': field_wrap([]),
+            'salary': {'invisible': False},
+            'allowance': {'invisible': False},
+            'transfer': field_wrap([]),
+            'transfer_outer': field_wrap([]),
+        }
+
+        return employee_data
