@@ -304,7 +304,7 @@ class MobileAppAuthAPI(http.Controller):
             return ResponseFormatter.error_response('Lỗi server', ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
-    @http.route('/api/v1/auth/refresh-token', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/refresh-token', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def refresh_token(self):
         try:
@@ -367,27 +367,7 @@ class MobileAppAuthAPI(http.Controller):
                                                     ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
-    @http.route('/api/v1/auth/verify-token', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
-    def verify_token(self):
-        try:
-            payload = request.jwt_payload
-            user_data = {
-                'id': payload.get('user_id'),
-                'name': payload.get('name'),
-                'email': payload.get('email'),
-                'login': payload.get('login'),
-                'exp': payload.get('exp'),
-                'valid': True
-            }
-            return ResponseFormatter.success_response('Token hợp lệ', user_data)
-
-        except Exception as e:
-            return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu',
-                                                    ResponseFormatter.HTTP_INTERNAL_ERROR,
-                                                    http_status_code=ResponseFormatter.HTTP_OK)
-
-    @http.route('/api/v1/auth/logout', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/logout', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def logout(self):
         try:
@@ -407,7 +387,7 @@ class MobileAppAuthAPI(http.Controller):
                                                     ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
-    @http.route('/api/v1/auth/me', type='http', auth='none', methods=['GET'], csrf=False)
+    @http.route('/api/v1/refresh-info', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def get_current_user(self):
         try:
@@ -432,21 +412,44 @@ class MobileAppAuthAPI(http.Controller):
                                                             ResponseFormatter.HTTP_FORBIDDEN,
                                                             http_status_code=ResponseFormatter.HTTP_OK)
 
-                user_info = {
-                    'id': user.id,
-                    'name': user.name,
-                    'email': user.email or '',
-                    'login': user.login,
-                    'active': user.active
+                user_data = {
+                    'user_id': {
+                        'id': user.id,
+                        'name': user.name,
+                        'email': user.email or '',
+                    },
+                    'partner_id': {
+                        'id': user.partner_id.id if user.partner_id else None,
+                        'name': user.partner_id.name if user.partner_id else ''
+                    },
+                    'company_id': {
+                        'id': user.company_id.id if user.company_id else 1,
+                        'name': user.company_id.name if user.company_id else ''
+                    },
+                    'department_id': {
+                        'id': user.employee_ids[0].department_id.id if user.employee_ids and user.employee_ids[
+                            0].department_id else None,
+                        'name': user.employee_ids[0].department_id.name if user.employee_ids and user.employee_ids[
+                            0].department_id else ''
+                    },
+                    'employee_id': {
+                        'id': user.employee_ids[0].id if user.employee_ids else None,
+                        'name': user.employee_ids[0].name if user.employee_ids else '',
+                        'barcode': user.employee_ids[0].barcode if user.employee_ids else '',
+                        'email': user.employee_ids[0].work_email if user.employee_ids else '',
+                        'mobile_phone': user.employee_ids[0].mobile_phone if user.employee_ids else '',
+                        'timekeep_online': user.employee_ids[0].timekeep_online if user.employee_ids and hasattr(
+                            user.employee_ids[0], 'timekeep_online') else False,
+                    }
                 }
 
-            return ResponseFormatter.success_response('Lấy thông tin người dùng thành công', user_info)
+            return ResponseFormatter.success_response('Lấy thông tin người dùng thành công', user_data)
         except Exception as e:
             return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu',
                                                     ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
-    @http.route('/api/v1/auth/change-password', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/change-password', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def change_password(self):
         try:

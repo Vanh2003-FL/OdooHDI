@@ -65,9 +65,10 @@ class EmployeeController(http.Controller):
                 employee_list = []
                 for emp in employees:
                     # Get base URL for image
-                    base_url = env['ir.config_parameter'].sudo().get_param('web.base.url', 'http://localhost:8069').rstrip('/')
+                    base_url = env['ir.config_parameter'].sudo().get_param('web.base.url',
+                                                                           'http://localhost:8069').rstrip('/')
                     img_url = f"{base_url}/web/image/hr.employee/{emp.id}?timestamp={int(datetime.now().timestamp())}" if emp.image_1920 else False
-                    
+
                     employee_list.append({
                         'id': emp.id,
                         'code': emp.barcode or '',
@@ -116,7 +117,8 @@ class EmployeeController(http.Controller):
                 raise
 
         except Exception as e:
-            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR, http_status_code=ResponseFormatter.HTTP_OK)
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
+                                                    http_status_code=ResponseFormatter.HTTP_OK)
 
     @http.route('/api/v1/employee/detail', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
@@ -132,27 +134,28 @@ class EmployeeController(http.Controller):
                     return ResponseFormatter.error_response(
                         'Vui lòng cung cấp employee_id',
                         ResponseFormatter.HTTP_BAD_REQUEST, http_status_code=ResponseFormatter.HTTP_OK)
-                
+
                 employee = env['hr.employee'].sudo().browse(employee_id)
                 if not employee.exists():
                     return ResponseFormatter.error_response(
                         'Nhân viên không tồn tại',
                         ResponseFormatter.HTTP_NOT_FOUND, http_status_code=ResponseFormatter.HTTP_OK)
-                
+
                 # Get base URL for image
-                base_url = env['ir.config_parameter'].sudo().get_param('web.base.url', 'http://localhost:8069').rstrip('/')
+                base_url = env['ir.config_parameter'].sudo().get_param('web.base.url', 'http://localhost:8069').rstrip(
+                    '/')
                 img_url = f"{base_url}/web/image/hr.employee/{employee.id}" if employee.image_1920 else False
-                
+
                 # Format date helper
                 def format_date_vn(date_field):
                     if date_field:
                         return date_field.strftime('%d/%m/%Y')
                     return None
-                
+
                 # Helper to wrap field values
                 def field_wrap(value, invisible=False):
                     return {'value': value, 'invisible': invisible}
-                
+
                 employee_data = {
                     'id': field_wrap(employee.id),
                     'code': field_wrap(employee.barcode or ''),
@@ -183,7 +186,8 @@ class EmployeeController(http.Controller):
                     }),
                     'department_parent': field_wrap({
                         'name': employee.department_id.parent_id.name if employee.department_id and employee.department_id.parent_id else '',
-                        'code': getattr(employee.department_id.parent_id, 'code', '') or '' if employee.department_id and employee.department_id.parent_id else ''
+                        'code': getattr(employee.department_id.parent_id, 'code',
+                                        '') or '' if employee.department_id and employee.department_id.parent_id else ''
                     }),
                     'job': field_wrap({
                         'name': employee.job_id.name if employee.job_id else '',
@@ -200,76 +204,14 @@ class EmployeeController(http.Controller):
                     'transfer': field_wrap([]),
                     'transfer_outer': field_wrap([]),
                 }
-                
+
                 cr.commit()
-                return ResponseFormatter.success_response('Thành công', {'app_data': employee_data}, ResponseFormatter.HTTP_OK)
+                return ResponseFormatter.success_response('Thành công', {'app_data': employee_data},
+                                                          ResponseFormatter.HTTP_OK)
             except Exception as e:
                 cr.rollback()
                 raise
 
         except Exception as e:
-            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR, http_status_code=ResponseFormatter.HTTP_OK)
-
-    @http.route('/api/v1/employee/departments', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token_http
-    def get_departments(self):
-        try:
-            env, cr = self._get_env()
-
-            try:
-                departments = env['hr.department'].sudo().search([
-                    ('active', '=', True)
-                ], order='name asc')
-
-                department_list = []
-                for dept in departments:
-                    department_list.append({
-                        'id': dept.id,
-                        'name': dept.name,
-                        'parent_id': dept.parent_id.id if dept.parent_id else False,
-                        'parent_name': dept.parent_id.name if dept.parent_id else '',
-                        'manager_id': dept.manager_id.id if dept.manager_id else False,
-                        'manager_name': dept.manager_id.name if dept.manager_id else '',
-                        'total_employee': dept.total_employee or 0,
-                    })
-
-                cr.commit()
-                return ResponseFormatter.success_response('Lấy danh sách phòng ban thành công', department_list, ResponseFormatter.HTTP_OK)
-
-            except Exception as e:
-                cr.rollback()
-                raise
-
-        except Exception as e:
-            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR, http_status_code=ResponseFormatter.HTTP_OK)
-
-    @http.route('/api/v1/employee/jobs', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token_http
-    def get_jobs(self):
-        try:
-            env, cr = self._get_env()
-
-            try:
-                jobs = env['hr.job'].sudo().search([
-                    ('active', '=', True)
-                ], order='name asc')
-
-                job_list = []
-                for job in jobs:
-                    job_list.append({
-                        'id': job.id,
-                        'name': job.name,
-                        'department_id': job.department_id.id if job.department_id else False,
-                        'department_name': job.department_id.name if job.department_id else '',
-                        'no_of_employee': job.no_of_employee or 0,
-                    })
-
-                cr.commit()
-                return ResponseFormatter.success_response('Lấy danh sách chức vụ thành công', job_list, ResponseFormatter.HTTP_OK)
-
-            except Exception as e:
-                cr.rollback()
-                raise
-
-        except Exception as e:
-            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR, http_status_code=ResponseFormatter.HTTP_OK)
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
+                                                    http_status_code=ResponseFormatter.HTTP_OK)

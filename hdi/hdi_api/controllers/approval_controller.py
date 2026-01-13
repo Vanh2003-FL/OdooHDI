@@ -265,7 +265,6 @@ class ApprovalController(http.Controller):
                 to_date = data.get('to_date', '')
                 approval_type = data.get('type', 'all')
 
-                # Parse dates
                 from_datetime = None
                 to_datetime = None
 
@@ -287,14 +286,12 @@ class ApprovalController(http.Controller):
                             ResponseFormatter.HTTP_BAD_REQUEST,
                             http_status_code=ResponseFormatter.HTTP_OK)
 
-                # Validate approval_type
                 if approval_type not in ['leave', 'Timesheet', 'all']:
                     return ResponseFormatter.error_response(
                         'type phải là: leave, Timesheet hoặc all',
                         ResponseFormatter.HTTP_BAD_REQUEST,
                         http_status_code=ResponseFormatter.HTTP_OK)
 
-                # Get user
                 user = env['res.users'].browse(user_id)
                 if not user.exists():
                     return ResponseFormatter.error_response(
@@ -302,15 +299,15 @@ class ApprovalController(http.Controller):
                         ResponseFormatter.HTTP_NOT_FOUND,
                         http_status_code=ResponseFormatter.HTTP_OK)
 
+                is_admin = user.has_group('base.group_system')
+
                 approvals_list = []
 
-                # Fetch Leave approvals
                 if approval_type in ['leave', 'all']:
                     leave_domain = [
                         ('state', 'in', ['confirm', 'validate1']),
                     ]
 
-                    # Add date range filter if provided
                     if from_datetime:
                         leave_domain.append(('request_date_from', '>=', from_datetime))
                     if to_datetime:
@@ -319,8 +316,9 @@ class ApprovalController(http.Controller):
                     leaves = env['hr.leave'].search(leave_domain)
 
                     for leave in leaves:
-                        # Sử dụng helper method để check quyền
-                        if self._can_approve_leave(leave, user, user_id):
+                        can_view = is_admin or self._can_approve_leave(leave, user, user_id)
+                        
+                        if can_view:
                             validation_type = leave.holiday_status_id.leave_validation_type if leave.holiday_status_id else 'no_validation'
                             
                             approvals_list.append({
@@ -339,7 +337,6 @@ class ApprovalController(http.Controller):
                                 'create_date': leave.create_date.isoformat() if leave.create_date else None,
                             })
 
-                # Fetch Timesheet (Attendance Excuse) approvals
                 if approval_type in ['Timesheet', 'all']:
                     excuse_domain = [
                         ('state', '=', 'submitted'),
@@ -353,8 +350,9 @@ class ApprovalController(http.Controller):
                     excuses = env['attendance.excuse'].search(excuse_domain)
 
                     for excuse in excuses:
-                        # Check if user can approve this excuse
-                        if excuse.employee_id.parent_id and excuse.employee_id.parent_id.user_id.id == user_id:
+                        can_view = is_admin or (excuse.employee_id.parent_id and excuse.employee_id.parent_id.user_id.id == user_id)
+                        
+                        if can_view:
                             approvals_list.append({
                                 'id': excuse.id,
                                 'name': excuse.display_name,
@@ -371,13 +369,13 @@ class ApprovalController(http.Controller):
                                 'create_date': excuse.create_date.isoformat() if excuse.create_date else None,
                             })
 
-                # Sort by creation date descending
                 approvals_list.sort(key=lambda x: x['create_date'] or '', reverse=True)
 
                 result = {
                     'approvals': approvals_list,
                     'total_count': len(approvals_list),
                     'type_filter': approval_type,
+                    'is_admin': is_admin,
                 }
 
                 cr.commit()

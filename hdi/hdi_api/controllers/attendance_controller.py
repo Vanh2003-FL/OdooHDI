@@ -40,9 +40,10 @@ class AttendanceAPI(http.Controller):
                 data = self._get_request_data()
                 in_latitude = data.get('in_latitude')
                 in_longitude = data.get('in_longitude')
+                check_in_location = data.get('check_in_location')
 
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_in(employee.id, in_latitude, in_longitude)
+                result = env['hr.attendance'].api_check_in(employee.id, in_latitude, in_longitude, check_in_location)
                 cr.commit()
 
                 return ResponseFormatter.success_response('Chấm công vào thành công', result, ResponseFormatter.HTTP_OK)
@@ -65,9 +66,10 @@ class AttendanceAPI(http.Controller):
                 data = self._get_request_data()
                 out_latitude = data.get('out_latitude')
                 out_longitude = data.get('out_longitude')
+                check_out_location = data.get('check_out_location')
 
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude)
+                result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude, check_out_location)
                 cr.commit()
 
                 return ResponseFormatter.success_response('Chấm công ra thành công', result, ResponseFormatter.HTTP_OK)
@@ -99,6 +101,7 @@ class AttendanceAPI(http.Controller):
                         'is_checked_in': True,
                         'attendance_id': current_attendance.id,
                         'check_in': current_attendance.check_in.isoformat() if current_attendance.check_in else None,
+                        'check_in_location': current_attendance.check_in_location or '',
                         'in_latitude': current_attendance.in_latitude,
                         'in_longitude': current_attendance.in_longitude,
                         'employee_name': employee.name,
@@ -154,7 +157,9 @@ class AttendanceAPI(http.Controller):
                     attendance_list.append({
                         'id': att.id,
                         'check_in': att.check_in.isoformat() if att.check_in else None,
+                        'check_in_location': att.check_in_location or '',
                         'check_out': att.check_out.isoformat() if att.check_out else None,
+                        'check_out_location': att.check_out_location or '',
                         'in_latitude': att.in_latitude,
                         'in_longitude': att.in_longitude,
                         'out_latitude': att.out_latitude,
@@ -231,6 +236,123 @@ class AttendanceAPI(http.Controller):
 
                 cr.commit()
                 return ResponseFormatter.success_response('Tổng hợp chấm công', result, ResponseFormatter.HTTP_OK)
+            except Exception as e:
+                cr.rollback()
+                raise
+
+        except Exception as e:
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
+                                                    http_status_code=ResponseFormatter.HTTP_OK)
+
+    @http.route('/api/v1/attendance/detail', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token
+    def get_detail(self):
+        try:
+            user_id = request.jwt_payload.get('user_id')
+            env, cr = self._get_env()
+
+            try:
+                data = self._get_request_data()
+                attendance_id = data.get('attendance_id')
+
+                if not attendance_id:
+                    return ResponseFormatter.error_response('attendance_id là bắt buộc',
+                                                            ResponseFormatter.HTTP_BAD_REQUEST,
+                                                            http_status_code=ResponseFormatter.HTTP_OK)
+
+                try:
+                    attendance_id = int(attendance_id)
+                except (ValueError, TypeError):
+                    return ResponseFormatter.error_response('attendance_id phải là số',
+                                                            ResponseFormatter.HTTP_BAD_REQUEST,
+                                                            http_status_code=ResponseFormatter.HTTP_OK)
+
+                attendance = env['hr.attendance'].browse(attendance_id)
+
+                if not attendance.exists():
+                    return ResponseFormatter.error_response('Không tìm thấy bản ghi chấm công',
+                                                            ResponseFormatter.HTTP_NOT_FOUND,
+                                                            http_status_code=ResponseFormatter.HTTP_OK)
+
+                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
+                if attendance.employee_id.id != employee.id:
+                    return ResponseFormatter.error_response('Bạn không có quyền xem bản ghi này',
+                                                            ResponseFormatter.HTTP_FORBIDDEN,
+                                                            http_status_code=ResponseFormatter.HTTP_OK)
+
+                buttons = []
+                if attendance.requires_excuse and attendance.attendance_status in ['late_or_early', 'missing_checkin_out']:
+                    buttons.append({
+                        'name': 'Tạo giải trình',
+                        'key': 'create_excuse',
+                        'sequence': 1
+                    })
+
+                attendance_value = {
+                    'id': {
+                        'readonly': True,
+                        'value': attendance.id
+                    },
+                    'employee_id': {
+                        'readonly': True,
+                        'value': {
+                            'id': attendance.employee_id.id,
+                            'name': attendance.employee_id.name
+                        }
+                    },
+                    'check_in': {
+                        'readonly': True,
+                        'value': attendance.check_in.isoformat() if attendance.check_in else None
+                    },
+                    'check_in_location': {
+                        'readonly': True,
+                        'value': attendance.check_in_location or ''
+                    },
+                    'check_out': {
+                        'readonly': True,
+                        'value': attendance.check_out.isoformat() if attendance.check_out else None
+                    },
+                    'check_out_location': {
+                        'readonly': True,
+                        'value': attendance.check_out_location or ''
+                    },
+                    'in_latitude': {
+                        'readonly': True,
+                        'value': attendance.in_latitude
+                    },
+                    'in_longitude': {
+                        'readonly': True,
+                        'value': attendance.in_longitude
+                    },
+                    'out_latitude': {
+                        'readonly': True,
+                        'value': attendance.out_latitude
+                    },
+                    'out_longitude': {
+                        'readonly': True,
+                        'value': attendance.out_longitude
+                    },
+                    'worked_hours': {
+                        'readonly': True,
+                        'value': attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0
+                    },
+                    'attendance_status': {
+                        'readonly': True,
+                        'value': attendance.attendance_status
+                    },
+                    'requires_excuse': {
+                        'readonly': True,
+                        'value': attendance.requires_excuse
+                    },
+                }
+
+                result = {
+                    'button': buttons,
+                    'value': attendance_value
+                }
+
+                cr.commit()
+                return ResponseFormatter.success_response('Chi tiết bản ghi chấm công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
                 cr.rollback()
                 raise

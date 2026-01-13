@@ -43,7 +43,7 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
-    @http.route('/api/v1/attendance-excuse/get', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/attendance-excuse/detail', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
     def get_excuse(self):
         try:
