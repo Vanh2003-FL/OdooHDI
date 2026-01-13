@@ -13,6 +13,7 @@ class EmployeeController(http.Controller):
     def get_employee_list(self):
         try:
             data = _get_json_data()
+            user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             search_text = data.get('search', '')
@@ -24,6 +25,7 @@ class EmployeeController(http.Controller):
             offset = (current_page - 1) * items_per_page
 
             result_data = env['hr.employee'].get_employee_list_api(
+                current_user_id=user_id,
                 search_text=search_text,
                 department_id=department_id,
                 job_id=job_id,
@@ -56,6 +58,7 @@ class EmployeeController(http.Controller):
         try:
             data = _get_json_data()
             employee_id = data.get('employee_id')
+            user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             if not employee_id:
@@ -63,7 +66,10 @@ class EmployeeController(http.Controller):
                     'Vui lòng cung cấp employee_id',
                     ResponseFormatter.HTTP_BAD_REQUEST, http_status_code=ResponseFormatter.HTTP_OK)
 
-            employee_data = env['hr.employee'].get_employee_detail_api(employee_id)
+            employee_data = env['hr.employee'].get_employee_detail_api(
+                current_user_id=user_id,
+                employee_id=employee_id
+            )
 
             if employee_data is None:
                 return ResponseFormatter.error_response(

@@ -160,12 +160,13 @@ class HrEmployee(models.Model):
         }
 
     @api.model
-    def get_employee_list_api(self, search_text='', department_id=False, job_id=False,
+    def get_employee_list_api(self, current_user_id, search_text='', department_id=False, job_id=False,
                               active=True, limit=20, offset=0):
         """
-        Lấy danh sách nhân viên cho API với phân trang
+        Lấy danh sách nhân viên cho API với phân trang và kiểm tra quyền
         
         Args:
+            current_user_id: ID user hiện tại
             search_text: Tìm kiếm trong tên, email, điện thoại
             department_id: Lọc theo phòng ban
             job_id: Lọc theo vị trí
@@ -180,6 +181,13 @@ class HrEmployee(models.Model):
                 'next_page': số trang tiếp theo hoặc None
             }
         """
+        # Kiểm tra quyền truy cập
+        current_user = self.env['res.users'].browse(current_user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+        
+        current_employee = current_user.employee_id
+        
         domain = []
 
         if active is not None:
@@ -197,6 +205,28 @@ class HrEmployee(models.Model):
 
         if job_id:
             domain.append(('job_id', '=', job_id))
+
+        # Nếu không phải admin/HR, chỉ xem được nhân viên trong phòng ban
+        if not (current_user.has_group('base.group_system') or 
+                current_user.has_group('hr.group_hr_manager') or 
+                current_user.has_group('hr.group_hr_user')):
+            # Lấy các phòng ban mà user quản lý hoặc chính user đó
+            if current_employee and current_employee.department_id:
+                managed_depts = self.env['hr.department'].search([
+                    ('head_id', '=', current_employee.id)
+                ])
+                if managed_depts:
+                    # User là trưởng phòng, chỉ xem nhân viên trong phòng ban quản lý
+                    managed_dept_ids = []
+                    for dept in managed_depts:
+                        managed_dept_ids.extend(self._get_child_departments_recursive(dept.id))
+                    domain.append(('department_id', 'in', managed_dept_ids))
+                else:
+                    # User không phải trưởng phòng, chỉ xem chính mình
+                    domain.append(('id', '=', current_employee.id))
+            else:
+                # User không phải nhân viên, không xem được gì
+                domain.append(('id', '=', -1))
 
         employees = self.sudo().search(
             domain,
@@ -258,19 +288,32 @@ class HrEmployee(models.Model):
         }
 
     @api.model
-    def get_employee_detail_api(self, employee_id):
+    def get_employee_detail_api(self, current_user_id, employee_id):
         """
-        Lấy thông tin chi tiết nhân viên cho API
+        Lấy thông tin chi tiết nhân viên cho API với kiểm tra quyền
         
         Args:
+            current_user_id: ID user hiện tại
             employee_id: ID nhân viên
             
         Returns:
-            dict: Dữ liệu chi tiết nhân viên
+            dict: Dữ liệu chi tiết nhân viên hoặc None nếu không có quyền
         """
+        # Kiểm tra user tồn tại
+        current_user = self.env['res.users'].browse(current_user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+        
+        current_employee = current_user.employee_id
+        
+        # Tìm target employee
         employee = self.sudo().browse(employee_id)
         if not employee.exists():
             return None
+        
+        # Kiểm tra quyền truy cập
+        if not self._check_department_access(current_user, current_employee, employee):
+            raise UserError('Không có quyền truy cập thông tin nhân viên này')
 
         # Lấy base URL cho ảnh
         base_url = self.env['ir.config_parameter'].sudo().get_param(
