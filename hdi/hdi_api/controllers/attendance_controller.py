@@ -3,39 +3,28 @@ from datetime import datetime, timedelta
 from odoo import http
 from odoo.http import request
 
-from .auth_controller import _verify_token
+from ..decorators.auth import verify_token
+from ..utils.request_helper import get_json_data, get_request_data
 from ..utils.response_formatter import ResponseFormatter
 from ..utils.env_helper import get_env
 
 
 class AttendanceAPI(http.Controller):
-    def _get_request_data(self):
-        try:
-            body = request.httprequest.get_data(as_text=True)
-            if body:
-                data = json.loads(body)
-                return data
-        except Exception as e:
-            pass
-
-        form_data = request.httprequest.form.to_dict()
-        return form_data
 
     @http.route('/api/v1/attendance/check-in', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
+    @verify_token
     def check_in(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             try:
-                data = self._get_request_data()
+                data = get_request_data()
                 in_latitude = data.get('in_latitude')
                 in_longitude = data.get('in_longitude')
                 check_in_location = data.get('check_in_location')
 
-                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_in(employee.id, in_latitude, in_longitude, check_in_location)
+                result = env['hr.attendance'].sudo().api_check_in(user_id, in_latitude, in_longitude, check_in_location)
                 cr.commit()
 
                 return ResponseFormatter.success_response('Chấm công vào thành công', result, ResponseFormatter.HTTP_OK)
@@ -48,20 +37,19 @@ class AttendanceAPI(http.Controller):
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
     @http.route('/api/v1/attendance/check-out', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
+    @verify_token
     def check_out(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             try:
-                data = self._get_request_data()
+                data = get_request_data()
                 out_latitude = data.get('out_latitude')
                 out_longitude = data.get('out_longitude')
                 check_out_location = data.get('check_out_location')
 
-                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude, check_out_location)
+                result = env['hr.attendance'].sudo().api_check_out(user_id, out_latitude, out_longitude, check_out_location)
                 cr.commit()
 
                 return ResponseFormatter.success_response('Chấm công ra thành công', result, ResponseFormatter.HTTP_OK)
@@ -74,36 +62,14 @@ class AttendanceAPI(http.Controller):
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
     @http.route('/api/v1/attendance/status', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
+    @verify_token
     def get_status(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             try:
-                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-
-                current_attendance = env['hr.attendance'].search([
-                    ('employee_id', '=', employee.id),
-                    ('check_out', '=', False)
-                ], limit=1)
-
-                if current_attendance:
-                    result = {
-                        'is_checked_in': True,
-                        'attendance_id': current_attendance.id,
-                        'check_in': current_attendance.check_in.isoformat() if current_attendance.check_in else None,
-                        'check_in_location': current_attendance.check_in_location or '',
-                        'in_latitude': current_attendance.in_latitude,
-                        'in_longitude': current_attendance.in_longitude,
-                        'employee_name': employee.name,
-                    }
-                else:
-                    result = {
-                        'is_checked_in': False,
-                        'employee_name': employee.name,
-                    }
-
+                result = env['hr.attendance'].sudo().api_get_status(user_id)
                 cr.commit()
                 return ResponseFormatter.success_response('Trạng thái chấm công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
@@ -115,58 +81,20 @@ class AttendanceAPI(http.Controller):
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
     @http.route('/api/v1/attendance/history', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
+    @verify_token
     def get_history(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             try:
-                data = self._get_request_data()
+                data = get_request_data()
                 limit = int(data.get('limit', 30))
                 offset = int(data.get('offset', 0))
                 from_date = data.get('from_date')
                 to_date = data.get('to_date')
 
-                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-
-                domain = [('employee_id', '=', employee.id)]
-
-                if from_date:
-                    from_datetime = datetime.strptime(from_date, '%Y-%m-%d')
-                    domain.append(('check_in', '>=', from_datetime))
-
-                if to_date:
-                    to_datetime = datetime.strptime(to_date, '%Y-%m-%d') + timedelta(days=1)
-                    domain.append(('check_in', '<', to_datetime))
-
-                attendances = env['hr.attendance'].search(domain, limit=limit, offset=offset, order='check_in desc')
-                total_count = env['hr.attendance'].search_count(domain)
-
-                attendance_list = []
-                for att in attendances:
-                    worked_hours = att.worked_hours if hasattr(att, 'worked_hours') else 0
-                    attendance_list.append({
-                        'id': att.id,
-                        'check_in': att.check_in.isoformat() if att.check_in else None,
-                        'check_in_location': att.check_in_location or '',
-                        'check_out': att.check_out.isoformat() if att.check_out else None,
-                        'check_out_location': att.check_out_location or '',
-                        'in_latitude': att.in_latitude,
-                        'in_longitude': att.in_longitude,
-                        'out_latitude': att.out_latitude,
-                        'out_longitude': att.out_longitude,
-                        'worked_hours': worked_hours,
-                    })
-
-                result = {
-                    'employee_name': employee.name,
-                    'attendances': attendance_list,
-                    'total_count': total_count,
-                    'limit': limit,
-                    'offset': offset,
-                }
-
+                result = env['hr.attendance'].sudo().api_get_history(user_id, limit, offset, from_date, to_date)
                 cr.commit()
                 return ResponseFormatter.success_response('Lịch sử chấm công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
@@ -178,54 +106,17 @@ class AttendanceAPI(http.Controller):
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
     @http.route('/api/v1/attendance/summary', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
+    @verify_token
     def get_summary(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             try:
-                data = self._get_request_data()
-                month = data.get('month', datetime.now().strftime('%Y-%m'))
+                data = get_request_data()
+                month = data.get('month')
 
-                year, month_num = map(int, month.split('-'))
-                from_date = datetime(year, month_num, 1)
-
-                if month_num == 12:
-                    to_date = datetime(year + 1, 1, 1)
-                else:
-                    to_date = datetime(year, month_num + 1, 1)
-
-                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-
-                attendances = env['hr.attendance'].search([
-                    ('employee_id', '=', employee.id),
-                    ('check_in', '>=', from_date),
-                    ('check_in', '<', to_date),
-                ])
-
-                total_days = 0
-                total_hours = 0
-                incomplete_days = 0
-
-                for att in attendances:
-                    if att.check_in:
-                        total_days += 1
-                        if att.check_out:
-                            worked_hours = att.worked_hours if hasattr(att, 'worked_hours') else 0
-                            total_hours += worked_hours
-                        else:
-                            incomplete_days += 1
-
-                result = {
-                    'employee_name': employee.name,
-                    'month': month,
-                    'total_days': total_days,
-                    'total_hours': round(total_hours, 2),
-                    'incomplete_days': incomplete_days,
-                    'average_hours_per_day': round(total_hours / total_days, 2) if total_days > 0 else 0,
-                }
-
+                result = env['hr.attendance'].sudo().api_get_summary(user_id, month)
                 cr.commit()
                 return ResponseFormatter.success_response('Tổng hợp chấm công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
@@ -237,112 +128,17 @@ class AttendanceAPI(http.Controller):
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
     @http.route('/api/v1/attendance/detail', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token
+    @verify_token
     def get_detail(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = get_env()
 
             try:
-                data = self._get_request_data()
+                data = get_request_data()
                 attendance_id = data.get('attendance_id')
 
-                if not attendance_id:
-                    return ResponseFormatter.error_response('attendance_id là bắt buộc',
-                                                            ResponseFormatter.HTTP_BAD_REQUEST,
-                                                            http_status_code=ResponseFormatter.HTTP_OK)
-
-                try:
-                    attendance_id = int(attendance_id)
-                except (ValueError, TypeError):
-                    return ResponseFormatter.error_response('attendance_id phải là số',
-                                                            ResponseFormatter.HTTP_BAD_REQUEST,
-                                                            http_status_code=ResponseFormatter.HTTP_OK)
-
-                attendance = env['hr.attendance'].browse(attendance_id)
-
-                if not attendance.exists():
-                    return ResponseFormatter.error_response('Không tìm thấy bản ghi chấm công',
-                                                            ResponseFormatter.HTTP_NOT_FOUND,
-                                                            http_status_code=ResponseFormatter.HTTP_OK)
-
-                employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                if attendance.employee_id.id != employee.id:
-                    return ResponseFormatter.error_response('Bạn không có quyền xem bản ghi này',
-                                                            ResponseFormatter.HTTP_FORBIDDEN,
-                                                            http_status_code=ResponseFormatter.HTTP_OK)
-
-                buttons = []
-                if attendance.requires_excuse and attendance.attendance_status in ['late_or_early', 'missing_checkin_out']:
-                    buttons.append({
-                        'name': 'Tạo giải trình',
-                        'key': 'create_excuse',
-                        'sequence': 1
-                    })
-
-                attendance_value = {
-                    'id': {
-                        'readonly': True,
-                        'value': attendance.id
-                    },
-                    'employee_id': {
-                        'readonly': True,
-                        'value': {
-                            'id': attendance.employee_id.id,
-                            'name': attendance.employee_id.name
-                        }
-                    },
-                    'check_in': {
-                        'readonly': True,
-                        'value': attendance.check_in.isoformat() if attendance.check_in else None
-                    },
-                    'check_in_location': {
-                        'readonly': True,
-                        'value': attendance.check_in_location or ''
-                    },
-                    'check_out': {
-                        'readonly': True,
-                        'value': attendance.check_out.isoformat() if attendance.check_out else None
-                    },
-                    'check_out_location': {
-                        'readonly': True,
-                        'value': attendance.check_out_location or ''
-                    },
-                    'in_latitude': {
-                        'readonly': True,
-                        'value': attendance.in_latitude
-                    },
-                    'in_longitude': {
-                        'readonly': True,
-                        'value': attendance.in_longitude
-                    },
-                    'out_latitude': {
-                        'readonly': True,
-                        'value': attendance.out_latitude
-                    },
-                    'out_longitude': {
-                        'readonly': True,
-                        'value': attendance.out_longitude
-                    },
-                    'worked_hours': {
-                        'readonly': True,
-                        'value': attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0
-                    },
-                    'attendance_status': {
-                        'readonly': True,
-                        'value': attendance.attendance_status
-                    },
-                    'requires_excuse': {
-                        'readonly': True,
-                        'value': attendance.requires_excuse
-                    },
-                }
-
-                result = {
-                    'button': buttons,
-                    'value': attendance_value
-                }
-
+                result = env['hr.attendance'].sudo().api_get_detail(user_id, attendance_id)
                 cr.commit()
                 return ResponseFormatter.success_response('Chi tiết bản ghi chấm công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
@@ -352,3 +148,5 @@ class AttendanceAPI(http.Controller):
         except Exception as e:
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
+
+

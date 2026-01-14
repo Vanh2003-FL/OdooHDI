@@ -1,7 +1,3 @@
-"""
-Response formatter chung cho tất cả API
-Cung cấp các method để tạo response với format chuẩn
-"""
 import json
 from odoo.http import Response
 
