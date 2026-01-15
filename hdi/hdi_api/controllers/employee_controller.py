@@ -70,7 +70,7 @@ class EmployeeController(http.Controller):
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
-    @http.route('/api/v1/employee/get_departments_and_employee', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/employee/get-departments-and-employee', type='http', auth='none', methods=['POST'], csrf=False)
     @verify_token
     def get_departments_and_employee(self):
         try:
@@ -99,6 +99,38 @@ class EmployeeController(http.Controller):
             cr.rollback()
             return ResponseFormatter.error_response(str(e), ResponseFormatter.HTTP_FORBIDDEN,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
+
+        except Exception as e:
+            cr.rollback()
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
+                                                    http_status_code=ResponseFormatter.HTTP_OK)
+
+    @http.route('/api/v1/hr/get-employee-new', type='http', auth='none', methods=['POST'], csrf=False)
+    @verify_token
+    def get_employee_new(self):
+        try:
+            env, cr = get_env()
+
+            result_data = env['hr.employee'].api_get_employee_new()
+
+            cr.commit()
+            return ResponseFormatter.success_response('Thành công', result_data, ResponseFormatter.HTTP_OK)
+
+        except Exception as e:
+            cr.rollback()
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
+                                                    http_status_code=ResponseFormatter.HTTP_OK)
+
+    @http.route('/api/v1/hr/get-birthday', type='http', auth='none', methods=['POST'], csrf=False)
+    @verify_token
+    def get_birthday(self):
+        try:
+            env, cr = get_env()
+
+            result_data = env['hr.employee'].api_get_birthday()
+
+            cr.commit()
+            return ResponseFormatter.success_response('Thành công', result_data, ResponseFormatter.HTTP_OK)
 
         except Exception as e:
             cr.rollback()
