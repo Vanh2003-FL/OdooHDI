@@ -1731,3 +1731,643 @@ fetch('http://localhost:8069/api/v1/auth/login', {
   "message": "Lỗi: Token không hợp lệ hoặc đã hết hạn"
 }
 ```
+
+---
+
+## 4. API Lấy Danh Sách Nhân Viên Mới
+
+### 4.1 Mô Tả Thông Tin API
+
+#### Endpoint
+- **URL**: `/api/v1/hr/get-employee-new`
+- **Method**: `POST`
+
+#### Header Request
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+#### Body Request
+```json
+{}
+```
+
+---
+
+### 4.2 Mô Tả Tham Số
+
+| Tham Số | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
+|---------|--------------|---------|-------|
+| (Header) Authorization | String | ✓ | Token JWT với format: `Bearer <token>` |
+
+---
+
+### 4.3 Mô Tả Kết Quả Trả Về
+
+| Tham Số | Kiểu Dữ Liệu | Mô Tả |
+|---------|--------------|-------|
+| code | Integer | Mã HTTP status |
+| status | String | Trạng thái phản hồi (Success/Error) |
+| message | String | Thông báo kết quả |
+| data | Object | Dữ liệu nhân viên mới |
+| data.new_employees | Array | Danh sách nhân viên mới |
+| data.new_employees[].id | Integer | ID nhân viên |
+| data.new_employees[].name | String | Tên nhân viên |
+| data.new_employees[].email | String | Email nhân viên |
+| data.new_employees[].department_name | String | Tên phòng ban |
+| data.new_employees[].job_title | String | Chức danh công việc |
+| data.new_employees[].date_start | String | Ngày bắt đầu làm việc |
+| data.new_employees[].mobile_phone | String | Số điện thoại |
+| data.new_employees[].img_url | String | URL ảnh đại diện |
+| data.total | Integer | Tổng số nhân viên mới |
+
+---
+
+### 4.4 Ví Dụ Kết Quả Trả Về
+
+**Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Thành công",
+  "data": {
+    "new_employees": [
+      {
+        "id": 15,
+        "name": "Lý Văn E",
+        "email": "lyvane@company.com",
+        "department_name": "Công nghệ",
+        "job_title": "Kỹ sư phần mềm",
+        "date_start": "2024-01-10",
+        "mobile_phone": "0912345681",
+        "img_url": "https://example.com/image/employee/15"
+      },
+      {
+        "id": 16,
+        "name": "Phạm Thị F",
+        "email": "phamthif@company.com",
+        "department_name": "Kinh Doanh",
+        "job_title": "Trợ lý kinh doanh",
+        "date_start": "2024-01-08",
+        "mobile_phone": "0912345682",
+        "img_url": "https://example.com/image/employee/16"
+      }
+    ],
+    "total": 2
+  }
+}
+```
+
+**Lỗi - Token không hợp lệ (401)**
+```json
+{
+  "code": 401,
+  "status": "Error",
+  "message": "Lỗi: Token không hợp lệ hoặc đã hết hạn"
+}
+```
+
+---
+
+## 5. API Lấy Danh Sách Nhân Viên Sinh Nhật
+
+### 5.1 Mô Tả Thông Tin API
+
+#### Endpoint
+- **URL**: `/api/v1/hr/get-birthday`
+- **Method**: `POST`
+
+#### Header Request
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+#### Body Request
+```json
+{}
+```
+
+---
+
+### 5.2 Mô Tả Tham Số
+
+| Tham Số | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
+|---------|--------------|---------|-------|
+| (Header) Authorization | String | ✓ | Token JWT với format: `Bearer <token>` |
+
+---
+
+### 5.3 Mô Tả Kết Quả Trả Về
+
+| Tham Số | Kiểu Dữ Liệu | Mô Tả |
+|---------|--------------|-------|
+| code | Integer | Mã HTTP status |
+| status | String | Trạng thái phản hồi (Success/Error) |
+| message | String | Thông báo kết quả |
+| data | Object | Dữ liệu nhân viên sinh nhật |
+| data.birthday_employees | Array | Danh sách nhân viên sinh nhật |
+| data.birthday_employees[].id | Integer | ID nhân viên |
+| data.birthday_employees[].name | String | Tên nhân viên |
+| data.birthday_employees[].birthday | String | Ngày sinh (format: MM-DD) |
+| data.birthday_employees[].age | Integer | Tuổi |
+| data.birthday_employees[].department_name | String | Tên phòng ban |
+| data.birthday_employees[].mobile_phone | String | Số điện thoại |
+| data.birthday_employees[].img_url | String | URL ảnh đại diện |
+| data.today_birthday | Array | Nhân viên có sinh nhật hôm nay |
+| data.today_birthday[].id | Integer | ID nhân viên |
+| data.today_birthday[].name | String | Tên nhân viên |
+| data.today_birthday[].age | Integer | Tuổi |
+| data.today_birthday[].department_name | String | Tên phòng ban |
+| data.upcoming_birthday | Array | Nhân viên có sinh nhật sắp tới (7 ngày) |
+| data.upcoming_birthday[].id | Integer | ID nhân viên |
+| data.upcoming_birthday[].name | String | Tên nhân viên |
+| data.upcoming_birthday[].birthday | String | Ngày sinh |
+| data.upcoming_birthday[].days_until | Integer | Số ngày còn lại |
+
+---
+
+### 5.4 Ví Dụ Kết Quả Trả Về
+
+**Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Thành công",
+  "data": {
+    "birthday_employees": [
+      {
+        "id": 5,
+        "name": "Nguyễn Văn A",
+        "birthday": "05-15",
+        "age": 34,
+        "department_name": "Công nghệ",
+        "mobile_phone": "0912345678",
+        "img_url": "https://example.com/image/employee/5"
+      },
+      {
+        "id": 8,
+        "name": "Đặng Trung G",
+        "birthday": "03-22",
+        "age": 29,
+        "department_name": "Kinh Doanh",
+        "mobile_phone": "0912345683",
+        "img_url": "https://example.com/image/employee/8"
+      }
+    ],
+    "today_birthday": [
+      {
+        "id": 10,
+        "name": "Hoàng Văn H",
+        "age": 31,
+        "department_name": "Công nghệ"
+      }
+    ],
+    "upcoming_birthday": [
+      {
+        "id": 11,
+        "name": "Tô Thị I",
+        "birthday": "01-20",
+        "days_until": 5
+      },
+      {
+        "id": 12,
+        "name": "Vũ Văn J",
+        "birthday": "01-22",
+        "days_until": 7
+      }
+    ]
+  }
+}
+```
+
+**Lỗi - Token không hợp lệ (401)**
+```json
+{
+  "code": 401,
+  "status": "Error",
+  "message": "Lỗi: Token không hợp lệ hoặc đã hết hạn"
+}
+```
+
+---
+
+# API Giải Trình Chấm Công (Attendance Excuse)
+
+## 1. API Tạo Giải Trình Chấm Công
+
+### 1.1 Mô Tả Thông Tin API
+
+#### Endpoint
+- **URL**: `/api/v1/attendance-excuse/create`
+- **Method**: `POST`
+
+#### Header Request
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+#### Body Request
+```json
+{
+  "attendance_date": "2024-01-15",
+  "reason": "Bệnh nhân phòng khám",
+  "description": "Đã đi khám bệnh sáng, không thể chấm công"
+}
+```
+
+---
+
+### 1.2 Mô Tả Tham Số
+
+| Tham Số | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
+|---------|--------------|---------|-------|
+| (Header) Authorization | String | ✓ | Token JWT với format: `Bearer <token>` |
+| attendance_date | String | ✓ | Ngày cần giải trình (format: YYYY-MM-DD) |
+| reason | String | ✓ | Lý do giải trình |
+| description | String |   | Mô tả chi tiết giải trình |
+
+---
+
+### 1.3 Mô Tả Kết Quả Trả Về
+
+| Tham Số | Kiểu Dữ Liệu | Mô Tả |
+|---------|--------------|-------|
+| code | Integer | Mã HTTP status |
+| status | String | Trạng thái phản hồi (Success/Error) |
+| message | String | Thông báo kết quả |
+| data | Object | Dữ liệu giải trình đã tạo |
+| data.id | Integer | ID giải trình |
+| data.name | String | Tên giải trình |
+| data.attendance_date | String | Ngày giải trình |
+| data.reason | String | Lý do giải trình |
+| data.state | String | Trạng thái (draft/submitted/approved/rejected) |
+| data.created_at | String | Thời gian tạo |
+
+---
+
+### 1.4 Ví Dụ Kết Quả Trả Về
+
+**Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Tạo giải trình thành công",
+  "data": {
+    "id": 23,
+    "name": "Giải trình chấm công - 2024-01-15",
+    "attendance_date": "2024-01-15",
+    "reason": "Bệnh nhân phòng khám",
+    "state": "draft",
+    "created_at": "2024-01-15 10:30:00"
+  }
+}
+```
+
+**Lỗi - Token không hợp lệ (401)**
+```json
+{
+  "code": 401,
+  "status": "Error",
+  "message": "Lỗi: Token không hợp lệ hoặc đã hết hạn"
+}
+```
+
+---
+
+## 2. API Lấy Chi Tiết Giải Trình
+
+### 2.1 Mô Tả Thông Tin API
+
+#### Endpoint
+- **URL**: `/api/v1/attendance-excuse/detail`
+- **Method**: `POST`
+
+#### Header Request
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+#### Body Request
+```json
+{
+  "attendance_excuse_id": 23
+}
+```
+
+---
+
+### 2.2 Mô Tả Tham Số
+
+| Tham Số | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
+|---------|--------------|---------|-------|
+| (Header) Authorization | String | ✓ | Token JWT với format: `Bearer <token>` |
+| attendance_excuse_id | Integer | ✓ | ID giải trình cần lấy chi tiết |
+
+---
+
+### 2.3 Mô Tả Kết Quả Trả Về
+
+| Tham Số | Kiểu Dữ Liệu | Mô Tả |
+|---------|--------------|-------|
+| code | Integer | Mã HTTP status |
+| status | String | Trạng thái phản hồi (Success/Error) |
+| message | String | Thông báo kết quả |
+| data | Object | Dữ liệu chi tiết giải trình |
+| data.id | Integer | ID giải trình |
+| data.name | String | Tên giải trình |
+| data.attendance_date | String | Ngày giải trình |
+| data.reason | String | Lý do giải trình |
+| data.description | String | Mô tả chi tiết |
+| data.state | String | Trạng thái (draft/submitted/approved/rejected) |
+| data.employee_id | Integer | ID nhân viên |
+| data.employee_name | String | Tên nhân viên |
+| data.department_name | String | Tên phòng ban |
+| data.submitted_date | String | Ngày gửi giải trình |
+| data.approved_by | String | Người duyệt giải trình |
+| data.approval_date | String | Ngày duyệt |
+| data.rejection_reason | String | Lý do từ chối (nếu có) |
+
+---
+
+### 2.4 Ví Dụ Kết Quả Trả Về
+
+**Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Lấy chi tiết giải trình thành công",
+  "data": {
+    "id": 23,
+    "name": "Giải trình chấm công - 2024-01-15",
+    "attendance_date": "2024-01-15",
+    "reason": "Bệnh nhân phòng khám",
+    "description": "Đã đi khám bệnh sáng, không thể chấm công",
+    "state": "submitted",
+    "employee_id": 5,
+    "employee_name": "Nguyễn Văn A",
+    "department_name": "Công nghệ",
+    "submitted_date": "2024-01-15 11:00:00",
+    "approved_by": "Trần Văn C",
+    "approval_date": "2024-01-15 14:30:00",
+    "rejection_reason": ""
+  }
+}
+```
+
+**Lỗi - Giải trình không tồn tại (404)**
+```json
+{
+  "code": 404,
+  "status": "Error",
+  "message": "Lỗi: Giải trình không tồn tại"
+}
+```
+
+---
+
+## 3. API Lấy Danh Sách Giải Trình
+
+### 3.1 Mô Tả Thông Tin API
+
+#### Endpoint
+- **URL**: `/api/v1/attendance-excuse/list`
+- **Method**: `POST`
+
+#### Header Request
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+#### Body Request
+```json
+{
+  "limit": 20,
+  "offset": 0,
+  "state": "submitted"
+}
+```
+
+---
+
+### 3.2 Mô Tả Tham Số
+
+| Tham Số | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
+|---------|--------------|---------|-------|
+| (Header) Authorization | String | ✓ | Token JWT với format: `Bearer <token>` |
+| limit | Integer |   | Số bản ghi trên một trang (mặc định: 10) |
+| offset | Integer |   | Vị trí bắt đầu (mặc định: 0) |
+| state | String |   | Lọc theo trạng thái (draft/submitted/approved/rejected) |
+
+---
+
+### 3.3 Mô Tả Kết Quả Trả Về
+
+| Tham Số | Kiểu Dữ Liệu | Mô Tả |
+|---------|--------------|-------|
+| code | Integer | Mã HTTP status |
+| status | String | Trạng thái phản hồi (Success/Error) |
+| message | String | Thông báo kết quả |
+| data | Object | Dữ liệu danh sách giải trình |
+| data.excuses | Array | Danh sách giải trình |
+| data.excuses[].id | Integer | ID giải trình |
+| data.excuses[].name | String | Tên giải trình |
+| data.excuses[].attendance_date | String | Ngày giải trình |
+| data.excuses[].reason | String | Lý do giải trình |
+| data.excuses[].state | String | Trạng thái |
+| data.excuses[].submitted_date | String | Ngày gửi |
+| data.excuses[].approval_date | String | Ngày duyệt |
+| data.total_record | Integer | Tổng số bản ghi |
+| data.next_page | Boolean | Có trang tiếp theo hay không |
+
+---
+
+### 3.4 Ví Dụ Kết Quả Trả Về
+
+**Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Lấy danh sách giải trình thành công",
+  "data": {
+    "excuses": [
+      {
+        "id": 23,
+        "name": "Giải trình chấm công - 2024-01-15",
+        "attendance_date": "2024-01-15",
+        "reason": "Bệnh nhân phòng khám",
+        "state": "submitted",
+        "submitted_date": "2024-01-15 11:00:00",
+        "approval_date": null
+      },
+      {
+        "id": 22,
+        "name": "Giải trình chấm công - 2024-01-12",
+        "attendance_date": "2024-01-12",
+        "reason": "Tham gia sự kiện công ty",
+        "state": "approved",
+        "submitted_date": "2024-01-12 09:30:00",
+        "approval_date": "2024-01-12 15:00:00"
+      }
+    ],
+    "total_record": 2,
+    "next_page": false
+  }
+}
+```
+
+**Lỗi - Token không hợp lệ (401)**
+```json
+{
+  "code": 401,
+  "status": "Error",
+  "message": "Lỗi: Token không hợp lệ hoặc đã hết hạn"
+}
+```
+
+---
+
+## 4. API Thực Hiện Hành Động Giải Trình
+
+### 4.1 Mô Tả Thông Tin API
+
+#### Endpoint
+- **URL**: `/api/v1/attendance-excuse/action`
+- **Method**: `POST`
+
+#### Header Request
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <access_token>"
+}
+```
+
+#### Body Request
+```json
+{
+  "attendance_excuse_id": 23,
+  "action": "send"
+}
+```
+
+---
+
+### 4.2 Mô Tả Tham Số
+
+| Tham Số | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
+|---------|--------------|---------|-------|
+| (Header) Authorization | String | ✓ | Token JWT với format: `Bearer <token>` |
+| attendance_excuse_id | Integer | ✓ | ID giải trình cần thực hiện hành động |
+| action | String | ✓ | Hành động cần thực hiện (send/draft/delete) |
+
+---
+
+### 4.3 Mô Tả Kết Quả Trả Về
+
+| Tham Số | Kiểu Dữ Liệu | Mô Tả |
+|---------|--------------|-------|
+| code | Integer | Mã HTTP status |
+| status | String | Trạng thái phản hồi (Success/Error) |
+| message | String | Thông báo kết quả |
+| data | Object | Dữ liệu kết quả hành động |
+| data.id | Integer | ID giải trình |
+| data.state | String | Trạng thái mới sau hành động |
+| data.deleted | Boolean | Flag xác nhận xóa (chỉ khi action=delete) |
+
+---
+
+### 4.4 Ví Dụ Kết Quả Trả Về
+
+**Gửi Giải Trình (action=send) - Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Gửi giải trình thành công",
+  "data": {
+    "id": 23,
+    "state": "submitted"
+  }
+}
+```
+
+**Quay Về Nháp (action=draft) - Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Quay về nháp thành công",
+  "data": {
+    "id": 23,
+    "state": "draft"
+  }
+}
+```
+
+**Xóa Giải Trình (action=delete) - Thành Công (200)**
+```json
+{
+  "code": 200,
+  "status": "Success",
+  "message": "Xóa giải trình thành công",
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+**Lỗi - Thiếu tham số (400)**
+```json
+{
+  "code": 400,
+  "status": "Error",
+  "message": "Lỗi: Vui lòng cung cấp attendance_excuse_id"
+}
+```
+
+**Lỗi - Giải trình không tồn tại (404)**
+```json
+{
+  "code": 404,
+  "status": "Error",
+  "message": "Lỗi: Giải trình không tồn tại"
+}
+```
+
+**Lỗi - Action không hợp lệ (400)**
+```json
+{
+  "code": 400,
+  "status": "Error",
+  "message": "Lỗi: Action không hợp lệ: update_status"
+}
+```
+
+**Lỗi - Token không hợp lệ (401)**
+```json
+{
+  "code": 401,
+  "status": "Error",
+  "message": "Lỗi: Token không hợp lệ hoặc đã hết hạn"
+}
+```

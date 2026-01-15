@@ -29,6 +29,26 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
 
+    @http.route('/api/v1/attendance-excuse/update', type='http', auth='none', methods=['POST'], csrf=False)
+    @verify_token
+    def update_excuse(self):
+        try:
+            data = get_json_data()
+            user_id = request.jwt_payload.get('user_id')
+            env, cr = get_env()
+
+            try:
+                result = env['attendance.excuse'].sudo().api_update_excuse(data, user_id)
+                cr.commit()
+                return ResponseFormatter.success_response('Cập nhật giải trình thành công', result)
+            except Exception as e:
+                cr.rollback()
+                raise
+
+        except Exception as e:
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
+                                                    http_status_code=ResponseFormatter.HTTP_OK)
+
     @http.route('/api/v1/attendance-excuse/detail', type='http', auth='none', methods=['POST'], csrf=False)
     @verify_token
     def get_excuse(self):
@@ -87,21 +107,21 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
             env, cr = get_env()
 
             if not attendance_excuse_id:
-                return ResponseFormatter.error_response('Vui lòng cung cấp attendance_excuse_id', 
-                                                       ResponseFormatter.HTTP_BAD_REQUEST,
-                                                       http_status_code=ResponseFormatter.HTTP_OK)
-            
+                return ResponseFormatter.error_response('Vui lòng cung cấp attendance_excuse_id',
+                                                        ResponseFormatter.HTTP_BAD_REQUEST,
+                                                        http_status_code=ResponseFormatter.HTTP_OK)
+
             if not action:
-                return ResponseFormatter.error_response('Vui lòng cung cấp action', 
-                                                       ResponseFormatter.HTTP_BAD_REQUEST,
-                                                       http_status_code=ResponseFormatter.HTTP_OK)
+                return ResponseFormatter.error_response('Vui lòng cung cấp action',
+                                                        ResponseFormatter.HTTP_BAD_REQUEST,
+                                                        http_status_code=ResponseFormatter.HTTP_OK)
 
             try:
                 excuse = env['attendance.excuse'].sudo().browse(attendance_excuse_id)
                 if not excuse.exists():
-                    return ResponseFormatter.error_response('Giải trình không tồn tại', 
-                                                           ResponseFormatter.HTTP_NOT_FOUND,
-                                                           http_status_code=ResponseFormatter.HTTP_OK)
+                    return ResponseFormatter.error_response('Giải trình không tồn tại',
+                                                            ResponseFormatter.HTTP_NOT_FOUND,
+                                                            http_status_code=ResponseFormatter.HTTP_OK)
 
                 if action == 'send':
                     result = excuse.api_submit_excuse(user_id)
@@ -114,9 +134,9 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                     cr.commit()
                     return ResponseFormatter.success_response('Xóa giải trình thành công', {'deleted': True})
                 else:
-                    return ResponseFormatter.error_response(f'Action không hợp lệ: {action}', 
-                                                           ResponseFormatter.HTTP_BAD_REQUEST,
-                                                           http_status_code=ResponseFormatter.HTTP_OK)
+                    return ResponseFormatter.error_response(f'Action không hợp lệ: {action}',
+                                                            ResponseFormatter.HTTP_BAD_REQUEST,
+                                                            http_status_code=ResponseFormatter.HTTP_OK)
 
                 cr.commit()
                 return ResponseFormatter.success_response(message, result)
@@ -127,6 +147,3 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
         except Exception as e:
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR,
                                                     http_status_code=ResponseFormatter.HTTP_OK)
-
-
-
