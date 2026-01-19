@@ -164,7 +164,18 @@ else:
             <field name="condition_select">python</field>
             <field name="condition_python">result = contract.phone_allowance > 0</field>
             <field name="amount_select">code</field>
-            <field name="amount_python_compute">result = contract.phone_allowance</field>
+            <field name="amount_python_compute"><![CDATA[
+# Phụ cấp điện thoại theo ngày công thực tế (không tính phép)
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+if work_days > 0 and payslip.standard_days > 0:
+    daily_allowance = contract.phone_allowance / payslip.standard_days
+    result = daily_allowance * work_days
+else:
+    result = contract.phone_allowance
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
@@ -190,7 +201,18 @@ else:
             <field name="condition_select">python</field>
             <field name="condition_python">result = contract.onsite_allowance > 0</field>
             <field name="amount_select">code</field>
-            <field name="amount_python_compute">result = contract.onsite_allowance</field>
+            <field name="amount_python_compute"><![CDATA[
+# Phụ cấp onsite theo ngày công thực tế (không tính phép)
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+if work_days > 0 and payslip.standard_days > 0:
+    daily_allowance = contract.onsite_allowance / payslip.standard_days
+    result = daily_allowance * work_days
+else:
+    result = contract.onsite_allowance
+]]></field>
             <field name="appears_on_payslip">True</field>
         </record>
 
