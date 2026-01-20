@@ -75,7 +75,7 @@
         <field name="max_volume">8.0</field>
         <field name="max_weight">2000</field>
         <field name="color_code_hex">#2196F3</field>
-        <field name="location_3d_type">pallet</field>
+        <field name="location_3d_type">rack_section</field>
         <field name="moving_class">b</field>
         <field name="storage_type">pallet</field>
     </record>
@@ -91,7 +91,7 @@
         <field name="max_volume">8.0</field>
         <field name="max_weight">2000</field>
         <field name="color_code_hex">#2196F3</field>
-        <field name="location_3d_type">pallet</field>
+        <field name="location_3d_type">rack_section</field>
         <field name="moving_class">b</field>
         <field name="storage_type">pallet</field>
     </record>
@@ -108,7 +108,7 @@
         <field name="max_volume">10.0</field>
         <field name="max_weight">3000</field>
         <field name="color_code_hex">#9C27B0</field>
-        <field name="location_3d_type">bulk</field>
+        <field name="location_3d_type">regular</field>
         <field name="moving_class">c</field>
         <field name="storage_type">bulk</field>
     </record>
@@ -124,7 +124,7 @@
         <field name="max_volume">10.0</field>
         <field name="max_weight">3000</field>
         <field name="color_code_hex">#9C27B0</field>
-        <field name="location_3d_type">bulk</field>
+        <field name="location_3d_type">regular</field>
         <field name="moving_class">c</field>
         <field name="storage_type">bulk</field>
     </record>

@@ -49,21 +49,17 @@
 
                     <notebook>
                         <page string="Vị Trí (Locations)" name="locations">
-                            <button name="action_view_locations" string="📍 Xem Tất Cả Vị Trí" type="object" class="oe_button"/>
-                            <field name="location_ids" nolabel="1" readonly="1">
-                                <tree>
-                                    <field name="name"/>
-                                    <field name="complete_name"/>
-                                    <field name="coordinate_display"/>
-                                    <field name="batch_count"/>
-                                    <field name="capacity_percentage" widget="gauge"/>
-                                    <field name="is_putable"/>
-                                </tree>
-                            </field>
+                            <div class="alert alert-info">
+                                <strong>📍 Tổng vị trí:</strong> <field name="location_count" class="oe_inline"/>
+                            </div>
+                            <button name="action_view_locations" string="📍 Xem Tất Cả Vị Trí" type="object" class="btn btn-primary"/>
                         </page>
 
                         <page string="Lô Hàng (Batches)" name="batches">
-                            <button name="action_view_batches" string="📦 Xem Tất Cả Lô Hàng" type="object" class="oe_button"/>
+                            <div class="alert alert-info">
+                                <strong>📦 Tổng lô hàng:</strong> <field name="batch_count" class="oe_inline"/>
+                            </div>
+                            <button name="action_view_batches" string="📦 Xem Tất Cả Lô Hàng" type="object" class="btn btn-primary"/>
                         </page>
 
                         <page string="Dữ Liệu JSON" name="json_data">
@@ -85,7 +81,7 @@
         <field name="name">warehouse.layout.list</field>
         <field name="model">warehouse.layout</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="max_x"/>
@@ -97,7 +93,7 @@
                 <field name="capacity_percentage" widget="gauge"/>
                 <field name="is_active" widget="boolean"/>
                 <field name="is_3d_enabled" widget="boolean"/>
-            </tree>
+            </list>
         </field>
     </record>
 

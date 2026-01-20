@@ -137,14 +137,12 @@ class WarehouseLayout(models.Model):
     def action_open_3d_view(self):
         """Mở view 3D interactif"""
         self.ensure_one()
+        
+        # Open 3D viewer in new window
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Sơ Đồ 3D'),
-                'message': _('Mở view 3D: %s') % self.name,
-                'type': 'info',
-            }
+            'type': 'ir.actions.act_url',
+            'url': f'/hdi_wms/warehouse_3d/{self.id}',
+            'target': 'new',
         }
 
     def action_view_locations(self):
