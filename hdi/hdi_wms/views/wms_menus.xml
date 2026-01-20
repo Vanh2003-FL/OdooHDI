@@ -8,7 +8,7 @@
     <menuitem id="menu_warehouse_3d"
               name="🗺️ Sơ Đồ Kho 3D"
               parent="menu_wms_root"
-              action="action_warehouse_layout_list"
+              action="hdi_wms.action_warehouse_layout_list"
               sequence="5"/>
 
     <menuitem id="menu_batch"
