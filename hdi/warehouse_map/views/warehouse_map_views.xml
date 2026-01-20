@@ -74,7 +74,7 @@
         <field name="name">warehouse.map.kanban</field>
         <field name="model">warehouse.map</field>
         <field name="arch" type="xml">
-            <kanban class="o_warehouse_map_kanban" create="false">
+            <kanban class="o_warehouse_map_kanban">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="warehouse_id"/>
