@@ -20,7 +20,6 @@ HDI Warehouse Management System
 
         # Data
         'data/wms_data.xml',
-        'data/warehouse_3d_demo.xml',
 
         # Views - Core Extensions (Inherit)
         'views/stock_picking_views.xml',
@@ -33,7 +32,6 @@ HDI Warehouse Management System
         'views/hdi_putaway_suggestion_views.xml',
         'views/hdi_loose_line_views.xml',
         'views/hdi_picking_list_views.xml',
-        'views/warehouse_layout_views.xml',
 
         # Wizards
         'wizard/batch_creation_wizard_views.xml',
@@ -42,9 +40,10 @@ HDI Warehouse Management System
 
         # Menus
         'views/wms_menus.xml',
-        
-        # 3D Visualization Templates
-        'views/warehouse_3d_template.xml',
+    ],
+    'demo': [
+        'views/warehouse_layout_views.xml',
+        'data/warehouse_3d_demo.xml',
     ],
     'assets': {
         'web.assets_backend': [

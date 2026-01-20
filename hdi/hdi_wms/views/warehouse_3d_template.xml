@@ -92,44 +92,6 @@
                 </div>
             </div>
 
-            <script type="text/javascript">
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Get data from context
-                    const warehouseData = <t t-esc="warehouse_data_json"/>;
-
-                    // Initialize viewer
-                    const viewer = new Warehouse3DViewer('warehouse-3d-container', warehouseData);
-
-                    // Update statistics
-                    document.getElementById('stat-locations').textContent = warehouseData.locations.length;
-                    document.getElementById('stat-batches').textContent = warehouseData.batches.length;
-                    
-                    // Calculate average capacity
-                    const avgCapacity = warehouseData.locations.reduce((sum, loc) => sum + loc.capacity_pct, 0) / warehouseData.locations.length;
-                    document.getElementById('stat-capacity-pct').textContent = avgCapacity.toFixed(1) + '%';
-                    document.getElementById('stat-capacity-bar').style.width = avgCapacity + '%';
-                    
-                    // Set progress color
-                    const capacityBar = document.getElementById('stat-capacity-bar');
-                    if (avgCapacity < 50) {
-                        capacityBar.className = 'progress-bar bg-success';
-                    } else if (avgCapacity < 80) {
-                        capacityBar.className = 'progress-bar bg-warning';
-                    } else {
-                        capacityBar.className = 'progress-bar bg-danger';
-                    }
-
-                    // Button handlers
-                    document.getElementById('btn-reset').addEventListener('click', function() {
-                        viewer.reset();
-                    });
-
-                    document.getElementById('btn-refresh').addEventListener('click', function() {
-                        location.reload();
-                    });
-                });
-            </script>
-
             <style>
                 #warehouse-3d-container {
                     display: flex;
@@ -148,6 +110,9 @@
                     padding: 15px;
                 }
             </style>
+
+            <!-- Data attributes for JavaScript -->
+            <t t-set="warehouse_data" t-value="warehouse_data_json"/>
         </t>
     </template>
 
