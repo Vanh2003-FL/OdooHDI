@@ -28,6 +28,7 @@
                         <page string="Chọn Lot hiện có" invisible="create_new">
                             <group>
                                 <field name="quant_id" 
+                                       required="not create_new"
                                        options="{'no_create': True}"
                                        context="{'tree_view_ref': 'warehouse_map.view_stock_quant_available_tree'}"/>
                             </group>

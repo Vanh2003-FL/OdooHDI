@@ -32,7 +32,13 @@ export class WarehouseMapView extends Component {
 
         onMounted(() => {
             // Close context menu when clicking outside
-            document.addEventListener('click', this.closeContextMenu.bind(this));
+            const closeMenuHandler = this.closeContextMenu.bind(this);
+            document.addEventListener('click', closeMenuHandler);
+            
+            // Cleanup function để xóa event listener khi component unmount (Odoo 18)
+            return () => {
+                document.removeEventListener('click', closeMenuHandler);
+            };
         });
     }
 

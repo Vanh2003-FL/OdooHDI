@@ -18,8 +18,7 @@ class AssignLotPositionWizard(models.TransientModel):
     
     # Cho phép chọn quant chưa có vị trí hoặc chưa hiển thị trên map
     # CHỈ sản phẩm có theo dõi lô/serial
-    quant_id = fields.Many2one('stock.quant', string='Chọn Lot/Quant', 
-                                required=True,
+    quant_id = fields.Many2one('stock.quant', string='Chọn Lot/Quant',
                                 domain="""[
                                     ('location_id', 'child_of', location_id),
                                     ('quantity', '>', 0),
