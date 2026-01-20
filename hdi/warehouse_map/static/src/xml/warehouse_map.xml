@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <t t-name="warehouse_map.WarehouseMapView" owl="1">
+    <t t-name="warehouse_map.WarehouseMapView">
         <div class="o_warehouse_map_container">
             <!-- Loading -->
             <t t-if="state.loading">
