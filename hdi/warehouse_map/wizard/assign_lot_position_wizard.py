@@ -63,13 +63,15 @@ class AssignLotPositionWizard(models.TransientModel):
             if not self.new_product_id:
                 raise UserError(_('Vui lòng chọn sản phẩm!'))
             
-            # Kiểm tra vị trí đã có quant chưa
+            # Kiểm tra vị trí đã có quant chưa (chỉ check quants có tracking trong cùng warehouse)
             existing = self.env['stock.quant'].search([
+                ('location_id', 'child_of', self.location_id.id),
                 ('posx', '=', self.posx),
                 ('posy', '=', self.posy),
                 ('posz', '=', self.posz),
                 ('display_on_map', '=', True),
                 ('quantity', '>', 0),
+                ('product_id.tracking', '!=', 'none'),
             ], limit=1)
             
             if existing:
@@ -97,13 +99,15 @@ class AssignLotPositionWizard(models.TransientModel):
             if not self.quant_id:
                 raise UserError(_('Vui lòng chọn lot/quant!'))
             
-            # Kiểm tra vị trí đã có quant khác chưa
+            # Kiểm tra vị trí đã có quant khác chưa (chỉ check quants có tracking trong cùng warehouse)
             existing = self.env['stock.quant'].search([
+                ('location_id', 'child_of', self.location_id.id),
                 ('posx', '=', self.posx),
                 ('posy', '=', self.posy),
                 ('posz', '=', self.posz),
                 ('display_on_map', '=', True),
                 ('quantity', '>', 0),
+                ('product_id.tracking', '!=', 'none'),
                 ('id', '!=', self.quant_id.id),
             ], limit=1)
             
