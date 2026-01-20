@@ -23,11 +23,9 @@
         'stock',
         'purchase_stock',
         'mrp',
-        'purchase_lot',
     ],
     'data': [
         'views/product_template_views.xml',
-        'views/purchase_order_views.xml',
         'views/stock_lot_views.xml',
     ],
     'installable': True,
