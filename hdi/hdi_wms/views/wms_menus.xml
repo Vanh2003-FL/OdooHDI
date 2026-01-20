@@ -6,6 +6,12 @@
               sequence="15"
               groups="group_wms_user"/>
 
+    <menuitem id="menu_warehouse_3d"
+              name="🗺️ Sơ Đồ Kho 3D"
+              parent="menu_wms_root"
+              action="action_warehouse_layout_list"
+              sequence="5"/>
+
     <menuitem id="menu_batch"
               name="Lô hàng / Pallet"
               parent="menu_wms_root"

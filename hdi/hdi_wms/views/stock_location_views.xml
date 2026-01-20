@@ -22,6 +22,12 @@
                 <field name="max_volume" groups="hdi_wms.group_wms_manager"/>
                 <field name="max_weight" groups="hdi_wms.group_wms_manager"/>
                 <field name="location_priority" groups="hdi_wms.group_wms_manager"/>
+                
+                <!-- 3D Warehouse Integration -->
+                <field name="warehouse_layout_id" groups="hdi_wms.group_wms_manager"/>
+                <field name="color_code_hex" groups="hdi_wms.group_wms_manager"/>
+                <field name="accessibility_score" readonly="1" groups="hdi_wms.group_wms_user"/>
+                <field name="location_3d_type" groups="hdi_wms.group_wms_manager"/>
             </field>
         </field>
     </record>
@@ -35,6 +41,8 @@
             <field name="usage" position="after">
                 <field name="coordinate_display" optional="show" groups="hdi_wms.group_wms_user"/>
                 <field name="batch_count" optional="show" groups="hdi_wms.group_wms_user"/>
+                <field name="accessibility_score" optional="show" groups="hdi_wms.group_wms_user"/>
+                <field name="warehouse_layout_id" optional="show" groups="hdi_wms.group_wms_user"/>
             </field>
         </field>
     </record>

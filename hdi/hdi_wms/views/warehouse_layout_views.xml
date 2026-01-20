@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM VIEW -->
+    <record id="view_warehouse_layout_form" model="ir.ui.view">
+        <field name="name">warehouse.layout.form</field>
+        <field name="model">warehouse.layout</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_open_3d_view" string="🗺️ Xem Sơ Đồ 3D" type="object" class="oe_highlight"/>
+                    <button name="refresh_layout_data" string="🔄 Cập Nhật Dữ Liệu" type="object"/>
+                    <field name="is_active" widget="boolean_toggle"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên Sơ Đồ"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Thông Tin Cơ Bản">
+                            <field name="warehouse_id"/>
+                            <field name="is_3d_enabled" widget="boolean_toggle"/>
+                            <field name="grid_unit"/>
+                        </group>
+                        
+                        <group string="Kích Thước Kho">
+                            <field name="max_x"/>
+                            <field name="max_y"/>
+                            <field name="max_z"/>
+                        </group>
+                    </group>
+
+                    <group string="Thống Kê" class="oe_read_only">
+                        <group>
+                            <field name="location_count"/>
+                            <field name="batch_count"/>
+                        </group>
+                        <group>
+                            <field name="total_capacity_volume"/>
+                            <field name="total_used_volume"/>
+                            <field name="capacity_percentage" widget="gauge" title="Dung Lượng Sử Dụng"/>
+                        </group>
+                    </group>
+
+                    <field name="description" placeholder="Mô tả sơ đồ..."/>
+
+                    <notebook>
+                        <page string="Vị Trí (Locations)" name="locations">
+                            <button name="action_view_locations" string="📍 Xem Tất Cả Vị Trí" type="object" class="oe_button"/>
+                            <field name="location_ids" nolabel="1" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="complete_name"/>
+                                    <field name="coordinate_display"/>
+                                    <field name="batch_count"/>
+                                    <field name="capacity_percentage" widget="gauge"/>
+                                    <field name="is_putable"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Lô Hàng (Batches)" name="batches">
+                            <button name="action_view_batches" string="📦 Xem Tất Cả Lô Hàng" type="object" class="oe_button"/>
+                        </page>
+
+                        <page string="Dữ Liệu JSON" name="json_data">
+                            <field name="layout_data_json" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_ids" widget="mail_thread"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- LIST/TREE VIEW -->
+    <record id="view_warehouse_layout_list" model="ir.ui.view">
+        <field name="name">warehouse.layout.list</field>
+        <field name="model">warehouse.layout</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="max_x"/>
+                <field name="max_y"/>
+                <field name="max_z"/>
+                <field name="grid_unit"/>
+                <field name="location_count"/>
+                <field name="batch_count"/>
+                <field name="capacity_percentage" widget="gauge"/>
+                <field name="is_active" widget="boolean"/>
+                <field name="is_3d_enabled" widget="boolean"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- KANBAN VIEW -->
+    <record id="view_warehouse_layout_kanban" model="ir.ui.view">
+        <field name="name">warehouse.layout.kanban</field>
+        <field name="model">warehouse.layout</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="warehouse_id" class="o_kanban_small_column">
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card">
+                            <div class="oe_kanban_card_header">
+                                <strong><field name="name"/></strong>
+                            </div>
+                            
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_right">
+                                        <span class="badge badge-secondary">
+                                            📍 <field name="location_count"/>
+                                        </span>
+                                        <span class="badge badge-info">
+                                            📦 <field name="batch_count"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <strong>Kích thước:</strong> 
+                                    <field name="max_x"/> × 
+                                    <field name="max_y"/> × 
+                                    <field name="max_z"/>
+                                </div>
+                                <div>
+                                    <field name="capacity_percentage" widget="gauge" title="Dung Lượng"/>
+                                </div>
+                                <div class="oe_kanban_bottom">
+                                    <div class="oe_kanban_right">
+                                        <t t-if="record.is_3d_enabled.value">
+                                            <span class="badge badge-success">3D ✓</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="oe_kanban_footer">
+                                <button name="action_open_3d_view" type="object" 
+                                        class="btn btn-sm btn-primary">
+                                    🗺️ Xem 3D
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ACTION WINDOW -->
+    <record id="action_warehouse_layout_list" model="ir.actions.act_window">
+        <field name="name">Sơ Đồ Kho 3D</field>
+        <field name="res_model">warehouse.layout</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo sơ đồ kho 3D mới!
+            </p>
+            <p>
+                Quản lý sơ đồ kho với tọa độ 3D, hiển thị vị trí và lô hàng.
+            </p>
+        </field>
+    </record>
+
+    <!-- SEARCH VIEW -->
+    <record id="view_warehouse_layout_search" model="ir.ui.view">
+        <field name="name">warehouse.layout.search</field>
+        <field name="model">warehouse.layout</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="[('name', 'ilike', self)]"/>
+                <field name="warehouse_id"/>
+                <filter string="Đang Sử Dụng" name="is_active" domain="[('is_active', '=', True)]"/>
+                <filter string="Bật 3D" name="is_3d_enabled" domain="[('is_3d_enabled', '=', True)]"/>
+                <separator/>
+                <group expand="0" string="Nhóm Theo">
+                    <filter string="Kho" name="group_by_warehouse" domain="[]" context="{'group_by': 'warehouse_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>
