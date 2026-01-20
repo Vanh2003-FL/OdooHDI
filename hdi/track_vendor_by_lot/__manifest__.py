@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Track Vendor by Lot',
-    'version': '17.0.1.0.1',
+    'version': '18.0.1.0.0',
     'category': 'Inventory/Inventory',
     'summary': 'Track vendor information in lot/serial numbers',
     'description': """
