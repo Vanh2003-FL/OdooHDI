@@ -3,8 +3,7 @@
     <menuitem id="menu_wms_root"
               name="Quản lý Kho"
               parent="stock.menu_stock_root"
-              sequence="15"
-              groups="group_wms_user"/>
+              sequence="15"/>
 
     <menuitem id="menu_warehouse_3d"
               name="🗺️ Sơ Đồ Kho 3D"
