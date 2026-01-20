@@ -100,14 +100,12 @@
         <field name="name">stock.quant.available.tree</field>
         <field name="model">stock.quant</field>
         <field name="arch" type="xml">
-            <tree string="Lots khả dụng">
+            <list string="Lots khả dụng">
                 <field name="product_id"/>
                 <field name="lot_id"/>
                 <field name="location_id"/>
                 <field name="quantity"/>
-                <field name="available_quantity"/>
-                <field name="reserved_quantity"/>
-            </tree>
+            </list>
         </field>
     </record>
 </odoo>
