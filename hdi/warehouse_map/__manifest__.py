@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Warehouse Map Layout',
-    'version': '17.0.1.6.4',
+    'version': '18.0.1.0.0',
     'category': 'Inventory/Inventory',
     'summary': 'Sơ đồ kho - Cell updates instantly',
     'description': """
@@ -24,9 +24,9 @@
     ],
     'assets': {
         'web.assets_backend': [
-            'warehouse_map/static/src/css/warehouse_map.css',
-            'warehouse_map/static/src/js/warehouse_map_view.js',
-            'warehouse_map/static/src/xml/warehouse_map.xml',
+            'hdi_warehouse_map/static/src/css/warehouse_map.css',
+            'hdi_warehouse_map/static/src/js/warehouse_map_view.js',
+            'hdi_warehouse_map/static/src/xml/warehouse_map.xml',
         ],
     },
     'installable': True,

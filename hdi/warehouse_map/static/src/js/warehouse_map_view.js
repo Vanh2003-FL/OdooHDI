@@ -33,6 +33,9 @@ export class WarehouseMapView extends Component {
         onMounted(() => {
             // Close context menu when clicking outside
             document.addEventListener('click', this.closeContextMenu.bind(this));
+            return () => {
+                document.removeEventListener('click', this.closeContextMenu.bind(this));
+            };
         });
     }
 

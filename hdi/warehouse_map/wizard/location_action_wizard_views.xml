@@ -22,13 +22,13 @@
                                 <field name="quant_ids" widget="many2many_tags" 
                                        domain="[('location_id', '=', location_id), ('quantity', '>', 0)]"
                                        options="{'no_create': True}">
-                                    <tree>
+                                    <list>
                                         <field name="product_id"/>
                                         <field name="lot_id"/>
                                         <field name="quantity"/>
                                         <field name="reserved_quantity"/>
                                         <field name="available_quantity"/>
-                                    </tree>
+                                    </list>
                                 </field>
                             </group>
                             <separator string="Hoặc nhập thủ công"/>
