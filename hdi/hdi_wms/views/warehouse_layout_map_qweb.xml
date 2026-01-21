@@ -96,37 +96,46 @@
                                     <t t-set="qty_total" t-value="int(batch.quantity or 0)" type="int"/>
                                     <t t-set="qty_reserved" t-value="int(batch.reserved_quantity or 0)" type="int"/>
                                     <t t-set="qty_available" t-value="qty_total - qty_reserved" type="int"/>
-                                    <div t-attf-class="grid-cell occupied" t-attf-data-id="#{gl.id}" t-attf-data-location-id="#{gl.id}" t-attf-data-x="#{gl.column}" t-attf-data-y="#{gl.row}">
-                                        <div class="quant-cell" t-attf-data-batch-id="#{batch_id_val}">
-                                            <div t-attf-class="quant-badge #{badge_color}" t-attf-title="Tồn #{days} ngày">
-                                                <t t-esc="days"/><span class="badge-text">d</span>
-                                            </div>
-                                            <div class="quant-info">
-                                                <div class="quant-lot">
-                                                    <strong><t t-esc="lot_name"/></strong>
-                                                </div>
-                                                <div class="quant-product">
-                                                    <t t-esc="product_name"/>
-                                                </div>
-                                                <div class="quant-qty">
-                                                    <span class="qty-total"><t t-esc="qty_total"/></span>
-                                                    <span class="qty-available">(<t t-esc="qty_available"/>)</span>
-                                                </div>
-                                            </div>
-                                            <div class="cell-actions">
-                                                <button class="cell-action-btn edit" title="Chỉnh sửa"><i class="fa fa-pencil"></i></button>
-                                                <button class="cell-action-btn move" title="Di chuyển"><i class="fa fa-arrows"></i></button>
-                                                <button class="cell-action-btn remove" title="Xóa"><i class="fa fa-trash"></i></button>
-                                            </div>
+                                    
+                                    <div t-attf-class="batch-card occupied" t-attf-data-id="#{gl.id}" t-attf-data-grid-id="#{gl.id}" t-attf-data-batch-id="#{batch_id_val}" t-attf-data-x="#{gl.column}" t-attf-data-y="#{gl.row}">
+                                        <div class="card-header">
+                                            <div class="batch-code"><t t-esc="lot_name"/></div>
+                                            <div t-attf-class="batch-status #{badge_color}"/>
                                         </div>
+                                        <div class="card-body">
+                                            <div class="batch-product"><strong><t t-esc="product_name"/></strong></div>
+                                            <div class="batch-qty">SL: <t t-esc="qty_total"/> Đơn vị</div>
+                                            <div class="batch-date">Nhập: <t t-esc="batch.create_date" t-options="{'widget': 'date'}"/></div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <span t-attf-class="days-badge #{badge_color}">
+                                                <i class="fa fa-calendar"></i> <t t-esc="days"/>d
+                                            </span>
+                                        </div>
+                                        <div class="card-menu-trigger" title="Menu tác vụ">⋮</div>
                                     </div>
                                 </t>
                                 <t t-else="">
-                                    <div class="grid-cell empty" t-attf-data-id="#{gl.id}" t-attf-data-location-id="#{gl.id}" t-attf-data-x="#{gl.column}" t-attf-data-y="#{gl.row}">
-                                        <div class="empty-cell" title="Nhấn để thêm hàng">+</div>
+                                    <div class="batch-card empty" t-attf-data-id="#{gl.id}" t-attf-data-grid-id="#{gl.id}" t-attf-data-x="#{gl.column}" t-attf-data-y="#{gl.row}">
+                                        <div class="empty-placeholder">
+                                            <i class="fa fa-plus-circle"></i>
+                                            <span>Thêm hàng</span>
+                                        </div>
                                     </div>
                                 </t>
                             </t>
+                        </div>
+                        
+                        <!-- Context Menu -->
+                        <div class="batch-context-menu" id="batch-context-menu" style="display: none;">
+                            <div class="menu-item" data-action="pick"><i class="fa fa-hand-paper-o"></i> Lấy hàng</div>
+                            <div class="menu-item" data-action="move"><i class="fa fa-arrows"></i> Chuyển vị trí</div>
+                            <div class="menu-item" data-action="transfer"><i class="fa fa-truck"></i> Chuyển kho</div>
+                            <div class="menu-divider"></div>
+                            <div class="menu-item" data-action="details"><i class="fa fa-list"></i> Xem chi tiết</div>
+                            <div class="menu-item" data-action="location"><i class="fa fa-map-marker"></i> Chi tiết vị trí</div>
+                            <div class="menu-divider"></div>
+                            <div class="menu-item delete" data-action="remove"><i class="fa fa-times"></i> Xóa khỏi sơ đồ</div>
                         </div>
                     </div>
 
