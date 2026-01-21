@@ -40,7 +40,6 @@
                 <header>
                     <button name="action_activate" string="Kích hoạt" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_archive" string="Lưu trữ" type="object" invisible="state != 'active'"/>
-                    <button name="action_view_warehouse_map" string="📊 Xem Sơ đồ Kho" type="object" class="btn-info"/>
                     <field name="state" widget="statusbar" options="{'clickable': False}"/>
                 </header>
                 <sheet>
