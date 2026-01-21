@@ -9,25 +9,25 @@ class PutawayMapBridge(models.Model):
     
     # Map position of suggested location
     map_posx = fields.Integer(
-        related='suggested_location_id.coordinate_x',
+        related='location_id.coordinate_x',
         string='Map Position X',
         readonly=True
     )
     
     map_posy = fields.Integer(
-        related='suggested_location_id.coordinate_y',
+        related='location_id.coordinate_y',
         string='Map Position Y',
         readonly=True
     )
     
     map_posz = fields.Integer(
-        related='suggested_location_id.coordinate_z',
+        related='location_id.coordinate_z',
         string='Map Position Z',
         readonly=True
     )
     
     display_on_map = fields.Boolean(
-        related='suggested_location_id.display_on_map',
+        related='location_id.display_on_map',
         string='Visible on Map',
         readonly=True
     )
@@ -39,14 +39,14 @@ class PutawayMapBridge(models.Model):
         help='Warehouse map chứa vị trí này'
     )
     
-    @api.depends('suggested_location_id', 'suggested_location_id.location_id')
+    @api.depends('location_id')
     def _compute_warehouse_map(self):
         """Find warehouse map for this putaway suggestion"""
         for putaway in self:
-            if putaway.suggested_location_id:
+            if putaway.location_id:
                 # Find warehouse
                 warehouse = self.env['stock.warehouse'].search([
-                    ('lot_stock_id', 'parent_of', putaway.suggested_location_id.id)
+                    ('lot_stock_id', 'parent_of', putaway.location_id.id)
                 ], limit=1)
                 
                 if warehouse:
@@ -77,11 +77,11 @@ class PutawayMapBridge(models.Model):
         return {
             'type': 'ir.actions.client',
             'tag': 'warehouse_map_view',
-            'name': f'Putaway Location - {self.suggested_location_id.name}',
+            'name': f'Putaway Location - {self.location_id.name}',
             'context': {
                 'active_id': self.warehouse_map_id.id,
-                'highlight_location_ids': [self.suggested_location_id.id],
-                'center_on_location': self.suggested_location_id.id,
+                'highlight_location_ids': [self.location_id.id],
+                'center_on_location': self.location_id.id,
             }
         }
 

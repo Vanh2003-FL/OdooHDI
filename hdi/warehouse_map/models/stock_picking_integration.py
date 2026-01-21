@@ -93,11 +93,11 @@ class StockPickingIntegration(models.Model):
                 # Get putaway suggestion
                 putaway = self.env['hdi.putaway.suggestion'].search([
                     ('product_id', '=', product.id),
-                    ('state', '=', 'pending')
-                ], order='priority desc, suggested_location_priority asc', limit=3)
+                    ('state', '=', 'suggested')
+                ], order='priority desc, score desc', limit=3)
                 
                 if putaway:
-                    suggested_locations |= putaway.mapped('suggested_location_id')
+                    suggested_locations |= putaway.mapped('location_id')
                 else:
                     # Fallback: find best available location
                     available = self.env['stock.location'].search([

@@ -55,11 +55,11 @@ class ReceiptPutawayWizard(models.TransientModel):
         # 1. Try putaway suggestion from hdi_wms
         putaway = self.env['hdi.putaway.suggestion'].search([
             ('product_id', '=', product.id),
-            ('state', '=', 'pending')
-        ], order='priority desc, suggested_location_priority asc', limit=1)
+            ('state', '=', 'suggested')
+        ], order='priority desc, score desc', limit=1)
         
-        if putaway and putaway.suggested_location_id:
-            return putaway.suggested_location_id
+        if putaway and putaway.location_id:
+            return putaway.location_id
         
         # 2. Find available location with map coordinates
         location = self.env['stock.location'].search([

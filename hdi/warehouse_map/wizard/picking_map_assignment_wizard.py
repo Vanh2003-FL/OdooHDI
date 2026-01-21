@@ -37,7 +37,7 @@ class PickingMapAssignmentWizard(models.TransientModel):
                 
                 suggestions = self.env['hdi.putaway.suggestion'].search([
                     ('product_id', 'in', products.ids),
-                    ('state', '=', 'pending')
+                    ('state', '=', 'suggested')
                 ], order='priority desc')
                 
                 wizard.suggested_putaway_ids = suggestions
@@ -58,11 +58,11 @@ class PickingMapAssignmentWizard(models.TransientModel):
                     # Find best putaway location
                     putaway = self.env['hdi.putaway.suggestion'].search([
                         ('product_id', '=', move.product_id.id),
-                        ('state', '=', 'pending')
-                    ], order='priority desc, suggested_location_priority asc', limit=1)
+                        ('state', '=', 'suggested')
+                    ], order='priority desc, score desc', limit=1)
                     
                     if putaway:
-                        suggested_location = putaway.suggested_location_id
+                        suggested_location = putaway.location_id
                     else:
                         # Fallback to any available location
                         suggested_location = self.env['stock.location'].search([
