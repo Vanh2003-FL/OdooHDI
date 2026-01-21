@@ -82,7 +82,6 @@ class HDIWarehouseLayout(models.Model):
         string='Utilization Rate (%)',
         store=True,
     )
-
     # ===== STATUS =====
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -91,8 +90,9 @@ class HDIWarehouseLayout(models.Model):
     ], string='Status', default='draft', tracking=True)
 
     is_active = fields.Boolean(
-        related='state',
+        compute='_compute_is_active',
         string='Active',
+        store=True,
     )
 
     # ===== TIMESTAMPS =====
@@ -126,6 +126,12 @@ class HDIWarehouseLayout(models.Model):
         
         if cells:
             self.env['hdi.warehouse.layout.grid'].create(cells)
+
+    @api.depends('state')
+    def _compute_is_active(self):
+        """Compute is_active based on state"""
+        for record in self:
+            record.is_active = record.state == 'active'
 
     @api.depends('location_grid_ids', 'location_grid_ids.batch_id')
     def _compute_slot_stats(self):
