@@ -122,19 +122,19 @@ class AssignLotPositionWizard(models.TransientModel):
                 'Vị trí [%d, %d, %d] đang bị chặn'
             ) % (self.posx, self.posy, self.posz))
 
-        # Kiểm tra vị trí đã có lot khác chưa
-        existing = self.env['stock.quant'].search([
-            ('location_id', 'child_of', location.id),
+        # Kiểm tra vị trí đã có batch khác chưa
+        existing_batch = self.env['hdi.batch'].search([
+            ('id', '!=', batch.id),
+            ('display_on_map', '=', True),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
             ('posz', '=', self.posz),
-            ('display_on_map', '=', True),
-            ('quantity', '>', 0),
-            ('batch_id', '!=', batch.id),
         ], limit=1)
 
-        if existing:
-            raise UserError(_('Vị trí đã có lot khác!'))
+        if existing_batch:
+            raise UserError(_(
+                'Vị trí [%d, %d, %d] đã có batch: %s'
+            ) % (self.posx, self.posy, self.posz, existing_batch.name))
 
         # Gán vị trí cho batch
         batch.write({

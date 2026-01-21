@@ -45,20 +45,15 @@ class WarehouseMap(models.Model):
     
     @api.model
     def get_map_data(self, map_id):
-        """Lấy dữ liệu sơ đồ kho với thông tin lot/batch - mỗi lot hoặc batch là 1 vị trí"""
+        """Lấy dữ liệu sơ đồ kho với thông tin batches - chỉ hiển thị batch"""
         warehouse_map = self.browse(map_id)
         if not warehouse_map:
             return {}
         
-        # Lấy tất cả locations con
-        domain = [('location_id', 'child_of', warehouse_map.location_id.id),
-                  ('usage', '=', 'internal')]
-        locations = self.env['stock.location'].search(domain)
-        
         # Tổ chức dữ liệu theo vị trí
         lot_data = {}
         
-        # 1. Lấy thông tin batches có display_on_map
+        # Lấy thông tin batches có display_on_map
         batches = self.env['hdi.batch'].search([
             ('display_on_map', '=', True),
             ('posx', '!=', False),
@@ -101,50 +96,6 @@ class WarehouseMap(models.Model):
                 'z': z,
                 'position_key': position_key,
             }
-        
-        # 2. Lấy thông tin quants (lot/serial) - chỉ những quants KHÔNG thuộc batch nào
-        # CHỈ hiển thị sản phẩm có theo dõi lô/serial (tracking != 'none')
-        quants = self.env['stock.quant'].search([
-            ('location_id', 'in', locations.ids),
-            ('quantity', '>', 0),
-            ('display_on_map', '=', True),
-            ('product_id.tracking', '!=', 'none'),
-            ('batch_id', '=', False),  # Chỉ lấy quants không thuộc batch
-        ])
-        
-        for quant in quants:
-            # Lấy vị trí x, y từ quant
-            x = quant.posx or 0
-            y = quant.posy or 0
-            z = quant.posz or 0
-            
-            # Tạo key unique cho mỗi vị trí
-            position_key = f"{x}_{y}_{z}"
-            
-            lot_info = {
-                'id': quant.id,
-                'quant_id': quant.id,
-                'product_id': quant.product_id.id,
-                'product_name': quant.product_id.display_name,
-                'product_code': quant.product_id.default_code or '',
-                'lot_id': quant.lot_id.id if quant.lot_id else False,
-                'lot_name': quant.lot_id.name if quant.lot_id else 'No Lot',
-                'quantity': quant.quantity,
-                'uom': quant.product_uom_id.name,
-                'reserved_quantity': quant.reserved_quantity,
-                'available_quantity': quant.quantity - quant.reserved_quantity,
-                'location_id': quant.location_id.id,
-                'location_name': quant.location_id.name,
-                'location_complete_name': quant.location_id.complete_name,
-                'in_date': quant.in_date.strftime('%d-%m-%Y') if quant.in_date else False,
-                'days_in_stock': quant.days_in_stock,
-                'x': x,
-                'y': y,
-                'z': z,
-                'position_key': position_key,
-            }
-            
-            lot_data[position_key] = lot_info
         
         # Lấy blocked cells
         blocked_cells = self.env['warehouse.map.blocked.cell'].get_blocked_cells_dict(warehouse_map.id)
