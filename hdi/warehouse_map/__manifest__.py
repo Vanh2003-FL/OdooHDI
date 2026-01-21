@@ -25,6 +25,7 @@
     'assets': {
         'web.assets_backend': [
             'warehouse_map/static/src/css/warehouse_map.css',
+            'warehouse_map/static/src/js/batch_selector_widget.js',
             'warehouse_map/static/src/js/warehouse_map_view.js',
             'warehouse_map/static/src/xml/warehouse_map.xml',
         ],
