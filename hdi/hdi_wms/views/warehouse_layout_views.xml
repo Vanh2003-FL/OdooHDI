@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_open_3d_view" string="Xem Sơ Đồ 3D" type="object" class="oe_highlight"/>
                     <button name="refresh_layout_data" string="Cập Nhật Dữ Liệu" type="object"/>
                     <field name="is_active" widget="boolean_toggle"/>
                 </header>
@@ -22,7 +21,6 @@
                     <group>
                         <group string="Thông Tin Cơ Bản">
                             <field name="warehouse_id"/>
-                            <field name="is_3d_enabled" widget="boolean_toggle"/>
                             <field name="grid_unit"/>
                         </group>
                         
@@ -95,7 +93,6 @@
                 <field name="batch_count"/>
                 <field name="capacity_percentage" widget="gauge"/>
                 <field name="is_active" widget="boolean"/>
-                <field name="is_3d_enabled" widget="boolean"/>
             </list>
         </field>
     </record>
@@ -133,20 +130,6 @@
                                 <div>
                                     <field name="capacity_percentage" widget="gauge" title="Dung Lượng"/>
                                 </div>
-                                <div class="oe_kanban_bottom">
-                                    <div class="oe_kanban_right">
-                                        <t t-if="record.is_3d_enabled.value">
-                                            <span class="badge badge-success">3D ✓</span>
-                                        </t>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="oe_kanban_footer">
-                                <button name="action_open_3d_view" type="object"
-                                        class="btn btn-sm btn-primary">
-                                    Xem 3D
-                                </button>
                             </div>
                         </div>
                     </t>
@@ -157,15 +140,15 @@
 
     <!-- ACTION WINDOW -->
     <record id="action_warehouse_layout_list" model="ir.actions.act_window">
-        <field name="name">Sơ Đồ Kho 3D</field>
+        <field name="name">Sơ Đồ Kho</field>
         <field name="res_model">warehouse.layout</field>
         <field name="view_mode">list,kanban,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Tạo sơ đồ kho 3D mới!
+                Tạo sơ đồ kho mới!
             </p>
             <p>
-                Quản lý sơ đồ kho với tọa độ 3D, hiển thị vị trí và lô hàng.
+                Quản lý sơ đồ kho, hiển thị vị trí và lô hàng.
             </p>
         </field>
     </record>
@@ -179,7 +162,6 @@
                 <field name="name" filter_domain="[('name', 'ilike', self)]"/>
                 <field name="warehouse_id"/>
                 <filter string="Đang Sử Dụng" name="is_active" domain="[('is_active', '=', True)]"/>
-                <filter string="Bật 3D" name="is_3d_enabled" domain="[('is_3d_enabled', '=', True)]"/>
                 <separator/>
                 <group expand="0" string="Nhóm Theo">
                     <filter string="Kho" name="group_by_warehouse" domain="[]" context="{'group_by': 'warehouse_id'}"/>

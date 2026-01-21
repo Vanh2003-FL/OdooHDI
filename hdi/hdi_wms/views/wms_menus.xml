@@ -5,12 +5,6 @@
               parent="stock.menu_stock_root"
               sequence="15"/>
 
-    <menuitem id="menu_warehouse_3d"
-              name="Sơ Đồ Kho 3D"
-              parent="menu_wms_root"
-              action="hdi_wms.action_warehouse_layout_list"
-              sequence="5"/>
-
     <menuitem id="menu_batch"
               name="Lô hàng / Pallet"
               parent="menu_wms_root"

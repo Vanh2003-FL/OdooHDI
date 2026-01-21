@@ -42,14 +42,7 @@ HDI Warehouse Management System
         # Menus
         'views/wms_menus.xml',
     ],
-    'demo': [
-        'data/warehouse_3d_demo.xml',
-    ],
-    'assets': {
-        'web.assets_backend': [
-            'hdi_wms/static/src/js/warehouse_3d_viewer.js',
-        ],
-    },
+    'assets': {},
     'installable': True,
     'application': True,
     'auto_install': False,
