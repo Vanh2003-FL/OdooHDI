@@ -46,7 +46,10 @@ HDI Warehouse Management System
     'assets': {
         'web.assets_backend': [
             'hdi_wms/static/src/css/warehouse_layout_grid.css',
+            'hdi_wms/static/src/css/warehouse_layout_view.css',
             'hdi_wms/static/src/js/warehouse_layout_grid.js',
+            'hdi_wms/static/src/js/warehouse_layout_view.js',
+            'hdi_wms/static/src/xml/warehouse_layout_view.xml',
         ],
     },
     'installable': True,

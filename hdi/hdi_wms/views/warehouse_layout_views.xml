@@ -2,11 +2,22 @@
 <odoo>
     <!-- ===== WAREHOUSE LAYOUT ACTIONS ===== -->
     
+    <!-- Main List/Form Action -->
     <record id="action_warehouse_layout_map" model="ir.actions.act_window">
         <field name="name">Sơ đồ Kho</field>
         <field name="res_model">hdi.warehouse.layout</field>
-        <field name="view_mode">qweb,list,form</field>
+        <field name="view_mode">warehouse_layout_map,list,form</field>
         <field name="target">main</field>
+    </record>
+
+    <!-- Custom Owl View for Warehouse Layout Map -->
+    <record id="view_warehouse_layout_map_owl" model="ir.ui.view">
+        <field name="name">hdi.warehouse.layout.map.owl</field>
+        <field name="model">hdi.warehouse.layout</field>
+        <field name="type">warehouse_layout_map</field>
+        <field name="arch" type="xml">
+            <warehouse_layout_map/>
+        </field>
     </record>
 
     <!-- ===== LIST VIEW ===== -->
@@ -37,9 +48,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_activate" string="Activate" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_archive" string="Archive" type="object" invisible="state != 'active'"/>
-                    <button name="action_view_grid" string="View Grid Map" type="object" class="btn-info"/>
+                    <button name="action_activate" string="Kích hoạt" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_archive" string="Lưu trữ" type="object" invisible="state != 'active'"/>
                     <field name="state" widget="statusbar" options="{'clickable': False}"/>
                 </header>
                 <sheet>
@@ -48,18 +58,18 @@
                     </div>
                     
                     <group>
-                        <group string="Warehouse Information">
+                        <group string="Thông tin Kho">
                             <field name="warehouse_id"/>
                             <field name="description"/>
                         </group>
-                        <group string="Grid Dimensions">
+                        <group string="Kích thước Lưới">
                             <field name="rows"/>
                             <field name="columns"/>
                             <field name="levels"/>
                         </group>
                     </group>
 
-                    <group string="Statistics">
+                    <group string="Thống kê">
                         <group>
                             <field name="total_slots"/>
                             <field name="occupied_slots"/>
@@ -71,7 +81,7 @@
                     </group>
 
                     <notebook>
-                        <page string="Grid Cells" name="grid_cells">
+                        <page string="Ô Lưới" name="grid_cells">
                             <field name="location_grid_ids" nolabel="1">
                                 <list>
                                     <field name="row"/>

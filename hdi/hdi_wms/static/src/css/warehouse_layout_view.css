@@ -1,0 +1,382 @@
+/* Warehouse Layout View Styles */
+
+.o_warehouse_layout_container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #f8f9fa;
+}
+
+/* Loading State */
+.o_warehouse_layout_loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+}
+
+.o_warehouse_layout_loading i {
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+/* Header */
+.o_warehouse_layout_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    gap: 2rem;
+}
+
+.layout_title_section h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.layout_info {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.95rem;
+    opacity: 0.95;
+}
+
+.layout_controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search_box {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search_box input {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+}
+
+.search_box input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search_box input:focus {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    outline: none;
+}
+
+.zoom_controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.zoom_level {
+    min-width: 60px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.zoom_controls button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.zoom_controls button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Statistics */
+.o_warehouse_layout_stats {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+    background-color: white;
+    border-bottom: 1px solid #e0e0e0;
+    flex-wrap: wrap;
+}
+
+.stat_item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.stat_label {
+    font-weight: 500;
+    color: #666;
+}
+
+.stat_value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Legend */
+.o_warehouse_layout_legend {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    flex-wrap: wrap;
+}
+
+.legend_item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.legend_color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+}
+
+/* Grid Container */
+.o_warehouse_layout_grid_container {
+    flex: 1;
+    overflow: auto;
+    padding: 1.5rem;
+    transform-origin: top left;
+    transition: transform 0.3s ease;
+}
+
+.o_warehouse_layout_grid {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Grid Cells */
+.o_warehouse_cell {
+    width: 150px;
+    height: 120px;
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.o_warehouse_cell:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+}
+
+.o_warehouse_cell_empty {
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.o_warehouse_cell_occupied {
+    background-color: #fff;
+}
+
+.o_warehouse_cell_green {
+    border-left: 4px solid #28a745;
+}
+
+.o_warehouse_cell_orange {
+    border-left: 4px solid #ffc107;
+}
+
+.o_warehouse_cell_red {
+    border-left: 4px solid #dc3545;
+    animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { background-color: #fff; }
+    50% { background-color: #fff3cd; }
+}
+
+.o_hidden {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+/* Cell Content */
+.cell_batch_card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.cell_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+}
+
+.batch_name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+    flex: 1;
+    word-break: break-word;
+}
+
+.batch_days {
+    display: flex;
+}
+
+.cell_body {
+    font-size: 0.85rem;
+    color: #666;
+    flex: 1;
+}
+
+.product_name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.batch_qty {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.cell_empty_placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ccc;
+}
+
+.cell_empty_placeholder i {
+    font-size: 2rem;
+}
+
+/* Context Menu */
+.o_warehouse_context_menu {
+    position: fixed;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 220px;
+}
+
+.menu_header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.menu_item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.menu_item:hover {
+    background-color: #f5f5f5;
+}
+
+.menu_item.menu_danger {
+    color: #dc3545;
+}
+
+.menu_item.menu_danger:hover {
+    background-color: #ffe5e5;
+}
+
+.menu_divider {
+    height: 1px;
+    background-color: #f0f0f0;
+}
+
+.menu_item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .o_warehouse_cell {
+        width: 120px;
+        height: 100px;
+        font-size: 0.85rem;
+    }
+
+    .o_warehouse_layout_header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .layout_controls {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .search_box {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .o_warehouse_layout_header {
+        padding: 1rem;
+    }
+
+    .o_warehouse_layout_stats {
+        padding: 0.75rem 1rem;
+        gap: 1rem;
+    }
+
+    .o_warehouse_layout_legend {
+        padding: 0.75rem 1rem;
+        gap: 1rem;
+    }
+
+    .o_warehouse_cell {
+        width: 100px;
+        height: 80px;
+        font-size: 0.75rem;
+    }
+}

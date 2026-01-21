@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="hdi_wms.WarehouseLayoutView" owl="1">
+        <div class="o_warehouse_layout_container">
+            <!-- Loading State -->
+            <t t-if="state.loading">
+                <div class="o_warehouse_layout_loading">
+                    <i class="fa fa-spinner fa-spin fa-3x"/>
+                    <div class="mt-3">Đang tải sơ đồ kho...</div>
+                </div>
+            </t>
+
+            <!-- Main Content -->
+            <t t-else="">
+                <!-- Header -->
+                <div class="o_warehouse_layout_header">
+                    <div class="layout_title_section">
+                        <h2 class="layout_title">
+                            <i class="fa fa-map-marker"/> <t t-esc="state.mapData.name"/>
+                        </h2>
+                        <div class="layout_info">
+                            <span><i class="fa fa-warehouse"/> <t t-esc="state.mapData.warehouse_name"/></span>
+                            <span class="badge badge-info"><t t-esc="state.mapData.rows"/> x <t t-esc="state.mapData.columns"/></span>
+                        </div>
+                    </div>
+                    
+                    <div class="layout_controls">
+                        <div class="search_box">
+                            <input type="text" 
+                                   class="form-control" 
+                                   placeholder="🔍 Tìm kiếm lô hàng..."
+                                   t-model="state.searchQuery"
+                                   t-on-input="(ev) => this.state.searchQuery = ev.target.value"/>
+                        </div>
+                        
+                        <div class="zoom_controls">
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    t-on-click="() => this.updateZoom('out')" 
+                                    title="Zoom ra">−</button>
+                            <span class="zoom_level"><t t-esc="state.zoomLevel"/>%</span>
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    t-on-click="() => this.updateZoom('in')"
+                                    title="Zoom vào">+</button>
+                        </div>
+
+                        <button class="btn btn-sm btn-primary" 
+                                t-on-click="() => this.loadMapData()"
+                                title="Làm mới dữ liệu">
+                            <i class="fa fa-refresh"/> Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="o_warehouse_layout_stats">
+                    <div class="stat_item">
+                        <span class="stat_label">Tổng slot:</span>
+                        <span class="stat_value"><t t-esc="state.mapData.total_slots"/></span>
+                    </div>
+                    <div class="stat_item">
+                        <span class="stat_label">Đã sử dụng:</span>
+                        <span class="stat_value text-success"><t t-esc="state.mapData.occupied_slots"/></span>
+                    </div>
+                    <div class="stat_item">
+                        <span class="stat_label">Trống:</span>
+                        <span class="stat_value text-muted"><t t-esc="state.mapData.empty_slots"/></span>
+                    </div>
+                    <div class="stat_item">
+                        <span class="stat_label">Hiệu suất:</span>
+                        <span class="stat_value text-info"><t t-esc="state.mapData.utilization_rate"/>%</span>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="o_warehouse_layout_legend">
+                    <div class="legend_item">
+                        <div class="legend_color" style="background-color: #28a745;"/>
+                        <span>Bình thường (0-60 ngày)</span>
+                    </div>
+                    <div class="legend_item">
+                        <div class="legend_color" style="background-color: #ffc107;"/>
+                        <span>Cảnh báo (61-90 ngày)</span>
+                    </div>
+                    <div class="legend_item">
+                        <div class="legend_color" style="background-color: #dc3545;"/>
+                        <span>Tồn lâu (&gt;90 ngày)</span>
+                    </div>
+                    <div class="legend_item">
+                        <div class="legend_color" style="background-color: #f0f0f0; border: 1px solid #ddd;"/>
+                        <span>Trống</span>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div class="o_warehouse_layout_grid_container" t-att-style="`transform: scale(${state.zoomLevel / 100});`">
+                    <table class="o_warehouse_layout_grid">
+                        <tbody>
+                            <t t-foreach="state.mapData.rowsArray" t-as="row" t-key="row">
+                                <tr>
+                                    <t t-foreach="state.mapData.columnsArray" t-as="col" t-key="col">
+                                        <t t-set="batch" t-value="getBatchAtPosition(row, col)"/>
+                                        <td t-att-class="getCellClass(batch, row, col)"
+                                            t-on-click="(ev) => this.onCellClick(ev, row, col)">
+                                            
+                                            <!-- Batch Card -->
+                                            <t t-if="batch">
+                                                <div class="cell_batch_card">
+                                                    <div class="cell_header">
+                                                        <div class="batch_name"><t t-esc="batch.name"/></div>
+                                                        <div class="batch_days">
+                                                            <t t-set="days" t-value="getDaysInWarehouse(batch)"/>
+                                                            <span class="badge" t-att-class="days > 90 ? 'badge-danger' : days > 60 ? 'badge-warning' : 'badge-success'">
+                                                                📅 <t t-esc="days"/>d
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="cell_body">
+                                                        <div class="product_name"><t t-esc="batch.product_id[1]"/></div>
+                                                        <div class="batch_qty">SL: <t t-esc="batch.total_quantity"/> Đơn vị</div>
+                                                    </div>
+                                                </div>
+                                            </t>
+
+                                            <!-- Empty Cell -->
+                                            <t t-else="">
+                                                <div class="cell_empty_placeholder">
+                                                    <i class="fa fa-plus-circle"/>
+                                                    <span>Thêm hàng</span>
+                                                </div>
+                                            </t>
+                                        </td>
+                                    </t>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Context Menu -->
+                <t t-if="state.contextMenu.visible and state.contextMenu.batchData">
+                    <div class="o_warehouse_context_menu"
+                         t-att-style="`top: ${state.contextMenu.y}px; left: ${state.contextMenu.x}px;`"
+                         t-on-click.stop="">
+                        <div class="menu_header">
+                            <strong><t t-esc="state.contextMenu.batchData.name"/></strong>
+                        </div>
+                        <div class="menu_item" t-on-click="() => this.onMenuAction('details')">
+                            <i class="fa fa-list"/> Chi tiết lô hàng
+                        </div>
+                        <div class="menu_divider"/>
+                        <div class="menu_item menu_danger" t-on-click="() => this.onMenuAction('remove')">
+                            <i class="fa fa-trash"/> Xóa khỏi sơ đồ
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </div>
+    </t>
+
+</templates>
