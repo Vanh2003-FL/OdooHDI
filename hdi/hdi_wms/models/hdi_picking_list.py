@@ -177,8 +177,7 @@ class HdiPickingList(models.Model):
                 rec.outgoing_type = 'production'
             else:
                 rec.outgoing_type = 'other'
-
-    @api.model
+    @api.model_create_single
     def create(self, vals):
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('hdi.picking.list') or _('New')

@@ -84,7 +84,7 @@ class HdiLooseLine(models.Model):
         string="Công ty",
     )
 
-    @api.model
+    @api.model_create_single
     def create(self, vals):
         result = super().create(vals)
         if not result.move_id and result.picking_id:

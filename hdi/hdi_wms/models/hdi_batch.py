@@ -177,7 +177,7 @@ class HdiBatch(models.Model):
         help="Number of different products in this batch"
     )
 
-    @api.model
+    @api.model_create_single
     def create(self, vals):
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('hdi.batch') or _('New')
