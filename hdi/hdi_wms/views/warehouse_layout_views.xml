@@ -1,10 +1,268 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Simple action for warehouse map -->
-    <record id="action_warehouse_layout_map" model="ir.actions.client">
+    <!-- ===== WAREHOUSE LAYOUT ACTIONS ===== -->
+    
+    <record id="action_warehouse_layout_map" model="ir.actions.act_window">
         <field name="name">Sơ đồ Kho</field>
-        <field name="type">ir.actions.client</field>
-        <field name="tag">warehouse_map</field>
+        <field name="res_model">hdi.warehouse.layout</field>
+        <field name="view_mode">tree,form,qweb</field>
+        <field name="target">main</field>
+    </record>
+
+    <!-- ===== TREE VIEW ===== -->
+    <record id="view_warehouse_layout_tree" model="ir.ui.view">
+        <field name="name">hdi.warehouse.layout.tree</field>
+        <field name="model">hdi.warehouse.layout</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="rows"/>
+                <field name="columns"/>
+                <field name="levels"/>
+                <field name="utilization_rate"/>
+                <field name="occupied_slots"/>
+                <field name="total_slots"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ===== FORM VIEW ===== -->
+    <record id="view_warehouse_layout_form" model="ir.ui.view">
+        <field name="name">hdi.warehouse.layout.form</field>
+        <field name="model">hdi.warehouse.layout</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_activate" string="Activate" type="object" class="btn-primary" states="draft"/>
+                    <button name="action_archive" string="Archive" type="object" states="active"/>
+                    <button name="action_view_grid" string="View Grid Map" type="object" class="btn-info"/>
+                    <field name="state" widget="statusbar" options="{'clickable': False}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Layout Name"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Warehouse Information">
+                            <field name="warehouse_id"/>
+                            <field name="description"/>
+                        </group>
+                        <group string="Grid Dimensions">
+                            <field name="rows"/>
+                            <field name="columns"/>
+                            <field name="levels"/>
+                        </group>
+                    </group>
+
+                    <group string="Statistics">
+                        <group>
+                            <field name="total_slots"/>
+                            <field name="occupied_slots"/>
+                            <field name="empty_slots"/>
+                        </group>
+                        <group>
+                            <field name="utilization_rate" widget="percentage"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Grid Cells" name="grid_cells">
+                            <field name="location_grid_ids" nolabel="1">
+                                <tree>
+                                    <field name="row"/>
+                                    <field name="column"/>
+                                    <field name="level"/>
+                                    <field name="location_code"/>
+                                    <field name="batch_id"/>
+                                    <field name="is_occupied"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== QWEB GRID MAP VIEW ===== -->
+    <record id="view_warehouse_layout_qweb" model="ir.ui.view">
+        <field name="name">hdi.warehouse.layout.qweb</field>
+        <field name="model">hdi.warehouse.layout</field>
+        <field name="type">qweb</field>
+        <field name="arch" type="xml">
+            <t t-name="hdi_wms.warehouse_layout_map_view">
+                <div class="warehouse-map-container">
+                    <!-- Header -->
+                    <div class="warehouse-map-header">
+                        <div class="header-top">
+                            <div class="header-title">
+                                <h1><t t-esc="record.name"/></h1>
+                                <p class="warehouse-name"><i class="fa fa-building-o"></i> <t t-esc="record.warehouse_id.name"/></p>
+                            </div>
+                            <div class="header-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Kích thước</span>
+                                    <span class="stat-value"><t t-esc="record.rows"/> × <t t-esc="record.columns"/> × <t t-esc="record.levels"/></span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Sử dụng</span>
+                                    <span class="stat-value"><t t-esc="record.utilization_rate"/>%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Slot</span>
+                                    <span class="stat-value"><t t-esc="record.occupied_slots"/>/<t t-esc="record.total_slots"/></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="header-controls">
+                            <input type="text" placeholder="🔍 Tìm kiếm theo lô hàng..." class="search-input" />
+                            <div class="zoom-controls">
+                                <button class="zoom-btn" data-zoom="minus">−</button>
+                                <span class="zoom-level">100%</span>
+                                <button class="zoom-btn" data-zoom="plus">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="warehouse-map-legend">
+                        <h3 class="legend-title">Chỉ số tồn kho</h3>
+                        <div class="legend-grid">
+                            <div class="legend-item">
+                                <div class="legend-color green"></div>
+                                <span>Bình thường (0-60 ngày)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color orange"></div>
+                                <span>Cảnh báo (61-90 ngày)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color red"></div>
+                                <span>Tồn lâu (&gt;90 ngày)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color white"></div>
+                                <span>Trống</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid -->
+                    <div class="warehouse-grid-wrapper" id="grid-wrapper">
+                        <div class="grid-toolbar">
+                            <span class="grid-coords">Kích thước lưới: <strong><t t-esc="record.rows"/> × <t t-esc="record.columns"/></strong></span>
+                            <div class="grid-actions">
+                                <button class="action-btn" title="Làm mới"><i class="fa fa-refresh"></i></button>
+                                <button class="action-btn" title="Tải xuống"><i class="fa fa-download"></i></button>
+                            </div>
+                        </div>
+                        <div class="warehouse-grid" t-attf-data-cols="#{record.columns}" t-attf-style="grid-template-columns: repeat(#{record.columns}, 1fr);">
+                            <t t-foreach="record.location_grid_ids" t-as="gl">
+                                <t t-if="gl and gl.batch_id and gl.batch_id.id">
+                                    <t t-set="batch" t-value="gl.batch_id"/>
+                                    <t t-set="days" t-value="batch.days_in_warehouse or 0" type="int"/>
+                                    <t t-set="badge_color" t-value="'badge-green'"/>
+                                    <t t-if="days &gt; 90">
+                                        <t t-set="badge_color" t-value="'badge-red blink'"/>
+                                    </t>
+                                    <t t-elif="days &gt; 60">
+                                        <t t-set="badge_color" t-value="'badge-orange'"/>
+                                    </t>
+                                    <t t-set="lot_name" t-value="'−'"/>
+                                    <t t-if="batch.lot_id">
+                                        <t t-set="lot_name" t-value="batch.lot_id.name"/>
+                                    </t>
+                                    <t t-set="product_name" t-value="'N/A'"/>
+                                    <t t-if="batch.product_id">
+                                        <t t-set="product_name" t-value="batch.product_id.name"/>
+                                    </t>
+                                    <t t-set="batch_id_val" t-value="batch.id" type="int"/>
+                                    <t t-set="qty_total" t-value="int(batch.quantity or 0)" type="int"/>
+                                    <t t-set="qty_reserved" t-value="int(batch.reserved_quantity or 0)" type="int"/>
+                                    <t t-set="qty_available" t-value="qty_total - qty_reserved" type="int"/>
+                                    <div t-attf-class="grid-cell occupied" t-attf-data-id="#{gl.id}" t-attf-data-location-id="#{gl.id}" t-attf-data-x="#{gl.column}" t-attf-data-y="#{gl.row}">
+                                        <div class="quant-cell" t-attf-data-batch-id="#{batch_id_val}">
+                                            <div t-attf-class="quant-badge #{badge_color}" t-attf-title="Tồn #{days} ngày">
+                                                <t t-esc="days"/><span class="badge-text">d</span>
+                                            </div>
+                                            <div class="quant-info">
+                                                <div class="quant-lot">
+                                                    <strong><t t-esc="lot_name"/></strong>
+                                                </div>
+                                                <div class="quant-product">
+                                                    <t t-esc="product_name"/>
+                                                </div>
+                                                <div class="quant-qty">
+                                                    <span class="qty-total"><t t-esc="qty_total"/></span>
+                                                    <span class="qty-available">(<t t-esc="qty_available"/>)</span>
+                                                </div>
+                                            </div>
+                                            <div class="cell-actions">
+                                                <button class="cell-action-btn edit" title="Chỉnh sửa"><i class="fa fa-pencil"></i></button>
+                                                <button class="cell-action-btn move" title="Di chuyển"><i class="fa fa-arrows"></i></button>
+                                                <button class="cell-action-btn remove" title="Xóa"><i class="fa fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div class="grid-cell empty" t-attf-data-id="#{gl.id}" t-attf-data-location-id="#{gl.id}" t-attf-data-x="#{gl.column}" t-attf-data-y="#{gl.row}">
+                                        <div class="empty-cell" title="Nhấn để thêm hàng">+</div>
+                                    </div>
+                                </t>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="warehouse-map-footer">
+                        <div class="footer-section">
+                            <h3>Thống kê kho</h3>
+                            <div class="footer-stats">
+                                <div class="footer-stat">
+                                    <span class="stat-icon"><i class="fa fa-cube"></i></span>
+                                    <div>
+                                        <span class="stat-name">Tổng slot</span>
+                                        <span class="stat-big"><t t-esc="record.total_slots"/></span>
+                                    </div>
+                                </div>
+                                <div class="footer-stat">
+                                    <span class="stat-icon"><i class="fa fa-check-circle" style="color: #28a745;"></i></span>
+                                    <div>
+                                        <span class="stat-name">Sử dụng</span>
+                                        <span class="stat-big"><t t-esc="record.occupied_slots"/></span>
+                                    </div>
+                                </div>
+                                <div class="footer-stat">
+                                    <span class="stat-icon"><i class="fa fa-circle-o" style="color: #ddd;"></i></span>
+                                    <div>
+                                        <span class="stat-name">Trống</span>
+                                        <span class="stat-big"><t t-esc="record.empty_slots"/></span>
+                                    </div>
+                                </div>
+                                <div class="footer-stat">
+                                    <span class="stat-icon"><i class="fa fa-bar-chart"></i></span>
+                                    <div>
+                                        <span class="stat-name">Hiệu suất</span>
+                                        <span class="stat-big"><t t-esc="record.utilization_rate"/>%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </field>
     </record>
 
 </odoo>
