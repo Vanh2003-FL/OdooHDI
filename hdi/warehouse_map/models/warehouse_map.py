@@ -84,31 +84,32 @@ class WarehouseMap(models.Model):
             
             _logger.info(f"[GetMapData] Processing batch: {batch.name} at position [{x}, {y}, {z}]")
             
-            # Get total quantity and product info from batch's quants
-            total_qty = sum(batch.quant_ids.mapped('quantity'))
-            reserved_qty = sum(batch.quant_ids.mapped('reserved_quantity'))
+            # CHỈ DÙNG THÔNG TIN TỪ BATCH - KHÔNG DÙNG QUANTS
+            product = batch.product_id
             
-            # Get product info from first quant (batches should have same product)
-            first_quant = batch.quant_ids[0] if batch.quant_ids else None
+            # Dùng total_quantity của batch (từ compute) hoặc planned_quantity
+            total_qty = batch.total_quantity or batch.planned_quantity or 0
+            reserved_qty = batch.reserved_quantity or 0
+            available_qty = batch.available_quantity or 0
             
             lot_data[position_key] = {
                 'id': batch.id,
                 'batch_id': batch.id,
                 'batch_name': batch.name,
-                'product_id': first_quant.product_id.id if first_quant else False,
-                'product_name': first_quant.product_id.display_name if first_quant else 'No Product',
-                'product_code': first_quant.product_id.default_code if first_quant else '',
-                'lot_id': False,  # Batch không có lot_id cụ thể
-                'lot_name': batch.name,  # Hiển thị tên batch
+                'product_id': product.id if product else False,
+                'product_name': product.display_name if product else 'No Product',
+                'product_code': product.default_code if product else '',
+                'lot_id': False,
+                'lot_name': batch.name,
                 'quantity': total_qty,
-                'uom': first_quant.product_uom_id.name if first_quant else 'Unit',
+                'uom': product.uom_id.name if product else 'Unit',
                 'reserved_quantity': reserved_qty,
-                'available_quantity': total_qty - reserved_qty,
-                'location_id': first_quant.location_id.id if first_quant else False,
-                'location_name': first_quant.location_id.name if first_quant else '',
-                'location_complete_name': first_quant.location_id.complete_name if first_quant else '',
+                'available_quantity': available_qty,
+                'location_id': batch.location_id.id,
+                'location_name': batch.location_id.name,
+                'location_complete_name': batch.location_id.complete_name,
                 'in_date': batch.create_date.strftime('%d-%m-%Y') if batch.create_date else False,
-                'days_in_stock': 0,  # TODO: Calculate from batch
+                'days_in_stock': 0,
                 'x': x,
                 'y': y,
                 'z': z,
