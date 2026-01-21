@@ -6,30 +6,38 @@ from odoo.exceptions import UserError
 
 class AssignLotPositionWizard(models.TransientModel):
     _name = 'assign.lot.position.wizard'
-    _description = 'Wizard gán vị trí cho lot'
+    _description = 'Wizard gán vị trí cho batch'
+    _transient_max_hours = 1.0
 
-    posx = fields.Integer(string='Vị trí X (Cột)', required=True)
-    posy = fields.Integer(string='Vị trí Y (Hàng)', required=True)
+    posx = fields.Integer(string='Vị trí X (Cột)')
+    posy = fields.Integer(string='Vị trí Y (Hàng)')
     posz = fields.Integer(string='Vị trí Z (Tầng)', default=0)
 
-    warehouse_map_id = fields.Many2one('warehouse.map', string='Sơ đồ kho', required=True)
+    # Use Integer fields only to store IDs - avoids All onchange/serialize issues
+    warehouse_map_id = fields.Integer(string='Sơ đồ kho ID')
+    batch_id = fields.Integer(string='Batch ID')
+    
+    # Batch name for display (read-only, no serialize)
+    batch_name = fields.Char(string='Chọn Batch/LPN', compute='_compute_batch_name')
 
-    # Mode: Batch hay Quant
-    mode = fields.Selection([
-        ('batch', 'Gán theo Batch/LPN'),
-        ('quant', 'Gán theo Lot/Quant'),
-    ], string='Chế độ gán', default='batch', required=True)
+    @property
+    def warehouse_map(self):
+        """Get actual warehouse.map record from ID"""
+        return self.env['warehouse.map'].browse(self.warehouse_map_id) if self.warehouse_map_id else None
 
-    # BATCH MODE - chỉ dùng batch_id, không dùng display fields
-    batch_id = fields.Many2one('hdi.batch', string='Chọn Batch/LPN')
+    @property
+    def batch(self):
+        """Get actual hdi.batch record from ID"""
+        return self.env['hdi.batch'].browse(self.batch_id) if self.batch_id else None
 
-    # QUANT MODE
-    quant_id = fields.Many2one('stock.quant', string='Chọn Lot/Quant')
-    create_new = fields.Boolean(string='Tạo quant mới')
-    new_product_id = fields.Many2one('product.product', string='Sản phẩm mới')
-    new_lot_id = fields.Many2one('stock.lot', string='Lot/Serial mới',
-                                 domain="[('product_id', '=', new_product_id)]")
-    new_quantity = fields.Float(string='Số lượng mới', default=1.0)
+    @api.depends('batch_id')
+    def _compute_batch_name(self):
+        for rec in self:
+            if rec.batch_id:
+                batch = rec.env['hdi.batch'].browse(rec.batch_id)
+                rec.batch_name = batch.name if batch.exists() else ''
+            else:
+                rec.batch_name = ''
 
     @api.model
     def create_from_map_click(self, warehouse_map_id, posx, posy, posz, batch_id=None):
@@ -41,18 +49,29 @@ class AssignLotPositionWizard(models.TransientModel):
             batch_id: Optional batch ID (for batch assignment mode)
         
         Returns:
-            Dictionary with wizard action
+            Dictionary with wizard action pointing to created record
         """
-        mode = 'batch' if batch_id else 'quant'
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.info(f"=== create_from_map_click called ===")
+        _logger.info(f"warehouse_map_id: {warehouse_map_id}")
+        _logger.info(f"posx: {posx}, posy: {posy}, posz: {posz}")
+        _logger.info(f"batch_id: {batch_id}")
         
-        wizard = self.create({
+        # Create wizard record with actual values
+        # Use Integer fields only - no Many2one = no onchange issues
+        wizard_vals = {
             'warehouse_map_id': warehouse_map_id,
             'posx': posx,
             'posy': posy,
-            'posz': posz,
-            'mode': mode,
-            'batch_id': batch_id,
-        })
+            'posz': posz or 0,
+        }
+        
+        if batch_id:
+            wizard_vals['batch_id'] = batch_id
+        
+        wizard = self.create(wizard_vals)
+        _logger.info(f"Wizard created with id: {wizard.id}")
         
         return {
             'name': _('Gán vị trí [%d, %d]') % (posx, posy),
@@ -65,15 +84,34 @@ class AssignLotPositionWizard(models.TransientModel):
         }
 
     def action_assign_position(self):
-        """Gán vị trí cho batch hoặc quant"""
+        """Gán vị trí cho batch"""
         self.ensure_one()
-        location = self.warehouse_map_id.location_id
+        
+        # Validate required fields
+        if not self.warehouse_map_id:
+            raise UserError(_('Thiếu thông tin sơ đồ kho!'))
+            
+        if self.posx is False or self.posy is False:
+            raise UserError(_('Thiếu thông tin vị trí!'))
+        
+        if not self.batch_id:
+            raise UserError(_('Vui lòng chọn batch!'))
+        
+        batch = self.batch
+        if not batch.exists():
+            raise UserError(_('Batch không tồn tại!'))
+        
+        if batch.state != 'stored':
+            raise UserError(_('Batch phải ở trạng thái Stored!'))
+
+        warehouse_map = self.warehouse_map
+        location = warehouse_map.location_id if warehouse_map else None
         if not location:
             raise UserError(_('Sơ đồ kho không có location!'))
 
         # Kiểm tra vị trí bị block
         blocked = self.env['warehouse.map.blocked.cell'].search([
-            ('warehouse_map_id', '=', self.warehouse_map_id.id),
+            ('warehouse_map_id', '=', self.warehouse_map_id),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
             ('posz', '=', self.posz),
@@ -84,96 +122,34 @@ class AssignLotPositionWizard(models.TransientModel):
                 'Vị trí [%d, %d, %d] đang bị chặn'
             ) % (self.posx, self.posy, self.posz))
 
-        # ========== BATCH MODE ==========
-        if self.mode == 'batch':
-            if not self.batch_id:
-                raise UserError(_('Vui lòng chọn batch!'))
+        # Kiểm tra vị trí đã có lot khác chưa
+        existing = self.env['stock.quant'].search([
+            ('location_id', 'child_of', location.id),
+            ('posx', '=', self.posx),
+            ('posy', '=', self.posy),
+            ('posz', '=', self.posz),
+            ('display_on_map', '=', True),
+            ('quantity', '>', 0),
+            ('batch_id', '!=', batch.id),
+        ], limit=1)
 
-            # Validate batch state
-            if self.batch_id.state != 'stored':
-                raise UserError(_('Batch phải ở trạng thái Stored!'))
+        if existing:
+            raise UserError(_('Vị trí đã có lot khác!'))
 
-            # Kiểm tra vị trí đã có lot khác chưa
-            existing = self.env['stock.quant'].search([
-                ('location_id', 'child_of', location.id),
-                ('posx', '=', self.posx),
-                ('posy', '=', self.posy),
-                ('posz', '=', self.posz),
-                ('display_on_map', '=', True),
-                ('quantity', '>', 0),
-                ('batch_id', '!=', self.batch_id.id),
-            ], limit=1)
+        # Gán vị trí cho batch
+        batch.write({
+            'posx': self.posx,
+            'posy': self.posy,
+            'posz': self.posz,
+            'display_on_map': True,
+        })
 
-            if existing:
-                raise UserError(_('Vị trí đã có lot khác!'))
+        # Gán vị trí cho tất cả quants của batch
+        batch.quant_ids.write({
+            'posx': self.posx,
+            'posy': self.posy,
+            'posz': self.posz,
+            'display_on_map': True,
+        })
 
-            # Gán vị trí cho batch
-            self.batch_id.write({
-                'posx': self.posx,
-                'posy': self.posy,
-                'posz': self.posz,
-                'display_on_map': True,
-            })
-
-            # Gán vị trí cho tất cả quants của batch
-            self.batch_id.quant_ids.write({
-                'posx': self.posx,
-                'posy': self.posy,
-                'posz': self.posz,
-                'display_on_map': True,
-            })
-
-            return {'type': 'ir.actions.act_window_close'}
-
-        # ========== QUANT MODE ==========
-        # Create new quant
-        if self.mode == 'quant' and self.create_new:
-            if not self.new_product_id:
-                raise UserError(_('Vui lòng chọn sản phẩm!'))
-
-            quant_vals = {
-                'product_id': self.new_product_id.id,
-                'location_id': location.id,
-                'quantity': self.new_quantity,
-                'posx': self.posx,
-                'posy': self.posy,
-                'posz': self.posz,
-                'display_on_map': True,
-            }
-            if self.new_lot_id:
-                quant_vals['lot_id'] = self.new_lot_id.id
-
-            self.env['stock.quant'].create(quant_vals)
-            return {'type': 'ir.actions.act_window_close'}
-        
-        # Assign existing quant
-        if self.mode == 'quant' and not self.create_new:
-            if not self.quant_id:
-                raise UserError(_('Vui lòng chọn quant!'))
-
-            if self.quant_id.quantity <= 0:
-                raise UserError(_('Quant không có số lượng!'))
-
-            existing = self.env['stock.quant'].search([
-                ('location_id', 'child_of', location.id),
-                ('posx', '=', self.posx),
-                ('posy', '=', self.posy),
-                ('posz', '=', self.posz),
-                ('display_on_map', '=', True),
-                ('quantity', '>', 0),
-                ('id', '!=', self.quant_id.id),
-            ], limit=1)
-
-            if existing:
-                raise UserError(_('Vị trí đã có lot khác!'))
-
-            self.quant_id.write({
-                'posx': self.posx,
-                'posy': self.posy,
-                'posz': self.posz,
-                'display_on_map': True,
-            })
-
-            return {'type': 'ir.actions.act_window_close'}
-        
-        raise UserError(_('Vui lòng chọn batch hoặc quant!'))
+        return {'type': 'ir.actions.act_window_close'}

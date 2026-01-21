@@ -3,6 +3,7 @@
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import "./batch_selector_widget";  // Import batch selector widget
 
 export class WarehouseMapView extends Component {
     static props = {
@@ -196,19 +197,29 @@ export class WarehouseMapView extends Component {
         
         const batchId = this.props.context?.default_batch_id || false;
         
+        // IMPORTANT: Ensure all IDs are integers, not objects
+        const mapId = parseInt(this.state.mapData.id);
+        const finalBatchId = batchId ? parseInt(batchId) : false;
+        
+        console.log('[AssignWizard] Opening wizard for cell:', { row, col, finalBatchId });
+        console.log('[AssignWizard] Map ID:', mapId, 'Type:', typeof mapId);
+        console.log('[AssignWizard] Batch ID:', finalBatchId, 'Type:', typeof finalBatchId);
+        
         try {
             const action = await this.orm.call(
                 'assign.lot.position.wizard',
                 'create_from_map_click',
                 [],
                 {
-                    warehouse_map_id: this.state.mapData.id,
+                    warehouse_map_id: mapId,
                     posx: col,
                     posy: row,
                     posz: 0,
-                    batch_id: batchId,
+                    batch_id: finalBatchId,
                 }
             );
+            
+            console.log('[AssignWizard] Action received:', action);
             
             // Execute the returned action
             await this.action.doAction(action, {
@@ -219,6 +230,8 @@ export class WarehouseMapView extends Component {
                     await this.refreshCell(row, col);
                 }
             });
+            
+            console.log('[AssignWizard] Action executed successfully');
         } catch (error) {
             console.error('[AssignWizard] Error:', error);
             this.notification.add('Lỗi khi mở form gán vị trí', {

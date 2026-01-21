@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="batch_selector_widget">
+        <div class="batch-selector-widget">
+            <t t-if="state.loading">
+                <span class="text-muted">Đang tải...</span>
+            </t>
+            <t t-else="">
+                <select 
+                    class="form-select"
+                    t-att-disabled="props.readonly"
+                    t-on-change="onBatchChange"
+                    t-att-value="state.selectedBatchId || ''">
+                    <option value="">-- Chọn Batch/LPN --</option>
+                    <t t-foreach="state.batches" t-as="batch" t-key="batch.id">
+                        <option t-att-value="batch.id" t-att-selected="state.selectedBatchId === batch.id">
+                            <t t-esc="batch.name"/>
+                        </option>
+                    </t>
+                </select>
+            </t>
+        </div>
+    </t>
+</templates>

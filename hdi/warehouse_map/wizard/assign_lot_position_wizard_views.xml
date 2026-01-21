@@ -4,62 +4,20 @@
         <field name="name">assign.lot.position.wizard.form</field>
         <field name="model">assign.lot.position.wizard</field>
         <field name="arch" type="xml">
-            <form string="Gán vị trí cho Lot/Batch">
-                <sheet>
-                    <div class="oe_title">
-                        <h1>Gán vị trí [<field name="posx" readonly="1" class="oe_inline"/>, <field name="posy" readonly="1" class="oe_inline"/>]</h1>
-                    </div>
-
-                    <group>
-                        <field name="warehouse_map_id" invisible="1"/>
-                        <field name="posz"/>
-                    </group>
-
-                    <group>
-                        <field name="mode" widget="radio"/>
-                    </group>
-
-                    <!-- BATCH MODE -->
-                    <group invisible="mode != 'batch'" string="Batch/LPN">
-                        <field name="batch_id" required="mode == 'batch'" options="{'no_create': True}"/>
-                    </group>
-
-                    <!-- QUANT MODE -->
-                    <group invisible="mode != 'quant'">
-                        <field name="create_new"/>
-                    </group>
-
-                    <group invisible="mode != 'quant' or create_new">
-                        <field name="quant_id" required="mode == 'quant' and not create_new" options="{'no_create': True}"/>
-                    </group>
-
-                    <group invisible="mode != 'quant' or not create_new">
-                        <field name="new_product_id" required="create_new" options="{'no_create': True}"/>
-                        <field name="new_lot_id" invisible="not new_product_id" options="{'no_create': True}"/>
-                        <field name="new_quantity" required="create_new"/>
-                    </group>
-                </sheet>
+            <form string="Gán vị trí cho Batch/LPN">
+                <group>
+                    <field name="warehouse_map_id" invisible="1"/>
+                    <field name="posx" invisible="1"/>
+                    <field name="posy" invisible="1"/>
+                    <field name="posz" readonly="1"/>
+                    <field name="batch_id" invisible="1"/>
+                    <field name="batch_name" widget="batch_selector" readonly="0"/>
+                </group>
                 <footer>
                     <button name="action_assign_position" string="Xác nhận" type="object" class="btn-primary"/>
                     <button string="Hủy" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
-        </field>
-    </record>
-
-    <!-- Custom tree view cho quants có thể chọn -->
-    <record id="view_stock_quant_available_tree" model="ir.ui.view">
-        <field name="name">stock.quant.available.tree</field>
-        <field name="model">stock.quant</field>
-        <field name="arch" type="xml">
-            <list string="Lots khả dụng">
-                <field name="product_id"/>
-                <field name="lot_id"/>
-                <field name="location_id"/>
-                <field name="quantity"/>
-                <field name="available_quantity"/>
-                <field name="reserved_quantity"/>
-            </list>
         </field>
     </record>
 </odoo>
