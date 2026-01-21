@@ -13,7 +13,9 @@ class StockMove(models.Model):
         string='Batch/LPN',
         index=True,
         tracking=True,
-        help="Batch containing this move - links to custom WMS model"
+        help="Batch containing this move - links to custom WMS model",
+        inverse_name=False,
+        ondelete='set null',
     )
 
     scanned_barcodes = fields.Text(

@@ -15,6 +15,7 @@ class HdiPutawaySuggestion(models.Model):
         string='Lô hàng',
         required=True,
         ondelete='cascade',
+        inverse_name=False,
     )
 
     product_id = fields.Many2one(

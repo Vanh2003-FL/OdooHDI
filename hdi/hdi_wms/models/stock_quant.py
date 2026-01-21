@@ -17,7 +17,9 @@ class StockQuant(models.Model):
         'hdi.batch',
         string='Batch/LPN',
         index=True,
-        help="Batch containing this inventory quant"
+        help="Batch containing this inventory quant",
+        inverse_name=False,
+        ondelete='set null',
     )
 
     is_batched = fields.Boolean(

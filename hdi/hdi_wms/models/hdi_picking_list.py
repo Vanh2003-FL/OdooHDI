@@ -402,7 +402,9 @@ class HdiPickingListLine(models.Model):
     batch_id = fields.Many2one(
         'hdi.batch',
         string='Batch/LPN',
-        domain="[('location_id', '=', location_id), ('product_id', '=', product_id), ('state', '=', 'stored')]"
+        domain="[('location_id', '=', location_id), ('product_id', '=', product_id), ('state', '=', 'stored')]",
+        inverse_name=False,
+        ondelete='set null',
     )
 
     # ===== SỐ LƯỢNG =====
