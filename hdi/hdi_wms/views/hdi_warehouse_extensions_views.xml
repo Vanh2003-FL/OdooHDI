@@ -6,21 +6,23 @@
         <field name="model">stock.location</field>
         <field name="inherit_id" ref="stock.view_location_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="WMS Grid">
-                    <group>
-                        <group string="Grid Information">
-                            <field name="is_grid_enabled" readonly="1"/>
-                            <field name="grid_location_id" attrs="{'invisible': [('is_grid_enabled', '=', False)]}"/>
-                            <field name="grid_position_code" readonly="1" attrs="{'invisible': [('is_grid_enabled', '=', False)]}"/>
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="WMS Grid">
+                        <group>
+                            <group string="Grid Information">
+                                <field name="is_grid_enabled" readonly="1"/>
+                                <field name="grid_location_id" readonly="1"/>
+                                <field name="grid_position_code" readonly="1"/>
+                            </group>
+                            <group string="Grid Position">
+                                <field name="grid_row" readonly="1"/>
+                                <field name="grid_column" readonly="1"/>
+                                <field name="grid_level" readonly="1"/>
+                            </group>
                         </group>
-                        <group string="Grid Position" attrs="{'invisible': [('is_grid_enabled', '=', False)]}">
-                            <field name="grid_row" readonly="1"/>
-                            <field name="grid_column" readonly="1"/>
-                            <field name="grid_level" readonly="1"/>
-                        </group>
-                    </group>
-                </page>
+                    </page>
+                </notebook>
             </xpath>
         </field>
     </record>
@@ -37,11 +39,11 @@
                         <group string="Warehouse Layout">
                             <field name="layout_id"/>
                             <button name="action_create_layout" string="Create New Layout" type="object"
-                                    class="oe_link" attrs="{'invisible': [('layout_id', '!=', False)]}"/>
+                                    class="oe_link"/>
                             <button name="action_open_layout" string="Open Layout" type="object"
-                                    class="oe_highlight" attrs="{'invisible': [('layout_id', '=', False)]}"/>
+                                    class="oe_highlight"/>
                         </group>
-                        <group string="Layout Details" attrs="{'invisible': [('layout_id', '=', False)]}">
+                        <group string="Layout Details">
                             <field name="layout_rows" readonly="1"/>
                             <field name="layout_columns" readonly="1"/>
                             <field name="layout_levels" readonly="1"/>

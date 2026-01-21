@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== EXTEND STOCK.QUANT WITH WAREHOUSE MAP FIELDS ===== -->
+    <record id="view_stock_quant_warehouse_map" model="ir.ui.view">
+        <field name="name">stock.quant.warehouse.map</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Sơ đồ Kho">
+                        <group>
+                            <group string="Vị trí trên Sơ đồ">
+                                <field name="pos_x"/>
+                                <field name="pos_y"/>
+                                <field name="pos_z"/>
+                                <field name="display_on_map"/>
+                            </group>
+                            <group string="Thời gian Tồn">
+                                <field name="days_in_warehouse" readonly="1"/>
+                                <field name="in_date" readonly="1"/>
+                            </group>
+                        </group>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

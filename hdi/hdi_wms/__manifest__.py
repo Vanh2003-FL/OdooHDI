@@ -26,6 +26,7 @@ HDI Warehouse Management System
         'views/stock_move_views.xml',
         'views/stock_location_views.xml',
         'views/stock_quant_views.xml',
+        'views/stock_quant_warehouse_map.xml',
         'views/hdi_warehouse_extensions_views.xml',
 
         # Views - Custom Models (New)
@@ -33,13 +34,13 @@ HDI Warehouse Management System
         'views/hdi_putaway_suggestion_views.xml',
         'views/hdi_loose_line_views.xml',
         'views/hdi_picking_list_views.xml',
-        'views/hdi_warehouse_layout_views.xml',
+        'views/hdi_warehouse_map_views.xml',
 
         # Wizards
         'wizard/batch_creation_wizard_views.xml',
         'wizard/putaway_wizard_views.xml',
         'wizard/picking_suggestion_wizard_views.xml',
-        'wizard/hdi_warehouse_layout_wizard_views.xml',
+        'wizard/warehouse_map_assign_lot_views.xml',
 
         # Menus
         'views/wms_menus.xml',
@@ -47,7 +48,9 @@ HDI Warehouse Management System
     'assets': {
         'web.assets_backend': [
             'hdi_wms/static/src/js/warehouse_layout.js',
+            'hdi_wms/static/src/js/warehouse_layout_grid.js',
             'hdi_wms/static/src/css/warehouse_layout.css',
+            'hdi_wms/static/src/css/warehouse_layout_grid.css',
         ],
     },
     'installable': True,

@@ -48,22 +48,29 @@
               action="action_wms_inventory_check_barcode"
               sequence="20"/>
 
-    <menuitem id="menu_warehouse_layout_root"
-              name="Sơ đồ Kho"
+    <!-- WAREHOUSE MAP LAYOUT MENU -->
+    <menuitem id="menu_warehouse_map_root"
+              name="📊 Sơ đồ Kho (WMS Map)"
               parent="menu_wms_root"
               sequence="50"
               groups="group_wms_user"/>
 
     <menuitem id="menu_warehouse_layout"
               name="Sơ đồ Kho"
-              parent="menu_warehouse_layout_root"
+              parent="menu_warehouse_map_root"
               action="action_warehouse_layout"
               sequence="10"/>
 
     <menuitem id="menu_warehouse_location_grid"
               name="Vị trí Lưới"
-              parent="menu_warehouse_layout_root"
+              parent="menu_warehouse_map_root"
               action="action_warehouse_location_grid"
               sequence="20"/>
+
+    <menuitem id="menu_quant_location_configuration"
+              name="Cấu hình Vị trí Lot"
+              parent="menu_warehouse_map_root"
+              action="stock.action_quant_from_lot"
+              sequence="30"/>
 
 </odoo>

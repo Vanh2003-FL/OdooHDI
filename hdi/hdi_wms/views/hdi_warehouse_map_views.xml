@@ -1,69 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ===== WAREHOUSE LAYOUT ===== -->
-    <record id="view_warehouse_layout_tree" model="ir.ui.view">
-        <field name="name">hdi.warehouse.layout.tree</field>
+    <!-- ===== WAREHOUSE LAYOUT - LIST VIEW ===== -->
+    <record id="view_warehouse_layout_list" model="ir.ui.view">
+        <field name="name">hdi.warehouse.layout.list</field>
         <field name="model">hdi.warehouse.layout</field>
         <field name="arch" type="xml">
-            <list string="Warehouse Layouts">
+            <list string="Sơ đồ Kho">
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="rows"/>
                 <field name="columns"/>
-                <field name="levels"/>
+                <field name="total_slots"/>
                 <field name="occupied_slots"/>
-                <field name="utilization_rate"/>
+                <field name="utilization_rate" widget="percentage"/>
             </list>
         </field>
     </record>
 
+    <!-- ===== WAREHOUSE LAYOUT - FORM VIEW ===== -->
     <record id="view_warehouse_layout_form" model="ir.ui.view">
         <field name="name">hdi.warehouse.layout.form</field>
         <field name="model">hdi.warehouse.layout</field>
         <field name="arch" type="xml">
-            <form string="Warehouse Layout">
+            <form string="Sơ đồ Kho">
                 <header>
-                    <button name="action_generate_grid" string="Generate Grid" type="object" class="oe_highlight"/>
-                    <button name="action_view_grids" string="View Grid Slots" type="object"/>
-                    <button name="action_view_layout" string="View Layout" type="object" class="oe_highlight"/>
+                    <button name="action_view_layout_map" string="📊 Xem Sơ đồ" type="object" class="oe_highlight"/>
+                    <button name="action_refresh_grid" string="🔄 Làm mới" type="object"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" placeholder="Layout Name"/>
+                            <field name="name" placeholder="Tên sơ đồ kho"/>
                         </h1>
                     </div>
 
                     <group>
-                        <group string="Basic Info">
-                            <field name="warehouse_id" widget="many2one" required="1"/>
+                        <group string="Thông tin cơ bản">
+                            <field name="warehouse_id" required="1"/>
                             <field name="active"/>
                             <field name="description"/>
                         </group>
-                        <group string="Grid Dimensions">
+                        <group string="Kích thước lưới">
                             <field name="rows" required="1"/>
                             <field name="columns" required="1"/>
                             <field name="levels" required="1"/>
                         </group>
                     </group>
 
-                    <group string="Cell Size">
+                    <group string="Kích thước ô">
                         <field name="cell_width" class="oe_inline"/>
                         <field name="cell_height" class="oe_inline"/>
                     </group>
 
-                    <group string="Statistics">
+                    <group string="Thống kê">
                         <group>
                             <field name="total_slots"/>
                             <field name="occupied_slots"/>
                             <field name="empty_slots"/>
-                            <field name="utilization_rate" widget="percentpie"/>
+                            <field name="utilization_rate" widget="percentage"/>
                         </group>
                     </group>
 
                     <notebook>
-                        <page string="Zones">
-                            <field name="zone_ids" mode="tree">
+                        <page string="Các Vùng">
+                            <field name="zone_ids" nolabel="1">
                                 <list editable="bottom">
                                     <field name="name"/>
                                     <field name="zone_type"/>
@@ -75,22 +75,13 @@
                                 </list>
                             </field>
                         </page>
-
-                        <page string="Grid Map">
-                            <div class="alert alert-info">
-                                <strong>Warehouse Layout Grid Visualization</strong><br/>
-                                Click on a location to view details or perform actions
-                            </div>
-                            <div id="warehouse_layout_grid" class="warehouse_layout_grid">
-                                <!-- Grid will be rendered via JS -->
-                            </div>
-                        </page>
                     </notebook>
                 </sheet>
             </form>
         </field>
     </record>
 
+    <!-- ===== WAREHOUSE LAYOUT - KANBAN VIEW ===== -->
     <record id="view_warehouse_layout_kanban" model="ir.ui.view">
         <field name="name">hdi.warehouse.layout.kanban</field>
         <field name="model">hdi.warehouse.layout</field>
@@ -108,8 +99,8 @@
                                 <h4><field name="name"/></h4>
                             </div>
                             <div class="oe_kanban_card_content">
-                                <p><strong>Warehouse:</strong> <field name="warehouse_id"/></p>
-                                <p><strong>Slots:</strong> <field name="occupied_slots"/> / <field name="total_slots"/></p>
+                                <p><strong>Kho:</strong> <field name="warehouse_id"/></p>
+                                <p><strong>Vị trí:</strong> <field name="occupied_slots"/> / <field name="total_slots"/></p>
                                 <div class="progress">
                                     <div class="progress-bar" role="progressbar"
                                          t-attf-style="width: #{record.utilization_rate.value}%"
@@ -125,19 +116,68 @@
         </field>
     </record>
 
+    <!-- ===== WAREHOUSE LAYOUT - ACTION ===== -->
     <record id="action_warehouse_layout" model="ir.actions.act_window">
-        <field name="name">Warehouse Layouts</field>
+        <field name="name">Sơ đồ Kho</field>
         <field name="res_model">hdi.warehouse.layout</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">list,form,kanban</field>
         <field name="search_view_id" ref=""/>
     </record>
 
-    <!-- ===== WAREHOUSE LOCATION GRID ===== -->
-    <record id="view_warehouse_location_grid_tree" model="ir.ui.view">
-        <field name="name">hdi.warehouse.location.grid.tree</field>
+    <!-- ===== WAREHOUSE ZONE - LIST VIEW ===== -->
+    <record id="view_warehouse_zone_list" model="ir.ui.view">
+        <field name="name">hdi.warehouse.zone.list</field>
+        <field name="model">hdi.warehouse.zone</field>
+        <field name="arch" type="xml">
+            <list string="Vùng Kho">
+                <field name="name"/>
+                <field name="zone_type"/>
+                <field name="layout_id"/>
+                <field name="location_count"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===== WAREHOUSE ZONE - FORM VIEW ===== -->
+    <record id="view_warehouse_zone_form" model="ir.ui.view">
+        <field name="name">hdi.warehouse.zone.form</field>
+        <field name="model">hdi.warehouse.zone</field>
+        <field name="arch" type="xml">
+            <form string="Vùng Kho">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên vùng"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Thông tin cơ bản">
+                            <field name="layout_id" required="1"/>
+                            <field name="zone_type"/>
+                            <field name="color" widget="color"/>
+                        </group>
+                        <group string="Biên giới">
+                            <field name="start_row"/>
+                            <field name="end_row"/>
+                            <field name="start_column"/>
+                            <field name="end_column"/>
+                            <field name="location_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <field name="description" nolabel="1" placeholder="Mô tả vùng"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== WAREHOUSE LOCATION GRID - LIST VIEW ===== -->
+    <record id="view_warehouse_location_grid_list" model="ir.ui.view">
+        <field name="name">hdi.warehouse.location.grid.list</field>
         <field name="model">hdi.warehouse.location.grid</field>
         <field name="arch" type="xml">
-            <list string="Grid Locations">
+            <list string="Vị trí Lưới">
                 <field name="position_code"/>
                 <field name="row"/>
                 <field name="column"/>
@@ -145,24 +185,23 @@
                 <field name="batch_id"/>
                 <field name="zone_id"/>
                 <field name="status"/>
-                <field name="utilization_percent"/>
+                <field name="utilization_percent" widget="percentage"/>
                 <field name="is_available"/>
             </list>
         </field>
     </record>
 
+    <!-- ===== WAREHOUSE LOCATION GRID - FORM VIEW ===== -->
     <record id="view_warehouse_location_grid_form" model="ir.ui.view">
         <field name="name">hdi.warehouse.location.grid.form</field>
         <field name="model">hdi.warehouse.location.grid</field>
         <field name="arch" type="xml">
-            <form string="Grid Location">
+            <form string="Vị trí Lưới">
                 <header>
-                    <button name="action_place_batch" string="Place Batch" type="object" 
-                            class="oe_highlight"/>
-                    <button name="action_move_batch" string="Move Batch" type="object"/>
-                    <button name="action_pick_batch" string="Pick Batch" type="object"/>
-                    <button name="action_transfer_warehouse" string="Transfer Warehouse" type="object"/>
-                    <button name="action_view_batch_details" string="Batch Details" type="object"/>
+                    <button name="action_place_batch" string="🎯 Gán Lot" type="object" class="oe_highlight"/>
+                    <button name="action_move_batch" string="📦 Chuyển Vị trí" type="object"/>
+                    <button name="action_pick_batch" string="✅ Lấy Hàng" type="object"/>
+                    <button name="action_transfer_warehouse" string="🚚 Chuyển Kho" type="object"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -172,103 +211,57 @@
                     </div>
 
                     <group>
-                        <group string="Position">
+                        <group string="Vị trí">
                             <field name="layout_id" readonly="1"/>
                             <field name="row" readonly="1"/>
                             <field name="column" readonly="1"/>
                             <field name="level" readonly="1"/>
                             <field name="zone_id" readonly="1"/>
                         </group>
-                        <group string="Status">
+                        <group string="Trạng thái">
                             <field name="status" widget="badge" readonly="1"/>
                             <field name="is_available" readonly="1"/>
                             <field name="is_reserved"/>
                         </group>
                     </group>
 
-                    <group string="Current Inventory">
+                    <group string="Hàng Hiện tại">
                         <field name="batch_id" widget="many2one"/>
                         <field name="location_id"/>
                         <field name="current_items" readonly="1"/>
                         <field name="current_weight" readonly="1"/>
                         <field name="current_volume" readonly="1"/>
-                        <field name="utilization_percent" readonly="1" widget="percentpie"/>
+                        <field name="utilization_percent" readonly="1" widget="percentage"/>
                     </group>
 
-                    <group string="Capacity">
+                    <group string="Dung tích">
                         <field name="capacity_type"/>
                         <field name="max_weight"/>
                         <field name="max_volume"/>
                         <field name="max_items"/>
                     </group>
 
-                    <group string="Reserved Products">
+                    <group string="Sản phẩm Đặt trước">
                         <field name="product_family"/>
                         <field name="reserved_product_ids" nolabel="1" widget="many2many_tags"/>
                     </group>
 
-                    <group string="History">
+                    <group string="Lịch sử">
                         <field name="last_batch_id" readonly="1"/>
                         <field name="last_change_date" readonly="1"/>
                     </group>
 
-                    <field name="notes" nolabel="1" placeholder="Notes about this location"/>
+                    <field name="notes" nolabel="1" placeholder="Ghi chú về vị trí này"/>
                 </sheet>
             </form>
         </field>
     </record>
 
+    <!-- ===== WAREHOUSE LOCATION GRID - ACTION ===== -->
     <record id="action_warehouse_location_grid" model="ir.actions.act_window">
-        <field name="name">Grid Locations</field>
+        <field name="name">Vị trí Lưới</field>
         <field name="res_model">hdi.warehouse.location.grid</field>
         <field name="view_mode">list,form</field>
-    </record>
-
-    <!-- ===== WAREHOUSE ZONE ===== -->
-    <record id="view_warehouse_zone_tree" model="ir.ui.view">
-        <field name="name">hdi.warehouse.zone.tree</field>
-        <field name="model">hdi.warehouse.zone</field>
-        <field name="arch" type="xml">
-            <list string="Warehouse Zones">
-                <field name="name"/>
-                <field name="zone_type"/>
-                <field name="layout_id"/>
-                <field name="location_count"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="view_warehouse_zone_form" model="ir.ui.view">
-        <field name="name">hdi.warehouse.zone.form</field>
-        <field name="model">hdi.warehouse.zone</field>
-        <field name="arch" type="xml">
-            <form string="Warehouse Zone">
-                <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" placeholder="Zone Name"/>
-                        </h1>
-                    </div>
-
-                    <group>
-                        <group string="Basic Info">
-                            <field name="layout_id" required="1"/>
-                            <field name="zone_type"/>
-                            <field name="color" widget="color"/>
-                        </group>
-                        <group string="Boundaries">
-                            <field name="start_row"/>
-                            <field name="end_row"/>
-                            <field name="start_column"/>
-                            <field name="end_column"/>
-                            <field name="location_count" readonly="1"/>
-                        </group>
-                    </group>
-
-                    <field name="description" nolabel="1" placeholder="Description"/>
-                </sheet>
-            </form>
-        </field>
     </record>
 
 </odoo>

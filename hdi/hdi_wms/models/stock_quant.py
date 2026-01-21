@@ -20,6 +20,44 @@ class StockQuant(models.Model):
         help="Batch containing this inventory quant"
     )
 
+    grid_location_id = fields.Many2one(
+        'hdi.warehouse.location.grid',
+        string='Grid Location',
+        index=True,
+        help="Grid location in warehouse layout"
+    )
+
+    # ===== WAREHOUSE MAP LAYOUT FIELDS =====
+    pos_x = fields.Integer(
+        string='Vị trí X (Cột)',
+        default=0,
+        help="Số thứ tự cột trong sơ đồ kho (0, 1, 2, ...)"
+    )
+
+    pos_y = fields.Integer(
+        string='Vị trí Y (Hàng)',
+        default=0,
+        help="Số thứ tự hàng trong sơ đồ kho (0, 1, 2, ...)"
+    )
+
+    pos_z = fields.Integer(
+        string='Vị trí Z (Tầng)',
+        default=0,
+        help="Tầng/kệ trong kho (0, 1, 2, ...)"
+    )
+
+    display_on_map = fields.Boolean(
+        string='Hiển thị trên sơ đồ',
+        default=True,
+        help="Check để hiển thị lot này trên sơ đồ kho"
+    )
+
+    days_in_warehouse = fields.Integer(
+        compute='_compute_days_in_warehouse',
+        string='Số ngày trong kho',
+        help="Số ngày hàng đã nằm trong kho (từ ngày nhập)"
+    )
+
     is_batched = fields.Boolean(
         compute='_compute_is_batched',
         store=True,
@@ -48,6 +86,18 @@ class StockQuant(models.Model):
     def _compute_is_batched(self):
         for quant in self:
             quant.is_batched = bool(quant.batch_id)
+
+    @api.depends('in_date')
+    def _compute_days_in_warehouse(self):
+        from datetime import datetime, timezone
+        for quant in self:
+            if quant.in_date:
+                # Tính số ngày từ ngày nhập đến hiện tại
+                in_date = quant.in_date.replace(tzinfo=None) if quant.in_date else datetime.now()
+                now = datetime.now()
+                quant.days_in_warehouse = (now - in_date).days
+            else:
+                quant.days_in_warehouse = 0
 
     @api.model_create_multi
     def create(self, vals_list):
