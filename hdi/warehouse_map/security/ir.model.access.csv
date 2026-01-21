@@ -6,9 +6,3 @@ access_warehouse_map_blocked_cell_manager,warehouse.map.blocked.cell.manager,mod
 access_location_action_wizard,location.action.wizard,model_location_action_wizard,stock.group_stock_user,1,1,1,1
 access_assign_lot_position_wizard,assign.lot.position.wizard,model_assign_lot_position_wizard,stock.group_stock_user,1,1,1,1
 access_block_cell_wizard,block.cell.wizard,model_block_cell_wizard,stock.group_stock_user,1,1,1,1
-access_picking_map_assignment_wizard,picking.map.assignment.wizard,model_picking_map_assignment_wizard,stock.group_stock_user,1,1,1,1
-access_picking_map_assignment_line,picking.map.assignment.line,model_picking_map_assignment_line,stock.group_stock_user,1,1,1,1
-access_receipt_putaway_wizard,receipt.putaway.wizard,model_receipt_putaway_wizard,stock.group_stock_user,1,1,1,1
-access_receipt_putaway_line,receipt.putaway.line,model_receipt_putaway_line,stock.group_stock_user,1,1,1,1
-access_delivery_pick_wizard,delivery.pick.wizard,model_delivery_pick_wizard,stock.group_stock_user,1,1,1,1
-access_delivery_pick_line,delivery.pick.line,model_delivery_pick_line,stock.group_stock_user,1,1,1,1
