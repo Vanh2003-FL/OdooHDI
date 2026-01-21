@@ -8,7 +8,7 @@
         Warehouse Map Layout
     """,
     'author': 'Wokwy (quochuy.software@gmail.com) support by Claude.ai',
-    'depends': ['stock', 'product', 'track_vendor_by_lot', 'stock_sms'],
+    'depends': ['stock', 'product', 'stock_sms'],
     'data': [
         'security/ir.model.access.csv',
         'views/blocked_cell_views.xml',
