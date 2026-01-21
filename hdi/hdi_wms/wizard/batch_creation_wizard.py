@@ -24,7 +24,9 @@ class BatchCreationWizard(models.TransientModel):
         'hdi.batch',
         string='Chọn Lô hàng',
         domain="[('state', 'in', ['draft', 'in_receiving', 'in_putaway']), '|', ('picking_id', '=', False), ('picking_id', '=', picking_id)]",
-        help="Chọn lô hàng đang có sẵn chưa hoàn thành"
+        help="Chọn lô hàng đang có sẵn chưa hoàn thành",
+        inverse_name=False,
+        ondelete='set null',
     )
 
     batch_type = fields.Selection([

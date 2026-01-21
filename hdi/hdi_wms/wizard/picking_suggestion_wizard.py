@@ -52,7 +52,7 @@ class PickingSuggestionWizard(models.TransientModel):
             wizard.total_qty_needed = sum(wizard.suggestion_line_ids.mapped('qty_needed'))
             wizard.total_qty_suggested = sum(wizard.suggestion_line_ids.mapped('suggested_qty'))
 
-    @api.model
+    @api.model_create_single
     def create(self, vals):
         """Auto-generate suggestions when wizard is created"""
         wizard = super().create(vals)
@@ -179,11 +179,14 @@ class PickingSuggestionLine(models.TransientModel):
     batch_id = fields.Many2one(
         'hdi.batch',
         string='Batch gợi ý',
+        inverse_name=False,
+        ondelete='set null',
     )
 
     location_id = fields.Many2one(
         'stock.location',
         string='Vị trí',
+        ondelete='set null',
     )
 
     location_priority = fields.Integer(

@@ -12,12 +12,15 @@ class PutawayWizard(models.TransientModel):
         'hdi.batch',
         string='Batch',
         default=lambda self: self.env.context.get('default_batch_id'),
+        inverse_name=False,
+        ondelete='set null',
     )
 
     picking_id = fields.Many2one(
         'stock.picking',
         string='Picking',
         default=lambda self: self.env.context.get('default_picking_id'),
+        ondelete='set null',
     )
 
     product_id = fields.Many2one(

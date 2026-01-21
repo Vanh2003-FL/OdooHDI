@@ -101,7 +101,7 @@ class HDIWarehouseLayout(models.Model):
         readonly=True,
     )
 
-    @api.model
+    @api.model_create_single
     def create(self, vals):
         record = super().create(vals)
         # Auto-create grid cells based on dimensions
@@ -201,13 +201,16 @@ class HDIWarehouseLayoutGrid(models.Model):
     batch_id = fields.Many2one(
         'hdi.batch',
         string='Batch/Lot',
-        help="Batch currently in this location"
+        help="Batch currently in this location",
+        inverse_name=False,
+        ondelete='set null',
     )
 
     location_id = fields.Many2one(
         'stock.location',
         string='Stock Location',
-        help="Linked stock location"
+        help="Linked stock location",
+        ondelete='set null',
     )
 
     # ===== STATUS =====
