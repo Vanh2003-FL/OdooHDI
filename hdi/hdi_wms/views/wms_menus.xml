@@ -12,6 +12,12 @@
               action="action_batch"
               sequence="10"/>
 
+    <menuitem id="menu_warehouse_map"
+              name="📊 Sơ đồ Kho"
+              parent="menu_wms_root"
+              action="action_warehouse_layout_map"
+              sequence="12"/>
+
     <menuitem id="menu_picking_list"
               name="Bảng kê lấy hàng"
               parent="menu_wms_root"

@@ -32,6 +32,8 @@ HDI Warehouse Management System
         'views/hdi_putaway_suggestion_views.xml',
         'views/hdi_loose_line_views.xml',
         'views/hdi_picking_list_views.xml',
+        'views/warehouse_layout_views.xml',
+        'views/warehouse_layout_map_qweb.xml',
 
         # Wizards
         'wizard/batch_creation_wizard_views.xml',
@@ -41,13 +43,12 @@ HDI Warehouse Management System
         # Menus
         'views/wms_menus.xml',
     ],
-    # 'assets': {
-    #     'web.assets_backend': [
-    #         'hdi_wms/static/src/js/barcode_scanner.js',
-    #         'hdi_wms/static/src/xml/scanner_templates.xml',
-    #         'hdi_wms/static/src/scss/wms.scss',
-    #     ],
-    # },
+    'assets': {
+        'web.assets_backend': [
+            'hdi_wms/static/src/css/warehouse_layout_grid.css',
+            'hdi_wms/static/src/js/warehouse_layout_grid.js',
+        ],
+    },
     'installable': True,
     'application': True,
     'auto_install': False,
