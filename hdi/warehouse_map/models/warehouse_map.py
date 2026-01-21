@@ -45,7 +45,7 @@ class WarehouseMap(models.Model):
     
     @api.model
     def get_map_data(self, map_id):
-        """Lấy dữ liệu sơ đồ kho với thông tin lot - mỗi lot là 1 vị trí"""
+        """Lấy dữ liệu sơ đồ kho với thông tin lot/batch - mỗi lot hoặc batch là 1 vị trí"""
         warehouse_map = self.browse(map_id)
         if not warehouse_map:
             return {}
@@ -55,17 +55,63 @@ class WarehouseMap(models.Model):
                   ('usage', '=', 'internal')]
         locations = self.env['stock.location'].search(domain)
         
-        # Lấy thông tin quants (lot/serial) - mỗi quant là 1 vị trí trên sơ đồ
+        # Tổ chức dữ liệu theo vị trí
+        lot_data = {}
+        
+        # 1. Lấy thông tin batches có display_on_map
+        batches = self.env['hdi.batch'].search([
+            ('display_on_map', '=', True),
+            ('posx', '!=', False),
+            ('posy', '!=', False),
+        ])
+        
+        for batch in batches:
+            x = batch.posx or 0
+            y = batch.posy or 0
+            z = batch.posz or 0
+            position_key = f"{x}_{y}_{z}"
+            
+            # Get total quantity and product info from batch's quants
+            total_qty = sum(batch.quant_ids.mapped('quantity'))
+            reserved_qty = sum(batch.quant_ids.mapped('reserved_quantity'))
+            
+            # Get product info from first quant (batches should have same product)
+            first_quant = batch.quant_ids[0] if batch.quant_ids else None
+            
+            lot_data[position_key] = {
+                'id': batch.id,
+                'batch_id': batch.id,
+                'batch_name': batch.name,
+                'product_id': first_quant.product_id.id if first_quant else False,
+                'product_name': first_quant.product_id.display_name if first_quant else 'No Product',
+                'product_code': first_quant.product_id.default_code if first_quant else '',
+                'lot_id': False,  # Batch không có lot_id cụ thể
+                'lot_name': batch.name,  # Hiển thị tên batch
+                'quantity': total_qty,
+                'uom': first_quant.product_uom_id.name if first_quant else 'Unit',
+                'reserved_quantity': reserved_qty,
+                'available_quantity': total_qty - reserved_qty,
+                'location_id': first_quant.location_id.id if first_quant else False,
+                'location_name': first_quant.location_id.name if first_quant else '',
+                'location_complete_name': first_quant.location_id.complete_name if first_quant else '',
+                'in_date': batch.create_date.strftime('%d-%m-%Y') if batch.create_date else False,
+                'days_in_stock': 0,  # TODO: Calculate from batch
+                'x': x,
+                'y': y,
+                'z': z,
+                'position_key': position_key,
+            }
+        
+        # 2. Lấy thông tin quants (lot/serial) - chỉ những quants KHÔNG thuộc batch nào
         # CHỈ hiển thị sản phẩm có theo dõi lô/serial (tracking != 'none')
         quants = self.env['stock.quant'].search([
             ('location_id', 'in', locations.ids),
             ('quantity', '>', 0),
             ('display_on_map', '=', True),
-            ('product_id.tracking', '!=', 'none'),  # Chỉ sản phẩm có tracking
+            ('product_id.tracking', '!=', 'none'),
+            ('batch_id', '=', False),  # Chỉ lấy quants không thuộc batch
         ])
         
-        # Tổ chức dữ liệu theo vị trí x, y của quant
-        lot_data = {}
         for quant in quants:
             # Lấy vị trí x, y từ quant
             x = quant.posx or 0
