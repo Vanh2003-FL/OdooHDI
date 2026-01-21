@@ -3,6 +3,7 @@
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { Dialog } from "@web/core/dialog";
 
 export class WarehouseLayoutView extends Component {
     static props = {
@@ -13,6 +14,7 @@ export class WarehouseLayoutView extends Component {
         this.orm = useService("orm");
         this.action = useService("action");
         this.notification = useService("notification");
+        this.dialog = useService("dialog");
 
         this.state = useState({
             mapData: null,
@@ -243,7 +245,10 @@ export class WarehouseLayoutView extends Component {
     }
 }
 
-// Đăng ký view
+// Đăng ký client action
+registry.category("client_actions").add("warehouse_map_dialog", WarehouseLayoutView);
+
+// Đăng ký view (optional - dự phòng)
 registry.category("views").add("warehouse_layout_map", {
     type: "warehouse_layout_map",
     display_name: "Sơ đồ Kho",

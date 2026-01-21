@@ -6,18 +6,8 @@
     <record id="action_warehouse_layout_map" model="ir.actions.act_window">
         <field name="name">Sơ đồ Kho</field>
         <field name="res_model">hdi.warehouse.layout</field>
-        <field name="view_mode">warehouse_layout_map,list,form</field>
+        <field name="view_mode">list,form</field>
         <field name="target">main</field>
-    </record>
-
-    <!-- Custom Owl View for Warehouse Layout Map -->
-    <record id="view_warehouse_layout_map_owl" model="ir.ui.view">
-        <field name="name">hdi.warehouse.layout.map.owl</field>
-        <field name="model">hdi.warehouse.layout</field>
-        <field name="type">warehouse_layout_map</field>
-        <field name="arch" type="xml">
-            <warehouse_layout_map/>
-        </field>
     </record>
 
     <!-- ===== LIST VIEW ===== -->
@@ -50,6 +40,7 @@
                 <header>
                     <button name="action_activate" string="Kích hoạt" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_archive" string="Lưu trữ" type="object" invisible="state != 'active'"/>
+                    <button name="action_view_warehouse_map" string="📊 Xem Sơ đồ Kho" type="object" class="btn-info"/>
                     <field name="state" widget="statusbar" options="{'clickable': False}"/>
                 </header>
                 <sheet>

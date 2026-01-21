@@ -247,3 +247,14 @@ class HDIWarehouseLayoutGrid(models.Model):
     def days_in_warehouse(self):
         """Property to access days in warehouse"""
         return self._get_days_in_warehouse()
+    def action_view_warehouse_map(self):
+        """Open warehouse map view"""
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'warehouse_map_dialog',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+                'active_model': 'hdi.warehouse.layout',
+            }
+        }
