@@ -1,103 +1,233 @@
-// Warehouse Layout Grid Visualization
-// Hiển thị sơ đồ kho dạng lưới với các quants
+// Warehouse Layout Grid Visualization - OPTIMIZED
+// Hiển thị sơ đồ kho dạng lưới với các quants, tìm kiếm, zoom
 
-odoo.define('hdi_wms.warehouse_layout_grid', function(require) {
+(function($) {
     'use strict';
 
-    const AbstractView = require('web.AbstractView');
-    const View = require('web.View');
-    const core = require('web.core');
-    const _t = core._t;
+    $(document).ready(function() {
+        const warehouseMapContainer = $('.warehouse-map-container');
+        if (!warehouseMapContainer.length) return;
 
-    /**
-     * WarehouseLayoutMapView
-     * Hiển thị sơ đồ kho dạng lưới
-     */
-    const WarehouseLayoutMapView = AbstractView.extend({
-        display_name: _t('Warehouse Map'),
-        icon: 'fa-th',
-        config: {
-            Controller: require('hdi_wms.WarehouseLayoutMapController'),
-            Model: require('hdi_wms.WarehouseLayoutMapModel'),
-            Renderer: require('hdi_wms.WarehouseLayoutMapRenderer'),
-        },
+        const gridWrapper = $('#grid-wrapper');
+        const searchInput = $('.search-input');
+        const zoomBtns = $('.zoom-btn');
+        const zoomLevel = $('.zoom-level');
+        const gridCells = $('.grid-cell');
+        
+        let currentZoom = 100;
+        const minZoom = 50;
+        const maxZoom = 200;
+        const zoomStep = 10;
 
-        init: function(viewInfo, params) {
-            this._super.apply(this, arguments);
-            const self = this;
-        },
-    });
+        // ===== ZOOM FUNCTIONALITY =====
+        zoomBtns.on('click', function() {
+            const action = $(this).data('zoom');
+            if (action === 'plus') {
+                currentZoom = Math.min(currentZoom + zoomStep, maxZoom);
+            } else if (action === 'minus') {
+                currentZoom = Math.max(currentZoom - zoomStep, minZoom);
+            }
+            updateZoom();
+        });
 
-    View.registry.add('warehouse_map', WarehouseLayoutMapView);
+        function updateZoom() {
+            const scale = currentZoom / 100;
+            zoomLevel.text(currentZoom + '%');
+            $('.warehouse-grid').css('transform', `scale(${scale})`);
+            $('.warehouse-grid').css('transform-origin', 'top left');
+        }
 
-    return WarehouseLayoutMapView;
-});
+        // ===== SEARCH FUNCTIONALITY =====
+        let searchTimeout;
+        searchInput.on('input', function() {
+            clearTimeout(searchTimeout);
+            const searchTerm = $(this).val().toLowerCase().trim();
 
-/**
- * WarehouseLayoutMapRenderer
- * Render grid visualization
- */
-odoo.define('hdi_wms.WarehouseLayoutMapRenderer', function(require) {
-    'use strict';
-
-    const AbstractRenderer = require('web.AbstractRenderer');
-    const qweb = require('web.qweb');
-
-    const WarehouseLayoutMapRenderer = AbstractRenderer.extend({
-        className: 'warehouse_layout_grid_container',
-        template: 'WarehouseLayoutMapTemplate',
-
-        init: function(parent, state, params) {
-            this._super.apply(this, arguments);
-            this.quants = [];
-        },
-
-        /**
-         * Render grid dạng HTML table
-         */
-        _renderGridMap: function(layout, quants) {
-            const self = this;
-            const grid = document.createElement('div');
-            grid.className = 'warehouse-grid';
-
-            const rows = layout.rows;
-            const cols = layout.columns;
-
-            for (let y = 0; y < rows; y++) {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'grid-row';
-
-                for (let x = 0; x < cols; x++) {
-                    const cellDiv = document.createElement('div');
-                    cellDiv.className = 'grid-cell';
-                    cellDiv.id = `cell-${x}-${y}`;
-
-                    // Tìm quant tại vị trí này
-                    const quant = quants.find(q => q.pos_x === x && q.pos_y === y);
-
-                    if (quant) {
-                        // Ô có hàng
-                        cellDiv.classList.add('occupied');
-                        cellDiv.innerHTML = self._renderQuantCell(quant, layout);
-                    } else {
-                        // Ô trống
-                        cellDiv.classList.add('empty');
-                        cellDiv.innerHTML = '<span class="empty-cell">+</span>';
-                    }
-
-                    cellDiv.addEventListener('click', function() {
-                        self.trigger_up('cell_clicked', {
-                            layout_id: layout.id,
-                            pos_x: x,
-                            pos_y: y,
-                            quant_id: quant ? quant.id : null,
-                        });
-                    });
-
-                    rowDiv.appendChild(cellDiv);
+            searchTimeout = setTimeout(function() {
+                if (!searchTerm) {
+                    // Reset - show all
+                    gridCells.removeClass('search-hidden search-highlight');
+                    return;
                 }
 
-                grid.appendChild(rowDiv);
+                gridCells.each(function() {
+                    const $cell = $(this);
+                    const lot = $cell.find('.quant-lot').text().toLowerCase();
+                    const product = $cell.find('.quant-product').text().toLowerCase();
+                    
+                    if (lot.includes(searchTerm) || product.includes(searchTerm)) {
+                        $cell.removeClass('search-hidden').addClass('search-highlight');
+                    } else {
+                        $cell.addClass('search-hidden').removeClass('search-highlight');
+                    }
+                });
+
+                // Show count
+                const visibleCount = gridCells.not('.search-hidden').length;
+                const totalCount = gridCells.length;
+                updateSearchStatus(visibleCount, totalCount);
+            }, 300);
+        });
+
+        function updateSearchStatus(visible, total) {
+            const status = visible === total ? 
+                `Hiển thị ${total} ô` : 
+                `Tìm thấy ${visible}/${total} ô`;
+            console.log(status);
+        }
+
+        // ===== CELL CLICK HANDLERS =====
+        gridCells.on('click', function(e) {
+            const $cell = $(this);
+            const isOccupied = $cell.hasClass('occupied');
+            const locationId = $cell.data('location-id');
+
+            if (e.target.closest('.cell-action-btn')) {
+                handleCellAction(e, $cell);
+            } else if (!isOccupied) {
+                // Empty cell - open assign wizard
+                openAssignWizard($cell, locationId);
+            } else {
+                // Occupied - show quick info
+                showCellInfo($cell);
+            }
+        });
+
+        function handleCellAction(e, $cell) {
+            const $btn = $(e.target).closest('.cell-action-btn');
+            const action = $btn.attr('class').split(' ')[1]; // edit, move, remove
+
+            switch(action) {
+                case 'edit':
+                    openEditDialog($cell);
+                    break;
+                case 'move':
+                    openMoveDialog($cell);
+                    break;
+                case 'remove':
+                    confirmRemoveQuant($cell);
+                    break;
+            }
+        }
+
+        function openAssignWizard($cell, locationId) {
+            // This would trigger the assign lot wizard
+            const x = $cell.data('x');
+            const y = $cell.data('y');
+            console.log(`Opening wizard for location ${locationId} at (${x}, ${y})`);
+            // window.location.href = `/web?action=...`;
+        }
+
+        function openEditDialog($cell) {
+            const batchId = $cell.find('.quant-cell').data('batch-id');
+            console.log(`Edit quant: ${batchId}`);
+        }
+
+        function openMoveDialog($cell) {
+            const batchId = $cell.find('.quant-cell').data('batch-id');
+            console.log(`Move quant: ${batchId}`);
+        }
+
+        function confirmRemoveQuant($cell) {
+            if (confirm('Xóa hàng khỏi sơ đồ?')) {
+                const batchId = $cell.find('.quant-cell').data('batch-id');
+                console.log(`Remove quant: ${batchId}`);
+            }
+        }
+
+        function showCellInfo($cell) {
+            const lot = $cell.find('.quant-lot').text();
+            const product = $cell.find('.quant-product').text();
+            const qty = $cell.find('.qty-total').text();
+            const days = $cell.find('.quant-badge').text();
+            
+            console.log(`Cell Info:\nLô: ${lot}\nSP: ${product}\nSL: ${qty}\nNgày: ${days}`);
+        }
+
+        // ===== ACTION BUTTONS =====
+        $('.action-btn').on('click', function() {
+            const action = $(this).attr('title');
+            if (action.includes('Làm mới')) {
+                location.reload();
+            } else if (action.includes('Tải')) {
+                exportGridData();
+            }
+        });
+
+        function exportGridData() {
+            const data = [];
+            gridCells.each(function() {
+                const $cell = $(this);
+                if ($cell.hasClass('occupied')) {
+                    data.push({
+                        x: $cell.data('x'),
+                        y: $cell.data('y'),
+                        lot: $cell.find('.quant-lot').text(),
+                        product: $cell.find('.quant-product').text(),
+                        qty: $cell.find('.qty-total').text(),
+                        days: $cell.find('.quant-badge').text(),
+                    });
+                }
+            });
+            console.log('Grid data:', data);
+        }
+
+        // ===== KEYBOARD SHORTCUTS =====
+        $(document).on('keydown', function(e) {
+            if (!searchInput.is(':focus')) {
+                // Ctrl/Cmd + F = Focus search
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+                // Ctrl/Cmd + + = Zoom in
+                if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) {
+                    e.preventDefault();
+                    currentZoom = Math.min(currentZoom + zoomStep, maxZoom);
+                    updateZoom();
+                }
+                // Ctrl/Cmd + - = Zoom out
+                if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+                    e.preventDefault();
+                    currentZoom = Math.max(currentZoom - zoomStep, minZoom);
+                    updateZoom();
+                }
+                // Escape = Clear search
+                if (e.key === 'Escape' && searchInput.val()) {
+                    searchInput.val('').trigger('input');
+                }
+            }
+        });
+
+        // ===== DRAG & DROP (Optional) =====
+        gridCells.on('dragstart', function(e) {
+            if (!$(this).hasClass('occupied')) return;
+            const batchId = $(this).find('.quant-cell').data('batch-id');
+            e.originalEvent.dataTransfer.effectAllowed = 'move';
+            e.originalEvent.dataTransfer.setData('batch_id', batchId);
+        });
+
+        gridCells.on('dragover', function(e) {
+            e.preventDefault();
+            e.originalEvent.dataTransfer.dropEffect = 'move';
+            $(this).addClass('drag-over');
+        });
+
+        gridCells.on('dragleave', function() {
+            $(this).removeClass('drag-over');
+        });
+
+        gridCells.on('drop', function(e) {
+            e.preventDefault();
+            $(this).removeClass('drag-over');
+            const batchId = e.originalEvent.dataTransfer.getData('batch_id');
+            const targetLocationId = $(this).data('location-id');
+            console.log(`Move batch ${batchId} to location ${targetLocationId}`);
+        });
+
+        console.log('✓ Warehouse Map Grid initialized');
+    });
+})(jQuery);
             }
 
             return grid;
