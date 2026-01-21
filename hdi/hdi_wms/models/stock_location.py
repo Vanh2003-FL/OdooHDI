@@ -156,35 +156,7 @@ class StockLocation(models.Model):
         help="Sequence for putaway suggestion (lower = higher priority)"
     )
 
-    # ===== 3D WAREHOUSE INTEGRATION =====
-    warehouse_layout_id = fields.Many2one(
-        'warehouse.layout',
-        string='Sơ Đồ Kho 3D',
-        index=True,
-        help="Sơ đồ kho 3D chứa vị trí này"
-    )
 
-    color_code_hex = fields.Char(
-        string='Mã Màu (Hex)',
-        default='#4CAF50',
-        help="Màu hiển thị vị trí trong sơ đồ 3D (e.g. #FF5733)"
-    )
-
-    accessibility_score = fields.Float(
-        compute='_compute_accessibility_score',
-        string='Điểm Tiếp Cận',
-        store=True,
-        digits=(3, 1),
-        help="Điểm 0-100 chỉ độ dễ tiếp cận (cao = dễ lấy hàng hơn)"
-    )
-
-    location_3d_type = fields.Selection([
-        ('regular', 'Vị Trí Thường'),
-        ('aisle', 'Lối Đi'),
-        ('rack_section', 'Phần Rack'),
-        ('door', 'Cửa/Lối Ra Vào'),
-        ('hazard_zone', 'Vùng Nguy Hiểm'),
-    ], string='Loại Vị Trí 3D', default='regular')
 
     @api.depends('coordinate_x', 'coordinate_y', 'coordinate_z')
     def _compute_coordinate_display(self):
@@ -229,25 +201,7 @@ class StockLocation(models.Model):
         for location in self:
             location.batch_count = len(location.batch_ids)
 
-    @api.depends('coordinate_z', 'capacity_percentage')
-    def _compute_accessibility_score(self):
-        """
-        Tính điểm tiếp cận (0-100)
-        - Vị trí thấp (z) dễ tiếp cận hơn → điểm cao
-        - Vị trí dung lượng thấp → dễ tiếp cận hơn → điểm cao
-        """
-        for location in self:
-            score = 100.0
-            
-            # Penalize high positions (harder to access)
-            if location.coordinate_z:
-                score -= (location.coordinate_z * 5)  # -5 điểm per level
-            
-            # Penalize full locations (harder to access/store)
-            score -= (location.capacity_percentage or 0) * 0.3  # -0.3 per capacity %
-            
-            # Ensure score stays in 0-100 range
-            location.accessibility_score = max(0, min(100, score))
+
 
     def action_view_batches(self):
         """View all batches in this location"""
