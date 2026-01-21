@@ -3,7 +3,8 @@
     <menuitem id="menu_wms_root"
               name="Quản lý Kho"
               parent="stock.menu_stock_root"
-              sequence="15"/>
+              sequence="15"
+              groups="group_wms_user"/>
 
     <menuitem id="menu_batch"
               name="Lô hàng / Pallet"

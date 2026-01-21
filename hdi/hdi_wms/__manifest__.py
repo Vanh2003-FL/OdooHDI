@@ -41,7 +41,13 @@ HDI Warehouse Management System
         # Menus
         'views/wms_menus.xml',
     ],
-    'assets': {},
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'hdi_wms/static/src/js/barcode_scanner.js',
+    #         'hdi_wms/static/src/xml/scanner_templates.xml',
+    #         'hdi_wms/static/src/scss/wms.scss',
+    #     ],
+    # },
     'installable': True,
     'application': True,
     'auto_install': False,

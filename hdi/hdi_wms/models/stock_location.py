@@ -156,8 +156,6 @@ class StockLocation(models.Model):
         help="Sequence for putaway suggestion (lower = higher priority)"
     )
 
-
-
     @api.depends('coordinate_x', 'coordinate_y', 'coordinate_z')
     def _compute_coordinate_display(self):
         """Format coordinates as X-Y-Z"""
@@ -200,8 +198,6 @@ class StockLocation(models.Model):
         """Count batches in location"""
         for location in self:
             location.batch_count = len(location.batch_ids)
-
-
 
     def action_view_batches(self):
         """View all batches in this location"""
