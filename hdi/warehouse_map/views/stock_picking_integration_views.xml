@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
+    <!-- Receipt Putaway Wizard Action -->
+    <record id="action_receipt_putaway_wizard" model="ir.actions.act_window">
+        <field name="name">Smart Putaway</field>
+        <field name="res_model">receipt.putaway.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+    <!-- Delivery Pick Wizard Action -->
+    <record id="action_delivery_pick_wizard" model="ir.actions.act_window">
+        <field name="name">Smart Picking</field>
+        <field name="res_model">delivery.pick.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
     <!-- Enhanced Stock Picking Form with Warehouse Map Integration -->
     <record id="view_picking_form_with_map_integration" model="ir.ui.view">
         <field name="name">stock.picking.form.map.integration</field>
@@ -80,22 +96,6 @@
             </xpath>
             
         </field>
-    </record>
-    
-    <!-- Receipt Putaway Wizard Action -->
-    <record id="action_receipt_putaway_wizard" model="ir.actions.act_window">
-        <field name="name">Smart Putaway</field>
-        <field name="res_model">receipt.putaway.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-    </record>
-    
-    <!-- Delivery Pick Wizard Action -->
-    <record id="action_delivery_pick_wizard" model="ir.actions.act_window">
-        <field name="name">Smart Picking</field>
-        <field name="res_model">delivery.pick.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
     </record>
 
 </odoo>
