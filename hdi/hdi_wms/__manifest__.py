@@ -12,6 +12,7 @@ HDI Warehouse Management System
     'depends': [
         'stock',
         'barcodes',
+        'warehouse_map',
     ],
     'data': [
         # Security
@@ -38,6 +39,7 @@ HDI Warehouse Management System
         'wizard/batch_creation_wizard_views.xml',
         'wizard/putaway_wizard_views.xml',
         'wizard/picking_suggestion_wizard_views.xml',
+        'wizard/assign_batch_position_wizard_views.xml',
 
         # Menus
         'views/wms_menus.xml',

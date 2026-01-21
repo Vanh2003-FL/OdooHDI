@@ -461,6 +461,18 @@ class StockPicking(models.Model):
                         'Cannot validate picking: %d batches are not yet stored.\n'
                         'Please complete putaway for all batches first.'
                     ) % len(pending_batches))
+                
+                # Check if batches have map position (for tracked products only)
+                stored_batches = picking.batch_ids.filtered(lambda b: b.state == 'stored')
+                batches_needing_position = stored_batches.filtered(
+                    lambda b: not b.has_map_position and 
+                    any(q.product_id.tracking != 'none' for q in b.quant_ids)
+                )
+                if batches_needing_position:
+                    raise UserError(_(
+                        'Cannot validate picking: %d batches with tracked products need warehouse map position.\n'
+                        'Please assign position on warehouse map for: %s'
+                    ) % (len(batches_needing_position), ', '.join(batches_needing_position.mapped('name'))))
 
         result = super().button_validate()
 

@@ -47,6 +47,12 @@
                             type="object" invisible="state not in ('in_receiving', 'in_putaway')"
                             class="btn-secondary"/>
                     
+                    <!-- Map Position Assignment -->
+                    <button name="action_assign_map_position" string="Gán vị trí Sơ đồ kho"
+                            type="object" invisible="state != 'stored' or has_map_position"
+                            class="btn-warning"
+                            help="Gán vị trí cho batch trên sơ đồ kho"/>
+                    
                     <!-- Outgoing workflow -->
                     <button name="action_start_picking" string="Bắt đầu lấy hàng"
                             type="object" invisible="state != 'stored'"
@@ -96,8 +102,17 @@
                             <field name="weight" string="Trọng lượng (kg)"/>
                             <field name="volume" string="Thể tích (m³)"/>
                         </group>
-                    </group>
-                    <group string="Kích thước vật lý" groups="base.group_no_one">
+                    </group>                    <group string="Vị trí trên Sơ đồ kho" invisible="state not in ('stored', 'in_picking', 'shipped')">
+                        <group>
+                            <field name="posx" string="Vị trí X (Cột)" readonly="1"/>
+                            <field name="posy" string="Vị trí Y (Hàng)" readonly="1"/>
+                            <field name="posz" string="Vị trí Z (Tầng)" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="display_on_map" string="Hiển thị trên sơ đồ" readonly="1"/>
+                            <field name="has_map_position" string="Đã có vị trí" readonly="1"/>
+                        </group>
+                    </group>                    <group string="Kích thước vật lý" groups="base.group_no_one">
                         <group>
                             <field name="height"/>
                             <field name="width"/>

@@ -138,6 +138,32 @@ class HdiBatch(models.Model):
     width = fields.Float(string='Chiều rộng (cm)', digits=(16, 2))
     length = fields.Float(string='Chiều dài (cm)', digits=(16, 2))
 
+    # ===== WAREHOUSE MAP POSITION =====
+    posx = fields.Integer(
+        string='Vị trí X (Cột)',
+        help='Vị trí cột trong sơ đồ kho'
+    )
+    posy = fields.Integer(
+        string='Vị trí Y (Hàng)',
+        help='Vị trí hàng trong sơ đồ kho'
+    )
+    posz = fields.Integer(
+        string='Vị trí Z (Tầng)',
+        default=0,
+        help='Tầng/kệ trong sơ đồ kho'
+    )
+    display_on_map = fields.Boolean(
+        string='Hiển thị trên sơ đồ',
+        default=False,
+        help='Batch này có hiển thị trên sơ đồ kho không'
+    )
+    has_map_position = fields.Boolean(
+        compute='_compute_has_map_position',
+        string='Đã có vị trí',
+        store=True,
+        help='Batch đã được gán vị trí trên sơ đồ'
+    )
+
     user_id = fields.Many2one(
         'res.users',
         string='Responsible',
@@ -245,6 +271,16 @@ class HdiBatch(models.Model):
         for batch in self:
             batch.product_count = len(batch.quant_ids.mapped('product_id'))
 
+    @api.depends('posx', 'posy', 'display_on_map')
+    def _compute_has_map_position(self):
+        """Check if batch has position on warehouse map"""
+        for batch in self:
+            batch.has_map_position = (
+                batch.display_on_map and 
+                batch.posx is not False and 
+                batch.posy is not False
+            )
+
     def action_start_receiving(self):
         """Start receiving process"""
         self.ensure_one()
@@ -274,9 +310,22 @@ class HdiBatch(models.Model):
         for quant in self.quant_ids:
             if quant.location_id != self.location_dest_id:
                 quant.location_id = self.location_dest_id
+            
+            # Auto-assign map position to quants if batch has position
+            if self.has_map_position:
+                quant.write({
+                    'posx': self.posx,
+                    'posy': self.posy,
+                    'posz': self.posz,
+                    'display_on_map': self.display_on_map,
+                })
 
         self.location_id = self.location_dest_id
         self.state = 'stored'
+        
+        # Suggest assigning map position if not yet assigned
+        if not self.has_map_position:
+            return self.action_assign_map_position()
 
     # ===== OUTGOING / PICKING OPERATIONS =====
     def action_start_picking(self):
@@ -320,6 +369,50 @@ class HdiBatch(models.Model):
             'context': {
                 'default_batch_id': self.id,
                 'default_product_id': self.product_id.id if self.product_id else False,
+            }
+        }
+
+    def action_assign_map_position(self):
+        """Open wizard to assign position on warehouse map"""
+        self.ensure_one()
+        
+        if self.state != 'stored':
+            raise UserError(_('Batch must be stored before assigning map position.'))
+        
+        # Get warehouse map for this location
+        warehouse_map = self.env['warehouse.map'].search([
+            ('location_id', 'parent_of', self.location_id.id)
+        ], limit=1)
+        
+        if not warehouse_map:
+            raise UserError(_('No warehouse map found for this location.'))
+        
+        # Check if batch has only products with tracking (lot/serial)
+        non_tracked_products = self.quant_ids.filtered(
+            lambda q: q.product_id.tracking == 'none'
+        )
+        if non_tracked_products:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Warning'),
+                    'message': _('This batch contains products without lot/serial tracking. '
+                               'Only products with tracking can be displayed on warehouse map.'),
+                    'type': 'warning',
+                    'sticky': True,
+                }
+            }
+        
+        return {
+            'name': _('Assign Position on Warehouse Map'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'assign.batch.position.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_batch_id': self.id,
+                'default_warehouse_map_id': warehouse_map.id,
             }
         }
 

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_assign_batch_position_wizard_form" model="ir.ui.view">
+        <field name="name">assign.batch.position.wizard.form</field>
+        <field name="model">assign.batch.position.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Gán vị trí Batch trên Sơ đồ kho">
+                <sheet>
+                    <group>
+                        <group string="Thông tin Batch">
+                            <field name="batch_id" readonly="1"/>
+                            <field name="batch_name" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="total_quantity" readonly="1"/>
+                            <field name="location_id" readonly="1"/>
+                        </group>
+                        
+                        <group string="Sơ đồ kho">
+                            <field name="warehouse_map_id" options="{'no_create': True}"/>
+                            <field name="rows" readonly="1"/>
+                            <field name="columns" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Tọa độ vị trí">
+                            <field name="posx" placeholder="0 - columns"/>
+                            <field name="posy" placeholder="0 - rows"/>
+                            <field name="posz"/>
+                        </group>
+                        
+                        <group string="Hiển thị">
+                            <field name="display_on_map"/>
+                        </group>
+                    </group>
+                    
+                    <div class="oe_chatter">
+                        <div class="alert alert-info text-center" role="alert">
+                            <p><strong>Lưu ý:</strong></p>
+                            <ul class="text-left">
+                                <li>Vị trí X = Cột (từ 0 đến <field name="columns" readonly="1" nolabel="1"/>)</li>
+                                <li>Vị trí Y = Hàng (từ 0 đến <field name="rows" readonly="1" nolabel="1"/>)</li>
+                                <li>Vị trí Z = Tầng/Kệ (mặc định = 0)</li>
+                                <li>Mỗi vị trí chỉ được gán cho 1 batch có sản phẩm theo dõi lô/serial</li>
+                            </ul>
+                        </div>
+                    </div>
+                </sheet>
+                
+                <footer>
+                    <button name="action_assign_position" 
+                            string="Gán vị trí" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button name="action_view_map" 
+                            string="Xem Sơ đồ" 
+                            type="object" 
+                            class="btn-secondary"/>
+                    <button string="Hủy" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
