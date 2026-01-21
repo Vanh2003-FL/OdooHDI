@@ -9,3 +9,6 @@ from . import stock_move
 from . import stock_location
 from . import stock_quant
 from . import product_product
+from . import hdi_warehouse_layout
+from . import hdi_warehouse_location_grid
+from . import hdi_stock_extensions
