@@ -123,12 +123,19 @@ class AssignLotPositionWizard(models.TransientModel):
             ) % (self.posx, self.posy, self.posz))
 
         # Kiểm tra vị trí đã có batch khác chưa
+        # Chỉ check batch có quants trong location của warehouse_map này
+        locations = self.env['stock.location'].search([
+            ('location_id', 'child_of', location.id),
+            ('usage', '=', 'internal')
+        ])
+        
         existing_batch = self.env['hdi.batch'].search([
             ('id', '!=', batch.id),
             ('display_on_map', '=', True),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
             ('posz', '=', self.posz),
+            ('quant_ids.location_id', 'in', locations.ids),  # Chỉ batch có quant trong location này
         ], limit=1)
 
         if existing_batch:

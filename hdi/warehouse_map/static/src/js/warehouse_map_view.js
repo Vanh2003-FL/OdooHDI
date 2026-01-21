@@ -84,10 +84,6 @@ export class WarehouseMapView extends Component {
             const mapId = this.getMapId();
             console.log(`[RefreshCell] Map ID: ${mapId}`);
 
-            // Get old data for comparison
-            const oldLotCount = Object.keys(this.state.mapData?.lots || {}).length;
-            const oldBlockedCount = Object.keys(this.state.mapData?.blocked_cells || {}).length;
-
             const data = await this.orm.call(
                 'warehouse.map',
                 'get_map_data',
@@ -99,31 +95,19 @@ export class WarehouseMapView extends Component {
                 blocked_cells: Object.keys(data.blocked_cells || {}).length
             });
 
-            // Check if data actually changed
-            const newLotCount = Object.keys(data.lots || {}).length;
-            const newBlockedCount = Object.keys(data.blocked_cells || {}).length;
-            const hasChanges = (newLotCount !== oldLotCount) || (newBlockedCount !== oldBlockedCount);
-
-            console.log(`[RefreshCell] Has changes: ${hasChanges}`);
-
             // Tạo arrays cho rows và columns
             data.rowsArray = Array.from({length: data.rows}, (_, i) => i);
             data.columnsArray = Array.from({length: data.columns}, (_, i) => i);
 
             // Update entire mapData object to trigger OWL reactivity
-            // Assigning nested properties doesn't trigger re-render
             this.state.mapData = data;
             console.log('[RefreshCell] State updated, triggering re-render');
 
-            // Show notification only if data changed (user didn't cancel)
-            if (hasChanges) {
-                this.notification.add(
-                    'Đã cập nhật thành công',
-                    { type: 'success' }
-                );
-            } else {
-                console.log('[RefreshCell] No changes detected, skipping notification');
-            }
+            // Always show success notification after refresh
+            this.notification.add(
+                'Đã cập nhật thành công',
+                { type: 'success' }
+            );
         } catch (error) {
             console.error('[RefreshCell] Error:', error);
             this.notification.add(

@@ -50,17 +50,28 @@ class WarehouseMap(models.Model):
         if not warehouse_map:
             return {}
         
+        # Lấy tất cả locations con
+        domain = [('location_id', 'child_of', warehouse_map.location_id.id),
+                  ('usage', '=', 'internal')]
+        locations = self.env['stock.location'].search(domain)
+        
         # Tổ chức dữ liệu theo vị trí
         lot_data = {}
         
         # Lấy thông tin batches có display_on_map
+        # Batch cần có ít nhất 1 quant trong locations của warehouse_map
         batches = self.env['hdi.batch'].search([
             ('display_on_map', '=', True),
             ('posx', '!=', False),
             ('posy', '!=', False),
         ])
         
-        for batch in batches:
+        # Filter batches that have quants in warehouse_map locations
+        valid_batches = batches.filtered(
+            lambda b: any(q.location_id.id in locations.ids for q in b.quant_ids)
+        )
+        
+        for batch in valid_batches:
             x = batch.posx or 0
             y = batch.posy or 0
             z = batch.posz or 0
