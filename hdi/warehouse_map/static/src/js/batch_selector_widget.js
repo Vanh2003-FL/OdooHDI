@@ -3,15 +3,38 @@
 import { Component, onWillStart, useState, useEffect } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { registry } from "@web/core/registry";
+import { xml } from "@odoo/owl";
+
+const BATCH_SELECTOR_TEMPLATE = xml`
+    <div class="batch-selector-widget">
+        <t t-if="state.loading">
+            <span class="text-muted">Đang tải...</span>
+        </t>
+        <t t-else="">
+            <select 
+                class="form-select"
+                t-att-disabled="props.readonly"
+                t-on-change="onBatchChange"
+                t-att-value="state.selectedBatchId || ''">
+                <option value="">-- Chọn Batch/LPN --</option>
+                <t t-foreach="state.batches" t-as="batch" t-key="batch.id">
+                    <option t-att-value="batch.id" t-att-selected="state.selectedBatchId === batch.id">
+                        <t t-esc="batch.name"/>
+                    </option>
+                </t>
+            </select>
+        </t>
+    </div>
+`;
 
 class BatchSelectorWidget extends Component {
-    static template = "batch_selector_widget";
+    static template = BATCH_SELECTOR_TEMPLATE;
     static props = {
-        value: [String, Number],
-        record: Object,
-        fieldName: String,
-        update: Function,
-        readonly: Boolean,
+        value: [String, Number, { value: null }],
+        record: { value: null },
+        fieldName: { value: null },
+        update: { value: null },
+        readonly: { value: false },
     };
 
     setup() {

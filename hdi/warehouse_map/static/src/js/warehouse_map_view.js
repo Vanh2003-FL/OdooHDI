@@ -445,4 +445,7 @@ WarehouseMapView.template = "warehouse_map.WarehouseMapView";
 WarehouseMapView.components = {};
 
 // Register the view as a client action
+registry.category("client_actions").add("warehouse_map_view", WarehouseMapView);
+
+export { WarehouseMapView };
 registry.category("actions").add("warehouse_map_view", WarehouseMapView);
