@@ -373,11 +373,11 @@ class HdiBatch(models.Model):
         }
 
     def action_assign_map_position(self):
-        """Open wizard to assign position on warehouse map"""
+        """Open warehouse map to assign batch position"""
         self.ensure_one()
         
         if self.state != 'stored':
-            raise UserError(_('Batch must be stored before assigning map position.'))
+            raise UserError(_('Batch phải ở trạng thái Stored!'))
         
         # Get warehouse map for this location
         warehouse_map = self.env['warehouse.map'].search([
@@ -385,34 +385,18 @@ class HdiBatch(models.Model):
         ], limit=1)
         
         if not warehouse_map:
-            raise UserError(_('No warehouse map found for this location.'))
+            raise UserError(_('Không tìm thấy sơ đồ kho cho vị trí này!'))
         
-        # Check if batch has only products with tracking (lot/serial)
-        non_tracked_products = self.quant_ids.filtered(
-            lambda q: q.product_id.tracking == 'none'
-        )
-        if non_tracked_products:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Warning'),
-                    'message': _('This batch contains products without lot/serial tracking. '
-                               'Only products with tracking can be displayed on warehouse map.'),
-                    'type': 'warning',
-                    'sticky': True,
-                }
-            }
-        
+        # Open warehouse map view to select position
+        # Pass batch_id through context so JavaScript can use it when wizard opens
         return {
-            'name': _('Assign Position on Warehouse Map'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'assign.batch.position.wizard',
-            'view_mode': 'form',
-            'target': 'new',
+            'name': _('Gán vị trí trên Sơ đồ kho'),
+            'type': 'ir.actions.client',
+            'tag': 'warehouse_map_view',
             'context': {
+                'active_id': warehouse_map.id,
                 'default_batch_id': self.id,
-                'default_warehouse_map_id': warehouse_map.id,
+                'batch_mode': True,
             }
         }
 

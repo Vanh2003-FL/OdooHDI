@@ -191,33 +191,40 @@ export class WarehouseMapView extends Component {
     }
 
     async openAssignPositionWizard(row, col) {
-        await this.action.doAction(
-            {
-                name: `Gán Lot vào vị trí [${col}, ${row}]`,
-                type: 'ir.actions.act_window',
-                res_model: 'assign.lot.position.wizard',
-                view_mode: 'form',
-                views: [[false, 'form']],
-                target: 'new',
-                context: {
-                    default_posx: col,
-                    default_posy: row,
-                    default_posz: 0,
-                    default_warehouse_map_id: this.state.mapData.id,
+        // Call Python method to create wizard record with all necessary data
+        // This avoids RPC_ERROR from readonly field context defaults
+        
+        const batchId = this.props.context?.default_batch_id || false;
+        
+        try {
+            const action = await this.orm.call(
+                'assign.lot.position.wizard',
+                'create_from_map_click',
+                [],
+                {
+                    warehouse_map_id: this.state.mapData.id,
+                    posx: col,
+                    posy: row,
+                    posz: 0,
+                    batch_id: batchId,
                 }
-            },
-            {
+            );
+            
+            // Execute the returned action
+            await this.action.doAction(action, {
                 onClose: async () => {
                     console.log('[AssignWizard] onClose called');
-                    // Trong Odoo 17, onClose có thể không nhận result từ transient wizard
-                    // Workaround: Luôn refresh với delay nhỏ
-                    console.log('[AssignWizard] Waiting 300ms for wizard to complete...');
                     await new Promise(resolve => setTimeout(resolve, 300));
                     console.log('[AssignWizard] Executing refresh...');
                     await this.refreshCell(row, col);
                 }
-            }
-        );
+            });
+        } catch (error) {
+            console.error('[AssignWizard] Error:', error);
+            this.notification.add('Lỗi khi mở form gán vị trí', {
+                type: 'danger',
+            });
+        }
     }
 
     async openBlockCellWizard(row, col) {
