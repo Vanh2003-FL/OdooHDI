@@ -123,19 +123,12 @@ class AssignLotPositionWizard(models.TransientModel):
             ) % (self.posx, self.posy, self.posz))
 
         # Kiểm tra vị trí đã có batch khác chưa
-        # Chỉ check batch có quants trong location của warehouse_map này
-        locations = self.env['stock.location'].search([
-            ('location_id', 'child_of', location.id),
-            ('usage', '=', 'internal')
-        ])
-        
         existing_batch = self.env['hdi.batch'].search([
             ('id', '!=', batch.id),
             ('display_on_map', '=', True),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
             ('posz', '=', self.posz),
-            ('quant_ids.location_id', 'in', locations.ids),  # Chỉ batch có quant trong location này
         ], limit=1)
 
         if existing_batch:
@@ -158,5 +151,13 @@ class AssignLotPositionWizard(models.TransientModel):
             'posz': self.posz,
             'display_on_map': True,
         })
+        
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.info(f"[AssignPosition] SUCCESS - Batch {batch.name} assigned to [{self.posx}, {self.posy}, {self.posz}]")
+        _logger.info(f"[AssignPosition] Batch display_on_map: {batch.display_on_map}")
+        _logger.info(f"[AssignPosition] Batch has {len(batch.quant_ids)} quants")
+        for quant in batch.quant_ids:
+            _logger.info(f"[AssignPosition] Quant {quant.id}: location={quant.location_id.complete_name}, pos=[{quant.posx}, {quant.posy}, {quant.posz}], display={quant.display_on_map}")
 
         return {'type': 'ir.actions.act_window_close'}

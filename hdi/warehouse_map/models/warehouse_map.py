@@ -46,6 +46,9 @@ class WarehouseMap(models.Model):
     @api.model
     def get_map_data(self, map_id):
         """Lấy dữ liệu sơ đồ kho với thông tin batches - chỉ hiển thị batch"""
+        import logging
+        _logger = logging.getLogger(__name__)
+        
         warehouse_map = self.browse(map_id)
         if not warehouse_map:
             return {}
@@ -55,27 +58,31 @@ class WarehouseMap(models.Model):
                   ('usage', '=', 'internal')]
         locations = self.env['stock.location'].search(domain)
         
+        _logger.info(f"[GetMapData] Warehouse map: {warehouse_map.name}, Location: {warehouse_map.location_id.name}")
+        _logger.info(f"[GetMapData] Found {len(locations)} child locations")
+        
         # Tổ chức dữ liệu theo vị trí
         lot_data = {}
         
         # Lấy thông tin batches có display_on_map
-        # Batch cần có ít nhất 1 quant trong locations của warehouse_map
+        # KHÔNG lọc theo location vì batch có thể chưa có quants
+        # Lưu ý: posx/posy có thể = 0, phải check is not False
         batches = self.env['hdi.batch'].search([
             ('display_on_map', '=', True),
-            ('posx', '!=', False),
-            ('posy', '!=', False),
         ])
         
-        # Filter batches that have quants in warehouse_map locations
-        valid_batches = batches.filtered(
-            lambda b: any(q.location_id.id in locations.ids for q in b.quant_ids)
-        )
+        # Filter in Python to handle posx/posy = 0 case
+        batches = batches.filtered(lambda b: b.posx is not False and b.posy is not False)
         
-        for batch in valid_batches:
+        _logger.info(f"[GetMapData] Found {len(batches)} batches to display")
+        
+        for batch in batches:
             x = batch.posx or 0
             y = batch.posy or 0
             z = batch.posz or 0
             position_key = f"{x}_{y}_{z}"
+            
+            _logger.info(f"[GetMapData] Processing batch: {batch.name} at position [{x}, {y}, {z}]")
             
             # Get total quantity and product info from batch's quants
             total_qty = sum(batch.quant_ids.mapped('quantity'))
