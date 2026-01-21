@@ -444,7 +444,8 @@ export class WarehouseMapView extends Component {
 WarehouseMapView.template = "warehouse_map.WarehouseMapView";
 WarehouseMapView.components = {};
 
-// Register the view as a client action
+// Register the view as a client action (Odoo 18 requires both registries)
+registry.category("actions").add("warehouse_map_view", WarehouseMapView);
 registry.category("client_actions").add("warehouse_map_view", WarehouseMapView);
 
 export { WarehouseMapView };
