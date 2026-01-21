@@ -67,10 +67,4 @@
               action="action_warehouse_location_grid"
               sequence="20"/>
 
-    <menuitem id="menu_quant_location_configuration"
-              name="Cấu hình Vị trí Lot"
-              parent="menu_warehouse_map_root"
-              action="stock.action_quant_from_lot"
-              sequence="30"/>
-
 </odoo>

@@ -208,6 +208,35 @@ class HdiWarehouseLayout(models.Model):
             'context': {'default_layout_id': self.id},
         }
 
+    def action_view_layout_map(self):
+        """Open warehouse map layout visualization"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Sơ đồ Kho - %s') % self.name,
+            'res_model': 'hdi.warehouse.layout',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'views': [(self.env.ref('hdi_wms.view_warehouse_layout_map_qweb').id, 'form')],
+            'target': 'current',
+        }
+
+    def action_refresh_grid(self):
+        """Refresh grid data"""
+        self.ensure_one()
+        self._compute_statistics()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Đã làm mới'),
+                'message': _('Dữ liệu sơ đồ đã được cập nhật'),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
     @api.model
     def create(self, vals):
         result = super().create(vals)

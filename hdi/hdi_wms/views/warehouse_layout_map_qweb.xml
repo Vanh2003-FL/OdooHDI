@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ===== WAREHOUSE LAYOUT MAP VISUALIZATION ===== -->
+    <record id="view_warehouse_layout_map_qweb" model="ir.ui.view">
+        <field name="name">hdi.warehouse.layout.map</field>
+        <field name="model">hdi.warehouse.layout</field>
+        <field name="type">qweb</field>
+        <field name="arch" type="xml">
+            <t t-name="hdi_wms.warehouse_layout_map_view">
+                <div class="warehouse-map-container">
+                    <div class="warehouse-map-header">
+                        <h2><t t-esc="record.name"/></h2>
+                        <div class="warehouse-map-info">
+                            <span>Kho: <t t-esc="record.warehouse_id.name"/></span>
+                            <span>Kích thước: <t t-esc="record.rows"/> x <t t-esc="record.columns"/> x <t t-esc="record.levels"/></span>
+                            <span>Sử dụng: <t t-esc="record.utilization_rate"/>%</span>
+                        </div>
+                    </div>
+
+                    <div class="warehouse-map-legend">
+                        <div class="legend-item">
+                            <div class="legend-color green"></div>
+                            <span>Có hàng tồn (0-60 ngày)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color orange"></div>
+                            <span>Cảnh báo (60-90 ngày)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color red"></div>
+                            <span>Tồn lâu (>90 ngày)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color white"></div>
+                            <span>Trống</span>
+                        </div>
+                    </div>
+
+                    <div class="warehouse-grid-wrapper">
+                        <div class="warehouse-grid" t-attf-style="grid-template-columns: repeat(#{record.columns}, 1fr);">
+                            <t t-foreach="record.location_grid_ids" t-as="grid_location">
+                                <t t-set="quant" t-value="None"/>
+                                <t t-foreach="grid_location.batch_id" t-as="batch">
+                                    <t t-set="quant" t-value="batch"/>
+                                </t>
+                                
+                                <div t-attf-class="grid-cell #{quant and 'occupied' or 'empty'}" 
+                                     t-attf-data-id="#{grid_location.id}"
+                                     t-attf-data-x="#{grid_location.column}"
+                                     t-attf-data-y="#{grid_location.row}">
+                                    
+                                    <t t-if="grid_location.batch_id">
+                                        <t t-set="days" t-value="grid_location.batch_id.days_in_warehouse or 0"/>
+                                        <t t-set="badge_color" t-value="'badge-green'" />
+                                        <t t-if="days > 90">
+                                            <t t-set="badge_color" t-value="'badge-red blink'"/>
+                                        </t>
+                                        <t t-elif="days > 60">
+                                            <t t-set="badge_color" t-value="'badge-orange'"/>
+                                        </t>
+                                        
+                                        <div class="quant-cell">
+                                            <div t-attf-class="quant-badge #{badge_color}">
+                                                <t t-esc="days"/>d
+                                            </div>
+                                            <div class="quant-info">
+                                                <div class="quant-lot">
+                                                    <t t-esc="grid_location.batch_id.lot_id.name if grid_location.batch_id.lot_id else 'No Lot'"/>
+                                                </div>
+                                                <div class="quant-product">
+                                                    <t t-esc="grid_location.batch_id.product_id.name"/>
+                                                </div>
+                                                <div class="quant-qty">
+                                                    <t t-esc="int(grid_location.batch_id.quantity)"/>
+                                                    <span class="available">(<t t-esc="int(grid_location.batch_id.quantity - grid_location.batch_id.reserved_quantity)"/>)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="empty-cell">+</div>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="warehouse-map-footer">
+                        <p>Tổng slot: <t t-esc="record.total_slots"/></p>
+                        <p>Slot sử dụng: <t t-esc="record.occupied_slots"/></p>
+                        <p>Slot trống: <t t-esc="record.empty_slots"/></p>
+                    </div>
+                </div>
+            </t>
+        </field>
+    </record>
+
+</odoo>

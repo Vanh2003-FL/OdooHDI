@@ -21,18 +21,14 @@
                     <field name="option" widget="radio"/>
                 </group>
 
-                <group attrs="{'invisible': [('option', '!=', 'existing')]}">
-                    <label string="Chọn Lot hiện có" for="quant_id" class="oe_edit_only"/>
+                <group string="Chọn Lot hiện có">
                     <field name="quant_id"/>
                 </group>
 
-                <group attrs="{'invisible': [('option', '!=', 'new')]}">
-                    <label string="Thông tin Quant mới" class="oe_edit_only"/>
-                    <group>
-                        <field name="product_id" required="1"/>
-                        <field name="lot_id"/>
-                        <field name="quantity"/>
-                    </group>
+                <group string="Thông tin Quant mới">
+                    <field name="product_id" required="1"/>
+                    <field name="lot_id"/>
+                    <field name="quantity"/>
                 </group>
 
                 <footer>
@@ -52,3 +48,5 @@
     </record>
 
 </odoo>
+
+
