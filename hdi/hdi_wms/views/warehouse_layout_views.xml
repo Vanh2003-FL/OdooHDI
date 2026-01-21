@@ -5,7 +5,8 @@
     <record id="action_warehouse_layout_map" model="ir.actions.act_window">
         <field name="name">Sơ đồ Kho</field>
         <field name="res_model">hdi.warehouse.layout</field>
-        <field name="view_mode">list,form,qweb</field>
+        <field name="view_mode">qweb,list,form</field>
+        <field name="view_id" ref="view_warehouse_layout_map_qweb"/>
         <field name="target">main</field>
     </record>
 

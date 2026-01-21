@@ -33,6 +33,7 @@ HDI Warehouse Management System
         'views/hdi_loose_line_views.xml',
         'views/hdi_picking_list_views.xml',
         'views/warehouse_layout_views.xml',
+        'views/warehouse_layout_map_qweb.xml',
 
         # Wizards
         'wizard/batch_creation_wizard_views.xml',
