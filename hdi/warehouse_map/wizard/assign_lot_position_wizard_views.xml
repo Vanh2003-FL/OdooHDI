@@ -9,9 +9,9 @@
                     <field name="warehouse_map_id" invisible="1"/>
                     <field name="posx" invisible="1"/>
                     <field name="posy" invisible="1"/>
-                    <field name="posz" readonly="1"/>
-                    <field name="batch_id" invisible="1"/>
-                    <field name="batch_name" widget="batch_selector" readonly="0"/>
+                    <field name="posz" readonly="1" force_save="1"/>
+                    <field name="batch_id" widget="batch_selector"/>
+                    <field name="batch_name" invisible="1"/>
                 </group>
                 <footer>
                     <button name="action_assign_position" string="Xác nhận" type="object" class="btn-primary"/>

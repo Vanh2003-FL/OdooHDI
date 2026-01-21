@@ -30,19 +30,21 @@ const BATCH_SELECTOR_TEMPLATE = xml`
 class BatchSelectorWidget extends Component {
     static template = BATCH_SELECTOR_TEMPLATE;
     static props = {
-        value: [String, Number, { value: null }],
-        record: { value: null },
-        fieldName: { value: null },
-        update: { value: null },
-        readonly: { value: false },
+        value: { type: Number, optional: true },
+        record: { type: Object, optional: false },
+        readonly: { type: Boolean, optional: true },
     };
 
     setup() {
         this.orm = useService("orm");
+        
+        // Get initial value from record data
+        const initialValue = this.props.record.data.batch_id || null;
+        
         this.state = useState({
             batches: [],
             loading: true,
-            selectedBatchId: this.props.value || null,
+            selectedBatchId: initialValue,
         });
 
         onWillStart(async () => {
@@ -50,9 +52,12 @@ class BatchSelectorWidget extends Component {
         });
 
         useEffect(() => {
-            // Update state when value changes
-            this.state.selectedBatchId = this.props.value || null;
-        }, () => [this.props.value]);
+            // Sync with record data changes
+            const newValue = this.props.record.data.batch_id || null;
+            if (this.state.selectedBatchId !== newValue) {
+                this.state.selectedBatchId = newValue;
+            }
+        }, () => [this.props.record.data.batch_id]);
     }
 
     async loadBatches() {
@@ -68,12 +73,15 @@ class BatchSelectorWidget extends Component {
     }
 
     onBatchChange(event) {
-        const batchId = parseInt(event.target.value) || null;
+        const batchId = parseInt(event.target.value) || false;
         this.state.selectedBatchId = batchId;
         
-        // Update the record's batch_id field
-        if (this.props.update) {
-            this.props.update({ batch_id: batchId });
+        console.log('[BatchSelector] Selected batch ID:', batchId);
+        
+        // Update the actual record field - use the field name from props
+        if (this.props.record && this.props.record.update) {
+            this.props.record.update({ batch_id: batchId });
+            console.log('[BatchSelector] Updated record.batch_id to', batchId);
         }
     }
 
