@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="view_receipt_putaway_wizard_form" model="ir.ui.view">
+        <field name="name">receipt.putaway.wizard.form</field>
+        <field name="model">receipt.putaway.wizard</field>
+        <field name="arch" type="xml">
+            <form string="📦 Smart Putaway - Receipt">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="picking_id" readonly="1" class="oe_inline"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="warehouse_map_id" readonly="1"/>
+                            <field name="auto_suggest" widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="preview_map" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    
+                    <group string="🎯 Putaway Strategy">
+                        <div class="alert alert-info">
+                            <p><strong>Strategy:</strong></p>
+                            <ul>
+                                <li>✅ Use WMS putaway suggestions</li>
+                                <li>✅ Consider location priority</li>
+                                <li>✅ Check map availability</li>
+                                <li>✅ Auto-sync coordinates</li>
+                            </ul>
+                        </div>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Putaway Lines">
+                            <field name="putaway_line_ids" nolabel="1">
+                                <tree editable="bottom" decoration-success="suggested_location_id == destination_location_id">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="quantity" readonly="1"/>
+                                    <field name="suggested_location_id" readonly="1" optional="show"/>
+                                    <field name="destination_location_id" domain="[('usage', '=', 'internal'), ('is_putable', '=', True)]"/>
+                                    <field name="location_display" readonly="1"/>
+                                    <field name="map_x" optional="hide"/>
+                                    <field name="map_y" optional="hide"/>
+                                    <field name="location_priority" optional="hide"/>
+                                    <field name="storage_type" optional="show"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <footer>
+                    <button string="🗺️ Show on Map" name="action_show_on_map" type="object" class="btn-info"/>
+                    <button string="✓ Apply Putaway" name="action_apply_putaway" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

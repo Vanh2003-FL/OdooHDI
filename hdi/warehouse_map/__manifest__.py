@@ -8,15 +8,19 @@
         Warehouse Map Layout
     """,
     'author': 'Wokwy (quochuy.software@gmail.com) support by Claude.ai',
-    'depends': ['stock', 'product', 'track_vendor_by_lot', 'stock_sms'],
+    'depends': ['stock', 'product', 'hdi_wms', 'track_vendor_by_lot', 'stock_sms'],
     'data': [
         'security/ir.model.access.csv',
         'views/blocked_cell_views.xml',
         'views/warehouse_map_views.xml',
         'views/stock_location_views.xml',
+        'views/stock_picking_integration_views.xml',
         'wizard/location_action_wizard_views.xml',
         'wizard/assign_lot_position_wizard_views.xml',
         'wizard/block_cell_wizard_views.xml',
+        'wizard/picking_map_assignment_wizard_views.xml',
+        'wizard/receipt_putaway_wizard_views.xml',
+        'wizard/delivery_pick_wizard_views.xml',
         'views/menu_views.xml',
     ],
     'demo': [

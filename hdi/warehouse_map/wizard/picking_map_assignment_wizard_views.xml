@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="view_picking_map_assignment_wizard_form" model="ir.ui.view">
+        <field name="name">picking.map.assignment.wizard.form</field>
+        <field name="model">picking.map.assignment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Locations from Map">
+                <group>
+                    <field name="picking_id" readonly="1"/>
+                    <field name="warehouse_map_id" readonly="1"/>
+                    <field name="picking_type" invisible="1"/>
+                </group>
+                
+                <notebook>
+                    <page string="Location Assignments">
+                        <field name="assignment_line_ids" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="product_id" readonly="1"/>
+                                <field name="product_qty" readonly="1"/>
+                                <field name="suggested_location_id" readonly="1"/>
+                                <field name="selected_location_id"/>
+                                <field name="location_info" readonly="1"/>
+                                <field name="selected_map_x" optional="hide"/>
+                                <field name="selected_map_y" optional="hide"/>
+                            </tree>
+                        </field>
+                    </page>
+                    
+                    <page string="Putaway Suggestions" invisible="picking_type != 'incoming'">
+                        <field name="suggested_putaway_ids" nolabel="1">
+                            <tree>
+                                <field name="product_id"/>
+                                <field name="suggested_location_id"/>
+                                <field name="priority"/>
+                                <field name="map_posx"/>
+                                <field name="map_posy"/>
+                                <button name="action_show_on_map" string="Show on Map" type="object" icon="fa-map-marker"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+                
+                <footer>
+                    <button string="Open Map" name="action_open_map" type="object" class="btn-secondary" icon="fa-map"/>
+                    <button string="Apply" name="action_apply_assignments" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
