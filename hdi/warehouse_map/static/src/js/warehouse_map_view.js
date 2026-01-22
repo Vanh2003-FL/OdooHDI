@@ -3,7 +3,7 @@
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
-import "./batch_selector_widget";  // Import batch selector widget
+import "./lot_selector_widget";  // Import lot selector widget
 
 export class WarehouseMapView extends Component {
     static props = {
@@ -179,15 +179,15 @@ export class WarehouseMapView extends Component {
         // Call Python method to create wizard record with all necessary data
         // This avoids RPC_ERROR from readonly field context defaults
         
-        const batchId = this.props.context?.default_batch_id || false;
+        const lotId = this.props.context?.default_lot_id || false;
         
         // IMPORTANT: Ensure all IDs are integers, not objects
         const mapId = parseInt(this.state.mapData.id);
-        const finalBatchId = batchId ? parseInt(batchId) : false;
+        const finalLotId = lotId ? parseInt(lotId) : false;
         
-        console.log('[AssignWizard] Opening wizard for cell:', { row, col, finalBatchId });
+        console.log('[AssignWizard] Opening wizard for cell:', { row, col, finalLotId });
         console.log('[AssignWizard] Map ID:', mapId, 'Type:', typeof mapId);
-        console.log('[AssignWizard] Batch ID:', finalBatchId, 'Type:', typeof finalBatchId);
+        console.log('[AssignWizard] Lot ID:', finalLotId, 'Type:', typeof finalLotId);
         
         try {
             const action = await this.orm.call(
@@ -199,7 +199,7 @@ export class WarehouseMapView extends Component {
                     posx: col,
                     posy: row,
                     posz: 0,
-                    batch_id: finalBatchId,
+                    lot_id: finalLotId,
                 }
             );
             

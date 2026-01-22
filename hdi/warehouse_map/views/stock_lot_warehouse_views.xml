@@ -18,15 +18,9 @@
                                 <field name="display_on_map"/>
                                 <field name="has_map_position"/>
                             </group>
-                            <group string="Thông tin Batch">
-                                <field name="batch_type"/>
-                                <field name="location_id"/>
-                                <field name="quant_count"/>
-                                <field name="product_count"/>
-                            </group>
                         </group>
 
-                        <group string="Kích thước & Trọng lượng">
+                        <group string="Kích thước &amp; Trọng lượng">
                             <field name="weight"/>
                             <field name="volume"/>
                             <field name="length"/>
@@ -67,7 +61,6 @@
                     <field name="posy" optional="hide"/>
                     <field name="posz" optional="hide"/>
                     <field name="display_on_map" optional="hide"/>
-                    <field name="batch_type" optional="hide"/>
                     <field name="total_quantity" optional="hide"/>
                 </xpath>
             </field>

@@ -83,7 +83,7 @@ class AssignLotPositionWizard(models.TransientModel):
         }
 
     def action_assign_position(self):
-        """Gán vị trí cho batch"""
+        """Gán vị trí cho lot"""
         self.ensure_one()
         
         # Validate required fields
@@ -93,11 +93,11 @@ class AssignLotPositionWizard(models.TransientModel):
         if self.posx is False or self.posy is False:
             raise UserError(_('Thiếu thông tin vị trí!'))
         
-        if not self.batch_id:
-            raise UserError(_('Vui lòng chọn batch!'))
+        if not self.lot_id:
+            raise UserError(_('Vui lòng chọn lot!'))
         
-        batch = self.batch
-if not lot.exists():
+        lot = self.lot
+        if not lot.exists():
             raise UserError(_('Lot không tồn tại!'))
 
         warehouse_map = self.warehouse_map

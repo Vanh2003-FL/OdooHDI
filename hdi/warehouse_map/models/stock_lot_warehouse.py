@@ -36,13 +36,6 @@ class StockLotWarehouse(models.Model):
         help='Lot đã được gán vị trí trên sơ đồ'
     )
 
-    # ===== BATCH TYPE (OPTIONAL) =====
-    batch_type = fields.Selection([
-        ('pallet', 'Pallet'),
-        ('lpn', 'LPN'),
-        ('container', 'Container'),
-        ('loose', 'Loose Items'),
-    ], string='Loại lô', default='pallet', help="Loại container chứa lot này")
 
     # ===== QUANTITY INFO =====
     total_quantity = fields.Float(
@@ -210,7 +203,6 @@ class StockLotWarehouse(models.Model):
             'id': self.id,
             'lot_id': self.id,
             'lot_name': self.name,
-            'batch_name': self.name,  # Để tương thích
             'product_id': self.product_id.id if self.product_id else False,
             'product_name': product_name,
             'product_code': product_code,
@@ -226,6 +218,5 @@ class StockLotWarehouse(models.Model):
             'y': self.posy or 0,
             'z': self.posz or 0,
             'position_key': f"{self.posx}_{self.posy}_{self.posz}",
-            'batch_type': self.batch_type,
             'product_count': self.product_count,
         }
