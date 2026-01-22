@@ -7,6 +7,20 @@ from odoo.exceptions import UserError
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
     
+    def action_open_wizard_assign_positions(self):
+        """Mở wizard để gán vị trí cho tất cả move_lines"""
+        self.ensure_one()
+        return {
+            'name': 'Gán vị trí sản phẩm/Lot',
+            'type': 'ir.actions.act_window',
+            'res_model': 'move.line.warehouse.map.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_picking_id': self.id,
+            }
+        }
+    
     def button_validate(self):
         """Override validate để cập nhật vị trí quant từ warehouse map"""
         # Gọi parent validate trước (này sẽ tạo quant)

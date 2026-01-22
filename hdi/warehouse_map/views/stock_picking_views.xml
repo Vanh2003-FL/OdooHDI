@@ -6,19 +6,14 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <!-- Thêm nút gán vị trí vào trong form, sau phần Operations -->
-            <xpath expr="//notebook/page[@name='operations']" position="inside">
-                <div class="alert alert-info mt-4" invisible="picking_type_code != 'incoming' or state == 'done'">
-                    <p>
-                        <strong>💡 Ghi chú:</strong> Để gán vị trí sản phẩm/lot trên sơ đồ kho, hãy:
-                    </p>
-                    <ol>
-                        <li>Nhập đầy đủ thông tin sản phẩm/lot ở bảng trên</li>
-                        <li>Nhấp button <strong>"Gán vị trí"</strong> ở góc phải của mỗi hàng (hoặc sử dụng menu action)</li>
-                        <li>Chọn sơ đồ kho và vị trí (Form hoặc Map)</li>
-                        <li>Validate phiếu → Quant sẽ được tạo với vị trí đã gán</li>
-                    </ol>
-                </div>
+            <!-- Thêm nút vào header cho phiếu nhập kho -->
+            <xpath expr="//button[@name='button_validate']" position="before">
+                <button name="action_open_wizard_assign_positions" 
+                        type="object" 
+                        string="🏢 Gán vị trí" 
+                        class="btn-info"
+                        invisible="picking_type_code != 'incoming' or state not in ['assigned', 'waiting']"
+                        help="Gán vị trí sản phẩm/Lot từ sơ đồ kho"/>
             </xpath>
         </field>
     </record>
