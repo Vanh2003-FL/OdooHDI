@@ -31,12 +31,35 @@ class StockPicking(models.Model):
             raise UserError('Không có sản phẩm nào có Lot/Serial trong phiếu nhập này')
     
     def button_validate(self):
-        """Override validate để cập nhật vị trí quant từ warehouse map nếu user đã gán"""
-        # Gọi parent validate trước (này sẽ tạo quant)
+        """Override validate để bắt buộc gán vị trí trước khi xác nhận phiếu kho"""
+        self.ensure_one()
+        
+        # Chỉ check vị trí cho phiếu nhập kho (incoming)
+        if self.picking_type_code == 'incoming':
+            # Kiểm tra move_line có tracking (lot/serial) chưa gán vị trí
+            move_lines_need_position = self.move_line_ids.filtered(
+                lambda x: x.product_id.tracking in ('lot', 'serial') 
+                and (not x.posx or not x.posy)
+            )
+            
+            # Nếu có move_line chưa gán vị trí thì mở wizard
+            if move_lines_need_position:
+                return {
+                    'name': 'Gán vị trí sản phẩm/Lot',
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'move.line.warehouse.map.wizard',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': {
+                        'default_move_line_id': move_lines_need_position[0].id,
+                        'default_picking_id': self.id,
+                    }
+                }
+        
+        # Nếu tất cả đã gán vị trí hoặc không cần tracking, proceed với validate
         result = super().button_validate()
         
-        # Chỉ cập nhật vị trí nếu user đã gán (có posx/posy)
-        # KHÔNG tự động gán vị trí
+        # Cập nhật vị trí quant từ move_line
         if self.picking_type_code == 'incoming':
             self._update_quants_positions_from_move_lines()
         
