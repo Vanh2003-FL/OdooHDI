@@ -109,13 +109,17 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         if self.posx < 0 or self.posy < 0:
             raise UserError(_('Vị trí X, Y phải >= 0!'))
         
+        # Cấm gán vị trí [0, 0] vì đó là vị trí mặc định (chưa gán)
+        if self.posx == 0 and self.posy == 0:
+            raise UserError(_('Vị trí [0, 0] là vị trí mặc định! Vui lòng chọn vị trí khác (X > 0 hoặc Y > 0)'))
+        
         if self.posx >= self.warehouse_map_id.columns:
             raise UserError(_('Vị trí X vượt quá số cột của sơ đồ!'))
         
         if self.posy >= self.warehouse_map_id.rows:
             raise UserError(_('Vị trí Y vượt quá số hàng của sơ đồ!'))
         
-        # Kiểm tra vị trí đã bị chiếm không
+        # Kiểm tra vị trí đã bị chiếm không (bỏ qua vị trí [0, 0] vì đó là mặc định)
         existing = self.env['stock.quant'].search([
             ('location_id', 'child_of', self.location_dest_id.id),
             ('posx', '=', self.posx),
@@ -124,6 +128,8 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             ('display_on_map', '=', True),
             ('quantity', '>', 0),
             ('product_id.tracking', '!=', 'none'),
+            # Bỏ qua lot hiện tại để cho phép update
+            ('id', '!=', self.move_line_id.id),
         ], limit=1)
         
         if existing:

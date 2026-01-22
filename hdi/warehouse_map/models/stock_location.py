@@ -41,7 +41,7 @@ class StockQuant(models.Model):
     posx = fields.Integer(string='Vị trí X (Cột)', help='Vị trí cột trong sơ đồ kho')
     posy = fields.Integer(string='Vị trí Y (Hàng)', help='Vị trí hàng trong sơ đồ kho')
     posz = fields.Integer(string='Vị trí Z (Tầng)', default=0, help='Tầng/kệ trong sơ đồ kho')
-    display_on_map = fields.Boolean(string='Hiển thị trên sơ đồ', default=True)
+    display_on_map = fields.Boolean(string='Hiển thị trên sơ đồ', default=False)
     
     days_in_stock = fields.Integer(string='Số ngày trong kho', compute='_compute_days_in_stock', store=False)
     
