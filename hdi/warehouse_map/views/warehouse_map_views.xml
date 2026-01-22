@@ -52,20 +52,20 @@
         </field>
     </record>
 
-    <!-- Tree view -->
-    <record id="view_warehouse_map_tree" model="ir.ui.view">
-        <field name="name">warehouse.map.tree</field>
+    <!-- List view -->
+    <record id="view_warehouse_map_list" model="ir.ui.view">
+        <field name="name">warehouse.map.list</field>
         <field name="model">warehouse.map</field>
         <field name="arch" type="xml">
-            <tree string="Sơ đồ kho">
+            <list string="Sơ đồ kho">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="location_id"/>
                 <field name="rows"/>
                 <field name="columns"/>
-                <field name="active"/>
-            </tree>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
         </field>
     </record>
 
@@ -107,7 +107,7 @@
     <record id="action_warehouse_map" model="ir.actions.act_window">
         <field name="name">Sơ đồ kho</field>
         <field name="res_model">warehouse.map</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Tạo sơ đồ kho mới

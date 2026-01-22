@@ -29,7 +29,7 @@
                             <group>
                                 <field name="quant_id" 
                                        options="{'no_create': True}"
-                                       context="{'tree_view_ref': 'warehouse_map.view_stock_quant_available_tree'}"/>
+                                       context="{'list_view_ref': 'warehouse_map.view_stock_quant_available_list'}"/>
                             </group>
                             
                             <group string="Thông tin Lot đã chọn" invisible="not quant_id">
@@ -95,19 +95,19 @@
         </field>
     </record>
     
-    <!-- Custom tree view cho quants có thể chọn -->
-    <record id="view_stock_quant_available_tree" model="ir.ui.view">
-        <field name="name">stock.quant.available.tree</field>
+    <!-- Custom list view cho quants có thể chọn -->
+    <record id="view_stock_quant_available_list" model="ir.ui.view">
+        <field name="name">stock.quant.available.list</field>
         <field name="model">stock.quant</field>
         <field name="arch" type="xml">
-            <tree string="Lots khả dụng">
+            <list string="Lots khả dụng">
                 <field name="product_id"/>
                 <field name="lot_id"/>
                 <field name="location_id"/>
                 <field name="quantity"/>
                 <field name="available_quantity"/>
                 <field name="reserved_quantity"/>
-            </tree>
+            </list>
         </field>
     </record>
 </odoo>

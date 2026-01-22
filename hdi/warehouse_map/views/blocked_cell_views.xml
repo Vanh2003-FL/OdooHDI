@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Tree view -->
-    <record id="view_warehouse_map_blocked_cell_tree" model="ir.ui.view">
-        <field name="name">warehouse.map.blocked.cell.tree</field>
+    <!-- List view -->
+    <record id="view_warehouse_map_blocked_cell_list" model="ir.ui.view">
+        <field name="name">warehouse.map.blocked.cell.list</field>
         <field name="model">warehouse.map.blocked.cell</field>
         <field name="arch" type="xml">
-            <tree string="Các ô bị chặn" editable="bottom">
+            <list string="Các ô bị chặn" editable="bottom">
                 <field name="warehouse_map_id"/>
                 <field name="posx"/>
                 <field name="posy"/>
@@ -13,7 +13,7 @@
                 <field name="block_type"/>
                 <field name="block_color" widget="color"/>
                 <field name="note"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -48,7 +48,7 @@
     <record id="action_warehouse_map_blocked_cell" model="ir.actions.act_window">
         <field name="name">Các ô bị chặn</field>
         <field name="res_model">warehouse.map.blocked.cell</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'default_warehouse_map_id': active_id}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

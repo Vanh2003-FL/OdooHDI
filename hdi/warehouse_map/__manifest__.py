@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Warehouse Map Layout',
-    'version': '17.0.1.6.4',
+    'version': '18.0.1.0.0',
     'category': 'Inventory/Inventory',
     'summary': 'Sơ đồ kho - Cell updates instantly',
     'description': """
         Warehouse Map Layout
     """,
     'author': 'Wokwy (quochuy.software@gmail.com) support by Claude.ai',
-    'depends': ['stock', 'product', 'track_vendor_by_lot'],
+    'depends': ['stock', 'product'],
     'data': [
         'security/ir.model.access.csv',
         'views/blocked_cell_views.xml',

@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
+import { Component, useState, useEffect } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
@@ -26,14 +26,20 @@ export class WarehouseMapView extends Component {
             }
         });
 
-        onWillStart(async () => {
+        useEffect(async () => {
             await this.loadMapData();
-        });
-
-        onMounted(() => {
             // Close context menu when clicking outside
-            document.addEventListener('click', this.closeContextMenu.bind(this));
-        });
+            const handleClickOutside = (event) => {
+                if (this.state.contextMenu.visible) {
+                    this.closeContextMenu();
+                }
+            };
+            document.addEventListener('click', handleClickOutside);
+            
+            return () => {
+                document.removeEventListener('click', handleClickOutside);
+            };
+        }, []);
     }
 
     getMapId() {
