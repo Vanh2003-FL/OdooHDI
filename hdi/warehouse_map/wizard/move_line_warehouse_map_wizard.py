@@ -60,7 +60,6 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
     # Vị trí trên sơ đồ
     posx = fields.Integer(string='Vị trí X (Cột)', required=True)
     posy = fields.Integer(string='Vị trí Y (Hàng)', required=True)
-    posz = fields.Integer(string='Vị trí Z (Tầng)', default=0)
     
     # Chế độ xem
     view_mode = fields.Selection([
@@ -73,7 +72,6 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         """Reset position when changing warehouse map"""
         self.posx = 0
         self.posy = 0
-        self.posz = 0
     
     def action_open_warehouse_map(self):
         """Mở sơ đồ kho để chọn vị trí"""
@@ -92,7 +90,6 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
                 'move_line_warehouse_map_wizard_id': self.id,
                 'default_posx': self.posx,
                 'default_posy': self.posy,
-                'default_posz': self.posz,
             }
         }
     
@@ -124,7 +121,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             ('location_id', 'child_of', self.location_dest_id.id),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
-            ('posz', '=', self.posz),
+            ('posz', '=', 0),  # Luôn dùng tầng 0
             ('display_on_map', '=', True),
             ('quantity', '>', 0),
             ('product_id.tracking', '!=', 'none'),
@@ -134,7 +131,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         
         if existing:
             raise UserError(_(
-                f'Vị trí [{self.posx}, {self.posy}, {self.posz}] đã có lot khác: '
+                f'Vị trí [{self.posx}, {self.posy}] đã có lot khác: '
                 f'{existing.display_name}'
             ))
         
@@ -142,7 +139,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         update_vals = {
             'posx': self.posx,
             'posy': self.posy,
-            'posz': self.posz,
+            'posz': 0,  # Luôn gán tầng 0
             'position_assigned': True,  # Đánh dấu đã gán vị trí
         }
         
@@ -163,7 +160,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             quants.write({
                 'posx': self.posx,
                 'posy': self.posy,
-                'posz': self.posz,
+                'posz': 0,  # Luôn gán tầng 0
                 'display_on_map': True,
             })
         

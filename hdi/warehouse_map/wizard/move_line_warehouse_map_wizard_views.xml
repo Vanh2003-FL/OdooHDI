@@ -35,9 +35,6 @@
                             <field name="posx"/>
                             <field name="posy"/>
                         </group>
-                        <group>
-                            <field name="posz"/>
-                        </group>
                     </group>
                     
                     <group invisible="view_mode == 'form'">

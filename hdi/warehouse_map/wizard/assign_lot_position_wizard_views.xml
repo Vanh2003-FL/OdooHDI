@@ -40,9 +40,6 @@
                             <field name="posx" readonly="0"/>
                             <field name="posy" readonly="0"/>
                         </group>
-                        <group>
-                            <field name="posz"/>
-                        </group>
                     </group>
                 </sheet>
                 <footer>

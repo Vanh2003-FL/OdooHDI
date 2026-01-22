@@ -10,7 +10,6 @@ class AssignLotPositionWizard(models.TransientModel):
 
     posx = fields.Integer(string='Vị trí X (Cột)', required=True, readonly=True)
     posy = fields.Integer(string='Vị trí Y (Hàng)', required=True, readonly=True)
-    posz = fields.Integer(string='Vị trí Z (Tầng)', default=0)
     
     warehouse_map_id = fields.Many2one('warehouse.map', string='Sơ đồ kho', required=True)
     location_id = fields.Many2one('stock.location', string='Vị trí kho', 
@@ -62,7 +61,7 @@ class AssignLotPositionWizard(models.TransientModel):
             existing = self.env['stock.quant'].search([
                 ('posx', '=', self.posx),
                 ('posy', '=', self.posy),
-                ('posz', '=', self.posz),
+                ('posz', '=', 0),
                 ('display_on_map', '=', True),
                 ('quantity', '>', 0),
             ], limit=1)
@@ -77,7 +76,7 @@ class AssignLotPositionWizard(models.TransientModel):
                 'quantity': self.new_quantity,
                 'posx': self.posx,
                 'posy': self.posy,
-                'posz': self.posz,
+                'posz': 0,
                 'display_on_map': True,
             }
             
@@ -96,7 +95,7 @@ class AssignLotPositionWizard(models.TransientModel):
             existing = self.env['stock.quant'].search([
                 ('posx', '=', self.posx),
                 ('posy', '=', self.posy),
-                ('posz', '=', self.posz),
+                ('posz', '=', 0),
                 ('display_on_map', '=', True),
                 ('quantity', '>', 0),
                 ('id', '!=', self.quant_id.id),
@@ -109,7 +108,7 @@ class AssignLotPositionWizard(models.TransientModel):
             self.quant_id.write({
                 'posx': self.posx,
                 'posy': self.posy,
-                'posz': self.posz,
+                'posz': 0,
                 'display_on_map': True,
             })
             
