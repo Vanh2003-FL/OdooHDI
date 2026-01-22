@@ -105,9 +105,9 @@
                                                 <!-- Cell Content -->
                                                 <div class="o_warehouse_map_cell_content">
                                                     <!-- Vendor Name -->
-                                                    <t t-if="lot.partner_id">
+                                                    <t t-if="lot.vendor_name">
                                                         <div class="o_warehouse_lot_code">
-                                                            NCC: <strong><t t-esc="lot.partner_id"/></strong>
+                                                            NCC: <strong><t t-esc="lot.vendor_name"/></strong>
                                                         </div>
                                                     </t>
 
