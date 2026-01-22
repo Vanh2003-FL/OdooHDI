@@ -14,17 +14,33 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
     
     # Thông tin sản phẩm
     product_id = fields.Many2one('product.product', string='Sản phẩm', 
-                                  related='move_line_id.product_id', readonly=True)
+                                  readonly=True)
     lot_id = fields.Many2one('stock.lot', string='Lot/Serial', 
-                             related='move_line_id.lot_id', readonly=True)
-    quantity = fields.Float(string='Số lượng', 
-                           related='move_line_id.qty_done', readonly=True)
+                             readonly=True)
+    quantity = fields.Float(string='Số lượng', readonly=True)
     location_dest_id = fields.Many2one('stock.location', string='Vị trí đích', 
-                                        related='move_line_id.location_dest_id', readonly=True)
+                                        readonly=True)
+    
+    @api.model
+    def default_get(self, fields_list):
+        """Load dữ liệu từ move_line_id"""
+        result = super().default_get(fields_list)
+        
+        if self._context.get('default_move_line_id'):
+            move_line = self.env['stock.move.line'].browse(self._context.get('default_move_line_id'))
+            if 'product_id' in fields_list:
+                result['product_id'] = move_line.product_id.id
+            if 'lot_id' in fields_list:
+                result['lot_id'] = move_line.lot_id.id if move_line.lot_id else False
+            if 'quantity' in fields_list:
+                result['quantity'] = move_line.quantity
+            if 'location_dest_id' in fields_list:
+                result['location_dest_id'] = move_line.location_dest_id.id
+        
+        return result
     
     # Chọn sơ đồ kho
-    warehouse_map_id = fields.Many2one('warehouse.map', string='Sơ đồ kho', required=True,
-                                        domain="[('location_id', 'parent_of', location_dest_id)]")
+    warehouse_map_id = fields.Many2one('warehouse.map', string='Sơ đồ kho', required=True)
     
     # Vị trí trên sơ đồ
     posx = fields.Integer(string='Vị trí X (Cột)', required=True)

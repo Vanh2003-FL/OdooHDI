@@ -13,7 +13,7 @@ class StockPicking(models.Model):
         result = super().button_validate()
         
         # Cập nhật vị trí quant từ move_line có warehouse map position
-        if self.picking_type_code == 'incoming' and self.state == 'done':
+        if self.picking_type_code == 'incoming':
             self._update_quants_positions_from_move_lines()
         
         return result
@@ -23,7 +23,7 @@ class StockPicking(models.Model):
         for picking in self:
             for move_line in picking.move_line_ids:
                 # Kiểm tra move_line có vị trí không
-                if move_line.posx is False or move_line.posy is False:
+                if not move_line.posx or not move_line.posy:
                     continue
                 
                 # Kiểm tra sản phẩm có tracking không
