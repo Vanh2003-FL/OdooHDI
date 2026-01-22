@@ -115,12 +115,17 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
                 f'{existing.display_name}'
             ))
         
-        # Cập nhật move_line với thông tin vị trí
-        self.move_line_id.write({
+        # Cập nhật move_line với thông tin vị trí và lot nếu có
+        update_vals = {
             'posx': self.posx,
             'posy': self.posy,
             'posz': self.posz,
-        })
+        }
+        # Nếu wizard có lot_id và move_line chưa có, cập nhật
+        if self.lot_id and not self.move_line_id.lot_id:
+            update_vals['lot_id'] = self.lot_id.id
+        
+        self.move_line_id.write(update_vals)
         
         return {'type': 'ir.actions.act_window_close'}
 

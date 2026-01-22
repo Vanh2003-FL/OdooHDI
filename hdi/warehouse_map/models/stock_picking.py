@@ -7,26 +7,36 @@ from odoo.exceptions import UserError
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
     
-    def action_open_wizard_assign_positions(self):
-        """Mở wizard để gán vị trí cho tất cả move_lines"""
+    def action_assign_warehouse_map_position(self):
+        """Mở wizard gán vị trí cho phiếu nhập kho"""
         self.ensure_one()
-        return {
-            'name': 'Gán vị trí sản phẩm/Lot',
-            'type': 'ir.actions.act_window',
-            'res_model': 'move.line.warehouse.map.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_picking_id': self.id,
+        # Lấy move_line đầu tiên nếu có tracking
+        move_line = self.move_line_ids.filtered(
+            lambda x: x.product_id.tracking in ('lot', 'serial')
+        )
+        if move_line:
+            move_line = move_line[0]
+            return {
+                'name': 'Gán vị trí sản phẩm/Lot',
+                'type': 'ir.actions.act_window',
+                'res_model': 'move.line.warehouse.map.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_move_line_id': move_line.id,
+                    'default_picking_id': self.id,
+                }
             }
-        }
+        else:
+            raise UserError('Không có sản phẩm nào có Lot/Serial trong phiếu nhập này')
     
     def button_validate(self):
-        """Override validate để cập nhật vị trí quant từ warehouse map"""
+        """Override validate để cập nhật vị trí quant từ warehouse map nếu user đã gán"""
         # Gọi parent validate trước (này sẽ tạo quant)
         result = super().button_validate()
         
-        # Cập nhật vị trí quant từ move_line có warehouse map position
+        # Chỉ cập nhật vị trí nếu user đã gán (có posx/posy)
+        # KHÔNG tự động gán vị trí
         if self.picking_type_code == 'incoming':
             self._update_quants_positions_from_move_lines()
         
