@@ -15,8 +15,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
     # Thông tin sản phẩm
     product_id = fields.Many2one('product.product', string='Sản phẩm', 
                                   readonly=True)
-    lot_id = fields.Many2one('stock.lot', string='Lot/Serial', 
-                             readonly=True)  # Chỉ hiển thị, không cho edit
+    lot_id = fields.Many2one('stock.lot', string='Lot/Serial', readonly=True)  # Chỉ hiển thị, không edit
     quantity = fields.Float(string='Số lượng', readonly=True)
     location_dest_id = fields.Many2one('stock.location', string='Vị trí đích', 
                                         readonly=True)
@@ -28,12 +27,22 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         
         if self._context.get('default_move_line_id'):
             move_line = self.env['stock.move.line'].browse(self._context.get('default_move_line_id'))
+            
             if 'product_id' in fields_list:
                 result['product_id'] = move_line.product_id.id
+            
+            # QUAN TRỌNG: Load lot_id từ move_line
             if 'lot_id' in fields_list:
-                result['lot_id'] = move_line.lot_id.id if move_line.lot_id else False
+                # Nếu move_line đã có lot_id, sử dụng nó
+                if move_line.lot_id:
+                    result['lot_id'] = move_line.lot_id.id
+                # Nếu không có, để trống
+                else:
+                    result['lot_id'] = False
+            
             if 'quantity' in fields_list:
                 result['quantity'] = move_line.quantity
+            
             if 'location_dest_id' in fields_list:
                 result['location_dest_id'] = move_line.location_dest_id.id
         
@@ -85,9 +94,9 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         """Xác nhận và gán vị trí cho move line"""
         self.ensure_one()
         
-        # Phải có lot_id từ move_line
-        if not self.move_line_id.lot_id:
-            raise UserError(_('Phiếu nhập kho phải có Lot/Serial. Vui lòng nhập Lot/Serial trong bảng sản phẩm!'))
+        # Phải có lot (từ move_line hoặc chọn)
+        if not self.move_line_id.lot_id and not self.lot_id:
+            raise UserError(_('Vui lòng nhập Lot/Serial trong phiếu nhập kho!'))
         
         if not self.warehouse_map_id:
             raise UserError(_('Vui lòng chọn sơ đồ kho!'))
@@ -120,15 +129,12 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             ))
         
         # Cập nhật move_line với thông tin vị trí
-        # Sử dụng lot_id từ move_line (không thay đổi lot)
-        update_vals = {
+        # Sử dụng lot từ move_line (đã được load trong default_get)
+        self.move_line_id.write({
             'posx': self.posx,
             'posy': self.posy,
             'posz': self.posz,
-            # lot_id giữ nguyên từ move_line
-        }
-        
-        self.move_line_id.write(update_vals)
+        })
         
         return {'type': 'ir.actions.act_window_close'}
 
