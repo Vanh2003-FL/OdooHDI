@@ -8,7 +8,31 @@ class StockLocation(models.Model):
 
     display_on_map = fields.Boolean(string='Hiển thị trên sơ đồ', default=True)
     color_code = fields.Char(string='Mã màu', help='Mã màu hiển thị trên sơ đồ (hex color)')
+
+
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
     
+    posx = fields.Integer(string='Vị trí X (Cột)', help='Vị trí cột trong sơ đồ kho')
+    posy = fields.Integer(string='Vị trí Y (Hàng)', help='Vị trí hàng trong sơ đồ kho')
+    posz = fields.Integer(string='Vị trí Z (Tầng)', default=0, help='Tầng/kệ trong sơ đồ kho')
+    
+    def action_assign_warehouse_map_position(self):
+        """Mở wizard gán vị trí từ sơ đồ kho"""
+        self.ensure_one()
+        
+        return {
+            'name': 'Gán vị trí trên sơ đồ kho',
+            'type': 'ir.actions.act_window',
+            'res_model': 'move.line.warehouse.map.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_move_line_id': self.id,
+                'default_picking_id': self.picking_id.id,
+            }
+        }
+
 
 class StockQuant(models.Model):
     _inherit = 'stock.quant'

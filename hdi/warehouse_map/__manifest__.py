@@ -14,9 +14,11 @@
         'views/blocked_cell_views.xml',
         'views/warehouse_map_views.xml',
         'views/stock_location_views.xml',
+        'views/stock_picking_warehouse_map_views.xml',
         'wizard/location_action_wizard_views.xml',
         'wizard/assign_lot_position_wizard_views.xml',
         'wizard/block_cell_wizard_views.xml',
+        'wizard/move_line_warehouse_map_wizard_views.xml',
         'views/menu_views.xml',
     ],
     'demo': [
