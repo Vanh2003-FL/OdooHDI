@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useState, useEffect } from "@odoo/owl";
+import { Component, useState, onWillStart, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
@@ -26,8 +26,11 @@ export class WarehouseMapView extends Component {
             }
         });
 
-        useEffect(async () => {
+        onWillStart(async () => {
             await this.loadMapData();
+        });
+
+        onMounted(() => {
             // Close context menu when clicking outside
             const handleClickOutside = (event) => {
                 if (this.state.contextMenu.visible) {
@@ -35,31 +38,67 @@ export class WarehouseMapView extends Component {
                 }
             };
             document.addEventListener('click', handleClickOutside);
-            
-            return () => {
-                document.removeEventListener('click', handleClickOutside);
-            };
-        }, []);
+        });
     }
 
     getMapId() {
-        // Get map ID from various possible sources
-        return this.props.action?.context?.active_id 
-            || this.props.actionId 
-            || this.props.context?.active_id 
-            || this.state.mapData?.id
-            || 1;
+        // Debug: log props to see what's available
+        console.log('WarehouseMapView props:', this.props);
+        
+        // Try multiple ways to get active_id
+        const activeId = 
+            this.props.action?.context?.active_id ||
+            this.props.context?.active_id ||
+            this.props.action?.res_id ||
+            this.props.res_id;
+        
+        console.log('Extracted mapId:', activeId);
+        
+        if (activeId) {
+            return activeId;
+        }
+        
+        // Fallback to first map if no active_id
+        console.warn('No active_id found, will attempt to load first warehouse.map');
+        return null;
     }
 
     async loadMapData() {
         try {
             this.state.loading = true;
-            const mapId = this.getMapId();
+            let mapId = this.getMapId();
+            
+            if (!mapId) {
+                // No mapId provided, load first warehouse.map
+                console.log('No mapId, searching for first warehouse.map...');
+                try {
+                    const maps = await this.orm.search('warehouse.map', [], {limit: 1, order: 'sequence,name'});
+                    console.log('Search result:', maps);
+                    
+                    if (!maps || maps.length === 0) {
+                        this.notification.add('Không có sơ đồ kho nào. Vui lòng tạo sơ đồ kho trước.', {
+                            type: 'warning',
+                        });
+                        this.state.mapData = null;
+                        this.state.loading = false;
+                        return;
+                    }
+                    mapId = maps[0];
+                    console.log('Using first map ID:', mapId);
+                } catch (searchError) {
+                    console.error('Search error:', searchError);
+                    throw new Error(`Lỗi khi tìm sơ đồ kho: ${searchError.message}`);
+                }
+            }
+            
+            console.log('Loading map data for mapId:', mapId);
             const data = await this.orm.call(
                 'warehouse.map',
                 'get_map_data',
                 [mapId]
             );
+            
+            console.log('Map data loaded:', data);
             
             // Tạo arrays cho rows và columns để có thể iterate trong template
             data.rowsArray = Array.from({length: data.rows}, (_, i) => i);
@@ -67,10 +106,11 @@ export class WarehouseMapView extends Component {
             
             this.state.mapData = data;
         } catch (error) {
-            this.notification.add('Lỗi khi tải dữ liệu sơ đồ kho', {
+            console.error('Error loading map data:', error);
+            this.notification.add('Lỗi khi tải dữ liệu sơ đồ kho: ' + (error.message || JSON.stringify(error)), {
                 type: 'danger',
             });
-            console.error(error);
+            this.state.mapData = null;
         } finally {
             this.state.loading = false;
         }
@@ -263,6 +303,37 @@ export class WarehouseMapView extends Component {
 
         this.closeContextMenu();
 
+        // Để chuyển vị trí, mở wizard gán vị trí với quant hiện tại
+        if (actionType === 'move') {
+            // actionType === 'move' = Chuyển vị trí
+            await this.action.doAction(
+                {
+                    name: 'Chuyển vị trí lot',
+                    type: 'ir.actions.act_window',
+                    res_model: 'assign.lot.position.wizard',
+                    view_mode: 'form',
+                    views: [[false, 'form']],
+                    target: 'new',
+                    context: {
+                        default_warehouse_map_id: this.state.mapData.id,
+                        default_quant_id: lotData.quant_id,
+                        default_posx: lotData.x,
+                        default_posy: lotData.y,
+                        default_posz: lotData.z,
+                    }
+                },
+                {
+                    onClose: async () => {
+                        console.log('[MoveWizard] onClose called');
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        await this.loadMapData();  // Reload toàn bộ
+                    }
+                }
+            );
+            return;
+        }
+
+        // Các action khác dùng location.action.wizard
         let actionData = {
             name: this.getActionName(actionType),
             type: 'ir.actions.act_window',

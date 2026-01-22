@@ -16,19 +16,13 @@ class AssignLotPositionWizard(models.TransientModel):
     location_id = fields.Many2one('stock.location', string='Vị trí kho', 
                                    related='warehouse_map_id.location_id', readonly=True)
     
-    # Cho phép chọn quant chưa có vị trí hoặc chưa hiển thị trên map
-    # CHỈ sản phẩm có theo dõi lô/serial
-    quant_id = fields.Many2one('stock.quant', string='Chọn Lot/Quant', 
-                                required=True,
+    # Quant đang được chuyển (nếu là chuyển vị trí)
+    quant_id = fields.Many2one('stock.quant', string='Chọn Lot/Quant để gán', 
+                                required=False,
                                 domain="""[
                                     ('location_id', 'child_of', location_id),
                                     ('quantity', '>', 0),
                                     ('product_id.tracking', '!=', 'none'),
-                                    '|',
-                                        ('display_on_map', '=', False),
-                                        '&',
-                                            ('posx', '=', False),
-                                            ('posy', '=', False)
                                 ]""")
     
     product_id = fields.Many2one('product.product', string='Sản phẩm', 
@@ -94,9 +88,9 @@ class AssignLotPositionWizard(models.TransientModel):
             
             return {'type': 'ir.actions.act_window_close'}
         else:
-            # Gán vị trí cho quant đã chọn
+            # Gán vị trí cho quant đã chọn hoặc chuyển vị trí
             if not self.quant_id:
-                raise UserError(_('Vui lòng chọn lot/quant!'))
+                raise UserError(_('Vui lòng chọn lot/quant hoặc bật "Tạo quant mới"!'))
             
             # Kiểm tra vị trí đã có quant khác chưa
             existing = self.env['stock.quant'].search([
@@ -111,7 +105,7 @@ class AssignLotPositionWizard(models.TransientModel):
             if existing:
                 raise UserError(_(f'Vị trí [{self.posx}, {self.posy}] đã có lot khác: {existing.display_name}'))
             
-            # Gán vị trí
+            # Gán vị trí cho quant (chuyển vị trí nếu quant đã có vị trí cũ)
             self.quant_id.write({
                 'posx': self.posx,
                 'posy': self.posy,

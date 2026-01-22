@@ -68,12 +68,16 @@ class WarehouseMap(models.Model):
         lot_data = {}
         for quant in quants:
             # Lấy vị trí x, y từ quant
-            x = quant.posx or 0
-            y = quant.posy or 0
+            x = quant.posx
+            y = quant.posy
             z = quant.posz or 0
             
+            # Bỏ qua quant nếu chưa có vị trí hợp lệ (phải là số >= 0, không phải None/False)
+            if x is None or x is False or y is None or y is False:
+                continue
+            
             # Tạo key unique cho mỗi vị trí
-            position_key = f"{x}_{y}_{z}"
+            position_key = f"{int(x)}_{int(y)}_{int(z)}"
             
             lot_info = {
                 'id': quant.id,
@@ -83,7 +87,7 @@ class WarehouseMap(models.Model):
                 'product_code': quant.product_id.default_code or '',
                 'lot_id': quant.lot_id.id if quant.lot_id else False,
                 'lot_name': quant.lot_id.name if quant.lot_id else 'No Lot',
-                'partner_id': quant.lot_id.partner_id.name if quant.lot_id.partner_id else 'No Vendor',
+                'partner_id': quant.lot_id.name if quant.lot_id else '',  # Lấy tên lot thay vì partner
                 'quantity': quant.quantity,
                 'uom': quant.product_uom_id.name,
                 'reserved_quantity': quant.reserved_quantity,
