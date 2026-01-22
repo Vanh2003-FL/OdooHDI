@@ -16,6 +16,7 @@ class StockMoveLine(models.Model):
     posx = fields.Integer(string='Vị trí X (Cột)', help='Vị trí cột trong sơ đồ kho')
     posy = fields.Integer(string='Vị trí Y (Hàng)', help='Vị trí hàng trong sơ đồ kho')
     posz = fields.Integer(string='Vị trí Z (Tầng)', default=0, help='Tầng/kệ trong sơ đồ kho')
+    position_assigned = fields.Boolean(string='Đã gán vị trí', default=False, help='Đánh dấu khi user gán vị trí thủ công')
     
     def action_assign_warehouse_map_position(self):
         """Mở wizard gán vị trí từ sơ đồ kho"""

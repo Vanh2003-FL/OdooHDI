@@ -97,7 +97,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         }
     
     def action_confirm_position(self):
-        """Xác nhận và gán vị trí cho move line"""
+        """Xác nhận và gán vị trí cho move line + cập nhật quant"""
         self.ensure_one()
         
         # Không bắt buộc lot_name vì lot có thể chưa được save từ move_line
@@ -137,6 +137,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             'posx': self.posx,
             'posy': self.posy,
             'posz': self.posz,
+            'position_assigned': True,  # Đánh dấu đã gán vị trí
         }
         
         # Nếu user chọn lot từ dropdown, cập nhật
@@ -144,6 +145,21 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             update_vals['lot_id'] = self.lot_id.id
         
         self.move_line_id.write(update_vals)
+        
+        # Cập nhật vị trí quant (sản phẩm đã được tạo từ button_validate)
+        quants = self.env['stock.quant'].search([
+            ('product_id', '=', self.move_line_id.product_id.id),
+            ('lot_id', '=', self.move_line_id.lot_id.id or False),
+            ('location_id', '=', self.move_line_id.location_dest_id.id),
+        ])
+        
+        if quants:
+            quants.write({
+                'posx': self.posx,
+                'posy': self.posy,
+                'posz': self.posz,
+                'display_on_map': True,
+            })
         
         return {'type': 'ir.actions.act_window_close'}
 

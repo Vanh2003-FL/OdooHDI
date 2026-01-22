@@ -12,8 +12,8 @@
                         type="object" 
                         string="↪ Gán vị trí sơ đồ" 
                         class="btn-info"
-                        invisible="picking_type_code != 'incoming' or state == 'done'"
-                        help="Gán vị trí sản phẩm/Lot từ sơ đồ kho trước khi xác nhận"/>
+                        invisible="picking_type_code != 'incoming' or state != 'done'"
+                        help="Gán vị trí sản phẩm/Lot từ sơ đồ kho sau khi xác nhận"/>
             </xpath>
         </field>
     </record>

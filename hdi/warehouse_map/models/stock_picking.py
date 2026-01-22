@@ -31,35 +31,11 @@ class StockPicking(models.Model):
             raise UserError('Không có sản phẩm nào có Lot/Serial trong phiếu nhập này')
     
     def button_validate(self):
-        """Override validate để bắt buộc gán vị trí trước khi xác nhận phiếu kho"""
-        self.ensure_one()
-        
-        # Chỉ check vị trí cho phiếu nhập kho (incoming)
-        if self.picking_type_code == 'incoming':
-            # Kiểm tra move_line có tracking (lot/serial) chưa gán vị trí
-            move_lines_need_position = self.move_line_ids.filtered(
-                lambda x: x.product_id.tracking in ('lot', 'serial') 
-                and (not x.posx or not x.posy)
-            )
-            
-            # Nếu có move_line chưa gán vị trí thì mở wizard
-            if move_lines_need_position:
-                return {
-                    'name': 'Gán vị trí sản phẩm/Lot',
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'move.line.warehouse.map.wizard',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'context': {
-                        'default_move_line_id': move_lines_need_position[0].id,
-                        'default_picking_id': self.id,
-                    }
-                }
-        
-        # Nếu tất cả đã gán vị trí hoặc không cần tracking, proceed với validate
+        """Override validate - chỉ cho phép gán vị trí AFTER xác nhận"""
+        # Proceed với validate bình thường
         result = super().button_validate()
         
-        # Cập nhật vị trí quant từ move_line
+        # Cập nhật vị trí quant từ move_line (nếu đã gán)
         if self.picking_type_code == 'incoming':
             self._update_quants_positions_from_move_lines()
         
@@ -69,6 +45,10 @@ class StockPicking(models.Model):
         """Cập nhật vị trí quant từ move_line có warehouse map position"""
         for picking in self:
             for move_line in picking.move_line_ids:
+                # Chỉ cập nhật nếu user thực sự gán vị trí (position_assigned = True)
+                if not move_line.position_assigned:
+                    continue
+                
                 # Kiểm tra move_line có vị trí không
                 if not move_line.posx or not move_line.posy:
                     continue
