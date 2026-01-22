@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Override stock.picking form để thêm nút gán vị trí -->
+    <record id="view_picking_form_warehouse_map" model="ir.ui.view">
+        <field name="name">stock.picking.form.warehouse.map</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Thêm nút gán vị trí vào trong form, sau phần Operations -->
+            <xpath expr="//notebook/page[@name='operations']" position="inside">
+                <div class="alert alert-info mt-4" invisible="picking_type_code != 'incoming' or state == 'done'">
+                    <p>
+                        <strong>💡 Ghi chú:</strong> Để gán vị trí sản phẩm/lot trên sơ đồ kho, hãy:
+                    </p>
+                    <ol>
+                        <li>Nhập đầy đủ thông tin sản phẩm/lot ở bảng trên</li>
+                        <li>Nhấp button <strong>"Gán vị trí"</strong> ở góc phải của mỗi hàng (hoặc sử dụng menu action)</li>
+                        <li>Chọn sơ đồ kho và vị trí (Form hoặc Map)</li>
+                        <li>Validate phiếu → Quant sẽ được tạo với vị trí đã gán</li>
+                    </ol>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
