@@ -6,19 +6,19 @@ from odoo.exceptions import UserError
 
 class AssignLotPositionWizard(models.TransientModel):
     _name = 'assign.lot.position.wizard'
-    _description = 'Wizard gán vị trí cho batch'
+    _description = 'Wizard gán vị trí cho lot/pallet'
     _transient_max_hours = 1.0
 
     posx = fields.Integer(string='Vị trí X (Cột)')
     posy = fields.Integer(string='Vị trí Y (Hàng)')
     posz = fields.Integer(string='Vị trí Z (Tầng)', default=0)
 
-    # Use Integer fields only to store IDs - avoids All onchange/serialize issues
+    # Use Integer fields only to store IDs
     warehouse_map_id = fields.Integer(string='Sơ đồ kho ID')
-    batch_id = fields.Integer(string='Batch ID')
+    lot_id = fields.Integer(string='Lot ID')
     
-    # Batch name for display (read-only, no serialize)
-    batch_name = fields.Char(string='Chọn Batch/LPN', compute='_compute_batch_name')
+    # Lot name for display (read-only)
+    lot_name = fields.Char(string='Chọn Lot/LPN/Pallet', compute='_compute_lot_name')
 
     @property
     def warehouse_map(self):
@@ -26,27 +26,27 @@ class AssignLotPositionWizard(models.TransientModel):
         return self.env['warehouse.map'].browse(self.warehouse_map_id) if self.warehouse_map_id else None
 
     @property
-    def batch(self):
-        """Get actual hdi.batch record from ID"""
-        return self.env['hdi.batch'].browse(self.batch_id) if self.batch_id else None
+    def lot(self):
+        """Get actual stock.lot record from ID"""
+        return self.env['stock.lot'].browse(self.lot_id) if self.lot_id else None
 
-    @api.depends('batch_id')
-    def _compute_batch_name(self):
+    @api.depends('lot_id')
+    def _compute_lot_name(self):
         for rec in self:
-            if rec.batch_id:
-                batch = rec.env['hdi.batch'].browse(rec.batch_id)
-                rec.batch_name = batch.name if batch.exists() else ''
+            if rec.lot_id:
+                lot = rec.env['stock.lot'].browse(rec.lot_id)
+                rec.lot_name = lot.name if lot.exists() else ''
             else:
-                rec.batch_name = ''
+                rec.lot_name = ''
 
     @api.model
-    def create_from_map_click(self, warehouse_map_id, posx, posy, posz, batch_id=None):
+    def create_from_map_click(self, warehouse_map_id, posx, posy, posz, lot_id=None):
         """Create wizard record when user clicks cell on map
         
         Args:
             warehouse_map_id: ID of warehouse.map
             posx, posy, posz: Cell coordinates
-            batch_id: Optional batch ID (for batch assignment mode)
+            lot_id: Optional lot ID (for lot assignment mode)
         
         Returns:
             Dictionary with wizard action pointing to created record
@@ -56,10 +56,9 @@ class AssignLotPositionWizard(models.TransientModel):
         _logger.info(f"=== create_from_map_click called ===")
         _logger.info(f"warehouse_map_id: {warehouse_map_id}")
         _logger.info(f"posx: {posx}, posy: {posy}, posz: {posz}")
-        _logger.info(f"batch_id: {batch_id}")
+        _logger.info(f"lot_id: {lot_id}")
         
         # Create wizard record with actual values
-        # Use Integer fields only - no Many2one = no onchange issues
         wizard_vals = {
             'warehouse_map_id': warehouse_map_id,
             'posx': posx,
@@ -67,8 +66,8 @@ class AssignLotPositionWizard(models.TransientModel):
             'posz': posz or 0,
         }
         
-        if batch_id:
-            wizard_vals['batch_id'] = batch_id
+        if lot_id:
+            wizard_vals['lot_id'] = lot_id
         
         wizard = self.create(wizard_vals)
         _logger.info(f"Wizard created with id: {wizard.id}")
@@ -98,16 +97,12 @@ class AssignLotPositionWizard(models.TransientModel):
             raise UserError(_('Vui lòng chọn batch!'))
         
         batch = self.batch
-        if not batch.exists():
-            raise UserError(_('Batch không tồn tại!'))
-        
-        if batch.state != 'stored':
-            raise UserError(_('Batch phải ở trạng thái Stored!'))
+if not lot.exists():
+            raise UserError(_('Lot không tồn tại!'))
 
         warehouse_map = self.warehouse_map
-        location = warehouse_map.location_id if warehouse_map else None
-        if not location:
-            raise UserError(_('Sơ đồ kho không có location!'))
+        if not warehouse_map:
+            raise UserError(_('Sơ đồ kho không tồn tại!'))
 
         # Kiểm tra vị trí bị block
         blocked = self.env['warehouse.map.blocked.cell'].search([
@@ -122,42 +117,35 @@ class AssignLotPositionWizard(models.TransientModel):
                 'Vị trí [%d, %d, %d] đang bị chặn'
             ) % (self.posx, self.posy, self.posz))
 
-        # Kiểm tra vị trí đã có batch khác chưa
-        existing_batch = self.env['hdi.batch'].search([
-            ('id', '!=', batch.id),
+        # Kiểm tra vị trí đã có lot khác chưa
+        existing_lot = self.env['stock.lot'].search([
+            ('id', '!=', lot.id),
             ('display_on_map', '=', True),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
             ('posz', '=', self.posz),
         ], limit=1)
 
-        if existing_batch:
+        if existing_lot:
             raise UserError(_(
-                'Vị trí [%d, %d, %d] đã có batch: %s'
-            ) % (self.posx, self.posy, self.posz, existing_batch.name))
+                'Vị trí [%d, %d, %d] đã có lot: %s'
+            ) % (self.posx, self.posy, self.posz, existing_lot.name))
 
-        # Gán vị trí cho batch
-        batch.write({
+        # Gán vị trí cho lot
+        lot.write({
             'posx': self.posx,
             'posy': self.posy,
             'posz': self.posz,
             'display_on_map': True,
-        })
-
-        # Gán vị trí cho tất cả quants của batch
-        batch.quant_ids.write({
-            'posx': self.posx,
-            'posy': self.posy,
-            'posz': self.posz,
-            'display_on_map': True,
+            'warehouse_map_id': self.warehouse_map_id,
         })
         
         import logging
         _logger = logging.getLogger(__name__)
-        _logger.info(f"[AssignPosition] SUCCESS - Batch {batch.name} assigned to [{self.posx}, {self.posy}, {self.posz}]")
-        _logger.info(f"[AssignPosition] Batch display_on_map: {batch.display_on_map}")
-        _logger.info(f"[AssignPosition] Batch has {len(batch.quant_ids)} quants")
-        for quant in batch.quant_ids:
-            _logger.info(f"[AssignPosition] Quant {quant.id}: location={quant.location_id.complete_name}, pos=[{quant.posx}, {quant.posy}, {quant.posz}], display={quant.display_on_map}")
+        _logger.info(f"[AssignPosition] SUCCESS - Lot {lot.name} assigned to [{self.posx}, {self.posy}, {self.posz}]")
+        _logger.info(f"[AssignPosition] Lot display_on_map: {lot.display_on_map}")
+        _logger.info(f"[AssignPosition] Lot has {len(lot.quant_ids)} quants")
+        for quant in lot.quant_ids:
+            _logger.info(f"[AssignPosition] Quant {quant.id}: location={quant.location_id.complete_name if quant.location_id else 'N/A'}")
 
         return {'type': 'ir.actions.act_window_close'}

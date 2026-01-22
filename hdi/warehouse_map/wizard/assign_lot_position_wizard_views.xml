@@ -4,20 +4,14 @@
         <field name="name">assign.lot.position.wizard.form</field>
         <field name="model">assign.lot.position.wizard</field>
         <field name="arch" type="xml">
-            <form string="Gán vị trí cho Batch/LPN">
+            <form string="Gán vị trí cho Lot/Pallet">
                 <group>
                     <field name="warehouse_map_id" invisible="1"/>
                     <field name="posx" invisible="1"/>
                     <field name="posy" invisible="1"/>
                     <field name="posz" readonly="1" force_save="1"/>
-                    <field name="batch_id" widget="batch_selector"/>
-                    <field name="batch_name" invisible="1"/>
-                </group>
-                <footer>
-                    <button name="action_assign_position" string="Xác nhận" type="object" class="btn-primary"/>
-                    <button string="Hủy" class="btn-secondary" special="cancel"/>
-                </footer>
-            </form>
+                    <field name="lot_id" widget="lot_selector"/>
+                    <field name="lot_name" invisible="1"/>
         </field>
     </record>
 </odoo>

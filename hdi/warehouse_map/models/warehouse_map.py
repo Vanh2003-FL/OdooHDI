@@ -45,7 +45,12 @@ class WarehouseMap(models.Model):
     
     @api.model
     def get_map_data(self, map_id):
-        """Lấy dữ liệu sơ đồ kho với thông tin batches - chỉ hiển thị batch"""
+        """
+        Lấy dữ liệu sơ đồ kho từ stock.lot có vị trí map.
+        
+        Thay thế batch bằng lot để dùng chung 1 model.
+        stock.lot giờ có thể chứa nhiều sản phẩm qua quants.
+        """
         import logging
         _logger = logging.getLogger(__name__)
         
@@ -53,68 +58,36 @@ class WarehouseMap(models.Model):
         if not warehouse_map:
             return {}
         
-        # Lấy tất cả locations con
-        domain = [('location_id', 'child_of', warehouse_map.location_id.id),
-                  ('usage', '=', 'internal')]
-        locations = self.env['stock.location'].search(domain)
-        
-        _logger.info(f"[GetMapData] Warehouse map: {warehouse_map.name}, Location: {warehouse_map.location_id.name}")
-        _logger.info(f"[GetMapData] Found {len(locations)} child locations")
+        _logger.info(f"[GetMapData] Warehouse map: {warehouse_map.name}")
         
         # Tổ chức dữ liệu theo vị trí
         lot_data = {}
         
-        # Lấy thông tin batches có display_on_map
-        # KHÔNG lọc theo location vì batch có thể chưa có quants
+        # Lấy thông tin lots có display_on_map (stock.lot custom)
         # Lưu ý: posx/posy có thể = 0, phải check is not False
-        batches = self.env['hdi.batch'].search([
+        lots = self.env['stock.lot'].search([
             ('display_on_map', '=', True),
+            ('warehouse_map_id', '=', warehouse_map.id),
         ])
         
         # Filter in Python to handle posx/posy = 0 case
-        batches = batches.filtered(lambda b: b.posx is not False and b.posy is not False)
+        lots = lots.filtered(lambda l: l.posx is not False and l.posy is not False)
         
-        _logger.info(f"[GetMapData] Found {len(batches)} batches to display")
+        _logger.info(f"[GetMapData] Found {len(lots)} lots to display")
         
-        for batch in batches:
-            x = batch.posx or 0
-            y = batch.posy or 0
-            z = batch.posz or 0
+        for lot in lots:
+            x = lot.posx or 0
+            y = lot.posy or 0
+            z = lot.posz or 0
             position_key = f"{x}_{y}_{z}"
             
-            _logger.info(f"[GetMapData] Processing batch: {batch.name} at position [{x}, {y}, {z}]")
+            _logger.info(f"[GetMapData] Processing lot: {lot.name} at position [{x}, {y}, {z}]")
             
-            # CHỈ DÙNG THÔNG TIN TỪ BATCH - KHÔNG DÙNG QUANTS
-            product = batch.product_id
+            # Lấy thông tin lot để hiển thị
+            lot_map_data = lot.get_lot_data_for_map()
+            lot_map_data['warehouse_map_id'] = warehouse_map.id
             
-            # Dùng total_quantity của batch (từ compute) hoặc planned_quantity
-            total_qty = batch.total_quantity or batch.planned_quantity or 0
-            reserved_qty = batch.reserved_quantity or 0
-            available_qty = batch.available_quantity or 0
-            
-            lot_data[position_key] = {
-                'id': batch.id,
-                'batch_id': batch.id,
-                'batch_name': batch.name,
-                'product_id': product.id if product else False,
-                'product_name': product.display_name if product else 'No Product',
-                'product_code': product.default_code if product else '',
-                'lot_id': False,
-                'lot_name': batch.name,
-                'quantity': total_qty,
-                'uom': product.uom_id.name if product else 'Unit',
-                'reserved_quantity': reserved_qty,
-                'available_quantity': available_qty,
-                'location_id': batch.location_id.id,
-                'location_name': batch.location_id.name,
-                'location_complete_name': batch.location_id.complete_name,
-                'in_date': batch.create_date.strftime('%d-%m-%Y') if batch.create_date else False,
-                'days_in_stock': 0,
-                'x': x,
-                'y': y,
-                'z': z,
-                'position_key': position_key,
-            }
+            lot_data[position_key] = lot_map_data
         
         # Lấy blocked cells
         blocked_cells = self.env['warehouse.map.blocked.cell'].get_blocked_cells_dict(warehouse_map.id)

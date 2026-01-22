@@ -7,21 +7,26 @@ from odoo.exceptions import UserError
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-    batch_ids = fields.One2many(
-        'hdi.batch',
-        'picking_id',
-        string='Batches',
-        help="All batches created from this picking"
-    )
-
-    batch_count = fields.Integer(
-        compute='_compute_batch_count',
-        string='Batch Count',
-    )
+    # ===== DEPRECATED: hdi.batch workflow replaced by stock.lot =====
+    # batch_ids and batch-related workflow have been moved to stock.lot
+    # All lot/pallet tracking now uses Odoo native stock.lot with custom warehouse_map fields
+    
+    # Kept for backward compatibility but not actively used
+    # batch_ids = fields.One2many(
+    #     'hdi.batch',
+    #     'picking_id',
+    #     string='Batches',
+    #     help="DEPRECATED: Use stock.lot instead"
+    # )
+    #
+    # batch_count = fields.Integer(
+    #     compute='_compute_batch_count',
+    #     string='Batch Count',
+    # )
 
     wms_state = fields.Selection([
         ('none', 'No WMS'),
-        ('batch_creation', 'Batch Creation'),
+        ('lot_creation', 'Lot Creation'),  # Changed from batch_creation
         ('putaway_pending', 'Putaway Pending'),
         ('putaway_done', 'Putaway Done'),
         ('picking_ready', 'Ready to Pick'),
@@ -30,11 +35,12 @@ class StockPicking(models.Model):
     ], string='WMS State', default='none', tracking=True,
         help="WMS workflow state - parallel to Odoo core picking state")
 
-    use_batch_management = fields.Boolean(
-        string='Use Batch Management',
-        default=False,
-        help="Enable batch/LPN management for this picking"
-    )
+    # DEPRECATED: use stock.lot workflow instead
+    # use_batch_management = fields.Boolean(
+    #     string='Use Batch Management',
+    #     default=False,
+    #     help="Enable batch/LPN management for this picking"
+    # )
 
     require_putaway_suggestion = fields.Boolean(
         string='Require Putaway Suggestion',
@@ -273,10 +279,11 @@ class StockPicking(models.Model):
             else:
                 picking.outgoing_type = 'other'
 
-    @api.depends('batch_ids')
-    def _compute_batch_count(self):
-        for picking in self:
-            picking.batch_count = len(picking.batch_ids)
+    # DEPRECATED: batch workflow replaced by stock.lot
+    # @api.depends('batch_ids')
+    # def _compute_batch_count(self):
+    #     for picking in self:
+    #         picking.batch_count = len(picking.batch_ids)
 
     @api.depends('picking_list_ids')
     def _compute_picking_list_count(self):
@@ -285,32 +292,37 @@ class StockPicking(models.Model):
             picking.picking_list_count = len(picking.picking_list_ids)
 
     def action_create_batch(self):
+        """DEPRECATED: Use stock.lot workflow instead"""
         self.ensure_one()
-        return {
-            'name': _('Create Batch'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hdi.batch.creation.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_picking_id': self.id,
-                'default_location_id': self.location_dest_id.id,
-            }
-        }
+        # Batch workflow replaced by stock.lot - this action is disabled
+        raise UserError(_('Batch workflow has been replaced by stock.lot. Please create lots directly in Stock → Lot/Serial Numbers.'))
+        # return {
+        #     'name': _('Create Batch'),
+        #     'type': 'ir.actions.act_window',
+        #     'res_model': 'hdi.batch.creation.wizard',
+        #     'view_mode': 'form',
+        #     'target': 'new',
+        #     'context': {
+        #         'default_picking_id': self.id,
+        #         'default_location_id': self.location_dest_id.id,
+        #     }
+        # }
 
     def action_suggest_putaway_all(self):
+        """DEPRECATED: Use stock.lot with warehouse_map instead"""
         self.ensure_one()
-        if not self.batch_ids:
-            raise UserError(_('No batches found in this picking.'))
-
-        return {
-            'name': _('Suggest Putaway for All Batches'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hdi.putaway.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_picking_id': self.id,
+        raise UserError(_('Batch-based putaway has been replaced by stock.lot. Please assign locations directly in Lot/Serial Numbers form.'))
+        # if not self.batch_ids:
+        #     raise UserError(_('No batches found in this picking.'))
+        #
+        # return {
+        #     'name': _('Suggest Putaway for All Batches'),
+        #     'type': 'ir.actions.act_window',
+        #     'res_model': 'hdi.putaway.wizard',
+        #     'view_mode': 'form',
+        #     'target': 'new',
+        #     'context': {
+        #         'default_picking_id': self.id,
                 'default_batch_ids': [(6, 0, self.batch_ids.ids)],
             }
         }

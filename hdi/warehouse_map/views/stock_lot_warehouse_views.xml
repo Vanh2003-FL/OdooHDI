@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Thêm tab "Warehouse Map" vào form stock.lot -->
+        <record id="stock_lot_form_warehouse_map" model="ir.ui.view">
+            <field name="name">stock.lot.form.warehouse.map</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.view_stock_lot_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='notes']" position="after">
+                    <page string="Sơ đồ Kho" name="warehouse_map">
+                        <group>
+                            <group string="Vị trí Sơ đồ">
+                                <field name="warehouse_map_id"/>
+                                <field name="posx"/>
+                                <field name="posy"/>
+                                <field name="posz"/>
+                                <field name="display_on_map"/>
+                                <field name="has_map_position"/>
+                            </group>
+                            <group string="Thông tin Batch">
+                                <field name="batch_type"/>
+                                <field name="location_id"/>
+                                <field name="quant_count"/>
+                                <field name="product_count"/>
+                            </group>
+                        </group>
+
+                        <group string="Kích thước & Trọng lượng">
+                            <field name="weight"/>
+                            <field name="volume"/>
+                            <field name="length"/>
+                            <field name="width"/>
+                            <field name="height"/>
+                        </group>
+
+                        <group string="Số lượng">
+                            <field name="total_quantity" readonly="1"/>
+                            <field name="available_quantity" readonly="1"/>
+                            <field name="reserved_quantity" readonly="1"/>
+                        </group>
+
+                        <group string="Thông tin Nhập khẩu">
+                            <field name="import_invoice_number"/>
+                            <field name="import_packing_list"/>
+                            <field name="import_bill_of_lading"/>
+                        </group>
+
+                        <div class="oe_inline">
+                            <button name="action_view_map" string="Xem trên Sơ đồ Kho" 
+                                    type="object" class="oe_highlight" 
+                                    attrs="{'invisible': [('warehouse_map_id', '=', False)]}"/>
+                        </div>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Cập nhật list view để hiển thị thông tin warehouse -->
+        <record id="stock_lot_tree_warehouse_map" model="ir.ui.view">
+            <field name="name">stock.lot.tree.warehouse.map</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.view_stock_lot_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="posx" optional="hide"/>
+                    <field name="posy" optional="hide"/>
+                    <field name="posz" optional="hide"/>
+                    <field name="display_on_map" optional="hide"/>
+                    <field name="batch_type" optional="hide"/>
+                    <field name="total_quantity" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Search filter cho warehouse map -->
+        <record id="stock_lot_search_warehouse_map" model="ir.ui.view">
+            <field name="name">stock.lot.search.warehouse.map</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.stock_lot_search_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='available']" position="after">
+                    <filter name="display_on_map" string="Hiển thị trên sơ đồ" 
+                            domain="[('display_on_map', '=', True)]"/>
+                    <filter name="has_map_position" string="Đã có vị trí" 
+                            domain="[('has_map_position', '=', True)]"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
