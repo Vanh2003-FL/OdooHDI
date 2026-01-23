@@ -143,6 +143,73 @@ class Stock3DView(http.Controller):
 
         return location_dict
 
+    @http.route('/3Dstock/save-position', type='json', auth='user')
+    def save_product_position(self, company_id, wh_id, product_id, pos_x, pos_y, pos_z):
+        """
+        Save product position to stock.quant (warehouse_map integration)
+        Saves position for all quants of this product in the warehouse
+        ------------------------------------------------
+        @param company_id: the current company id.
+        @param wh_id: the warehouse id.
+        @param product_id: the product id to assign position to.
+        @param pos_x: X coordinate.
+        @param pos_y: Y coordinate.
+        @param pos_z: Z coordinate.
+        @return: success message or error.
+        """
+        try:
+            # Get warehouse object
+            warehouse = request.env['stock.warehouse'].sudo().browse(int(wh_id))
+            if not warehouse:
+                return {
+                    'success': False,
+                    'message': 'Warehouse not found'
+                }
+            
+            # Get product object
+            product = request.env['product.product'].sudo().browse(int(product_id))
+            if not product:
+                return {
+                    'success': False,
+                    'message': 'Product not found'
+                }
+            
+            # Find all stock.quant records for this product in this warehouse
+            # that have quantities > 0 and are in internal locations
+            quants = request.env['stock.quant'].sudo().search([
+                ('product_id', '=', int(product_id)),
+                ('warehouse_id', '=', int(wh_id)),
+                ('quantity', '>', 0),
+                ('location_id.usage', '=', 'internal'),
+            ])
+            
+            if not quants:
+                return {
+                    'success': False,
+                    'message': f'No stock found for product {product.name} in warehouse {warehouse.name}'
+                }
+            
+            # Update all matching quants with the new position
+            # Using warehouse_map's posx, posy, posz fields
+            for quant in quants:
+                quant.sudo().write({
+                    'posx': float(pos_x),
+                    'posy': float(pos_y),
+                    'posz': float(pos_z),
+                })
+            
+            return {
+                'success': True,
+                'message': f'Position assigned to {len(quants)} quant(s) for {product.name}',
+                'updated_count': len(quants),
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'Error saving position: {str(e)}'
+            }
+
     @http.route('/3Dstock/data/quantity', type='json', auth='public')
     def get_stock_count_data(self, loc_code):
         """

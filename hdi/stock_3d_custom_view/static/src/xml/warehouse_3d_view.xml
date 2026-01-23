@@ -46,6 +46,22 @@
                         </div>
                     </div>
 
+                    <!-- Assignment Mode Controls -->
+                    <div class="d-flex gap-2">
+                        <button t-att-class="'btn ' + (state.assignmentMode ? 'btn-success' : 'btn-info')" 
+                                t-on-click="toggleAssignmentMode">
+                            <i t-att-class="'fa ' + (state.assignmentMode ? 'fa-check' : 'fa-crosshairs') + ' me-1'"/>
+                            <t t-if="state.assignmentMode">Assigning... Click to Select</t>
+                            <t t-else="">Assign Position</t>
+                        </button>
+                        <t t-if="state.selectedCoords">
+                            <button class="btn btn-primary" t-on-click="assignPositionToProduct">
+                                <i class="fa fa-arrow-right me-1"/>
+                                Assign to Product (X:<t t-esc="state.selectedCoords.x"/>, Y:<t t-esc="state.selectedCoords.y"/>, Z:<t t-esc="state.selectedCoords.z"/>)
+                            </button>
+                        </t>
+                    </div>
+
                     <button class="btn btn-secondary" t-on-click="onClose">
                         <i class="fa fa-times me-1"/>
                         Close
@@ -75,8 +91,8 @@
                     <t t-foreach="state.products" t-as="product" t-key="product.id">
                         <div class="product-item p-2 border-bottom">
                             <div class="d-flex align-items-start">
-                                <div t-attf-class="product-color-indicator" 
-                                     t-attf-style="background-color: #{{ product.color.toString(16).padStart(6, '0') }};"/>
+                                <div class="product-color-indicator" 
+                                     t-att-style="'background-color: ' + product.colorHex + ';'"/>
                                 <div class="flex-grow-1 ms-2">
                                     <div class="fw-bold small"><t t-esc="product.product_name"/></div>
                                     <div class="text-muted small">
