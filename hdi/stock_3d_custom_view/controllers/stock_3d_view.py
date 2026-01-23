@@ -19,6 +19,8 @@
 #    (LGPL v3) along with this program.
 #    If not, see <http://www.gnu.org/licenses/>.
 #
+#    Upgraded to Odoo 18 by Wokwy - Integrated with warehouse_map module
+#
 #############################################################################
 import math
 from odoo import http
@@ -26,7 +28,7 @@ from odoo.http import request
 
 
 class Stock3DView(http.Controller):
-    """Class for handling the requests and responses"""
+    """Class for handling the requests and responses - Integrated with warehouse_map"""
 
     @http.route('/3Dstock/warehouse', type='json', auth='public')
     def get_warehouse_data(self, company_id):
@@ -37,65 +39,128 @@ class Stock3DView(http.Controller):
         @param company_id: current company id.
         @return: a list of warehouses created under the active company.
         """
-        warehouse = request.env['stock.warehouse'].sudo().search([])
+        warehouse = request.env['stock.warehouse'].sudo().search([
+            ('company_id', '=', company_id)
+        ])
         warehouse_list = []
-        warehouse_list.clear()
         for rec in warehouse:
-            if rec.company_id.id == company_id:
-                warehouse_list.append((rec.id, rec.name))
+            warehouse_list.append((rec.id, rec.name))
         return warehouse_list
+
+    @http.route('/3Dstock/data/products', type='json', auth='public')
+    def get_product_positions_3d(self, company_id, wh_id):
+        """
+        NEW: Get product/lot 3D positions from warehouse_map integration
+        Returns actual quants with their posx, posy, posz positions
+        ------------------------------------------------
+        @param company_id: current company id.
+        @param wh_id: the selected warehouse id.
+        @return: list of products with 3D positions from warehouse_map
+        """
+        warehouse = request.env['stock.warehouse'].sudo().browse(int(wh_id))
+        
+        # Get all quants with positions in this warehouse
+        quants = request.env['stock.quant'].sudo().search([
+            ('location_id', 'child_of', warehouse.lot_stock_id.id),
+            ('quantity', '>', 0),
+            ('display_on_map', '=', True),
+            ('product_id.tracking', 'in', ['lot', 'serial']),
+        ])
+        
+        products_data = []
+        for quant in quants:
+            # Use warehouse_map positions (posx, posy, posz)
+            # Convert to 3D coordinates (scale up for visibility)
+            scale = 30  # Pixel to 3D unit scale
+            products_data.append({
+                'id': quant.id,
+                'product_name': quant.product_id.display_name,
+                'lot_name': quant.lot_id.name if quant.lot_id else 'N/A',
+                'quantity': quant.quantity,
+                'pos_x': quant.posx * scale,
+                'pos_y': quant.posz * scale * 2,  # Z in warehouse_map becomes Y in 3D (height)
+                'pos_z': quant.posy * scale,
+                'location_name': quant.location_id.complete_name,
+                # Color based on quantity/status
+                'color': self._get_quant_color(quant),
+            })
+        
+        return products_data
+    
+    def _get_quant_color(self, quant):
+        """Determine color for product box in 3D based on status"""
+        # Can customize based on product category, low stock, etc.
+        if quant.quantity > 100:
+            return 0x00802b  # Green - High stock
+        elif quant.quantity > 50:
+            return 0xe6b800  # Yellow - Medium stock
+        elif quant.quantity > 0:
+            return 0xcc0000  # Red - Low stock
+        return 0x8c8c8c  # Gray - Empty
 
     @http.route('/3Dstock/data', type='json', auth='public')
     def get_stock_data(self, company_id, wh_id):
         """
-        This method is used to handle the request for location data.
+        LEGACY: Get location box data for 3D warehouse structure
+        This shows the location boxes (shelves/racks) as background
         ------------------------------------------------
-        @param self: object pointer
         @param company_id: current company id.
         @param wh_id: the selected warehouse id.
-        @return:a list of locations with their dimensions and positions of
-                selected warehouse.
+        @return: list of locations with their 3D dimensions and positions
         """
         warehouse = request.env['stock.warehouse'].sudo().search(
             [('id', '=', int(wh_id)), ('company_id', '=', int(company_id))])
         locations = request.env['stock.location'].sudo().search(
             [('company_id', '=', int(company_id)),
-             ('active', '=', 'true'),
-             ('usage', '=', 'internal')])
+             ('active', '=', True),
+             ('usage', '=', 'internal'),
+             ('loc_3d_code', '!=', False)])  # Only locations with 3D config
+        
         location_dict = {}
         for loc in locations:
-            for wh in warehouse:
-                if loc.warehouse_id.id == warehouse.id:
-                    if loc.id not in (
-                            wh.lot_stock_id.id, wh.wh_input_stock_loc_id.id,
-                            wh.wh_qc_stock_loc_id.id,
-                            wh.wh_pack_stock_loc_id.id, wh.wh_output_stock_loc_id.id):
-                        length = int(loc.length * 3.779 * 2)
-                        width = int(loc.width * 3.779 * 2)
-                        height = int(loc.height * 3.779 * 2)
-                        location_dict.update(
-                            {loc.unique_code: [loc.pos_x, loc.pos_y, loc.pos_z,
-                                               length, width, height]})
+            if loc.warehouse_id.id == warehouse.id:
+                # Skip special locations
+                if loc.id not in (
+                        warehouse.lot_stock_id.id, 
+                        warehouse.wh_input_stock_loc_id.id,
+                        warehouse.wh_qc_stock_loc_id.id,
+                        warehouse.wh_pack_stock_loc_id.id, 
+                        warehouse.wh_output_stock_loc_id.id):
+                    
+                    # Use renamed fields (loc_length, loc_width, etc.)
+                    length = int(loc.loc_length * 3.779 * 2) if loc.loc_length else 50
+                    width = int(loc.loc_width * 3.779 * 2) if loc.loc_width else 50
+                    height = int(loc.loc_height * 3.779 * 2) if loc.loc_height else 50
+                    
+                    location_dict.update({
+                        loc.loc_3d_code: [
+                            loc.loc_pos_x or 0, 
+                            loc.loc_pos_y or 0, 
+                            loc.loc_pos_z or 0,
+                            length, width, height
+                        ]
+                    })
 
         return location_dict
 
     @http.route('/3Dstock/data/quantity', type='json', auth='public')
     def get_stock_count_data(self, loc_code):
         """
-        This method is used to handle the request for location's current stock
-        quantity.
+        Get stock quantity for a location (for color coding location boxes)
         ------------------------------------------------
-        @param self: object pointer.
         @param loc_code: the selected location code.
-        @return: current quantity of selected location.
+        @return: current quantity vs capacity data
         """
         quantity = request.env['stock.quant'].sudo().search(
-            [('location_id.unique_code', '=', loc_code)]).mapped(
-            'quantity')
-        capacity = request.env['stock.location'].sudo().search(
-            [('unique_code', '=', loc_code)]).max_capacity
+            [('location_id.loc_3d_code', '=', loc_code)]).mapped('quantity')
+        
+        location = request.env['stock.location'].sudo().search(
+            [('loc_3d_code', '=', loc_code)], limit=1)
+        
+        capacity = location.loc_max_capacity if location else 0
         count = math.fsum(quantity)
         quant_data = (0, 0)
+        
         if capacity:
             if capacity > 0:
                 load = int((count * 100) / capacity)
@@ -108,31 +173,34 @@ class Stock3DView(http.Controller):
     @http.route('/3Dstock/data/product', type='json', auth='public')
     def get_stock_product_data(self, loc_code):
         """
-        This method is used to handle the request for data of products of
-        selected location.
+        Get detailed product data for a location
         ------------------------------------------------
-        @param self: object pointer.
         @param loc_code: the selected location code.
-        @return: a dictionary including total capacity, current capacity and
-        products stored in selected location.
+        @return: dictionary with products, capacity, available space
         """
         products = request.env['stock.quant'].sudo().search(
-            [('location_id.unique_code', '=', loc_code)])
+            [('location_id.loc_3d_code', '=', loc_code)])
+        
         quantity_obj = request.env['stock.quant'].sudo().search(
-            [('location_id.unique_code', '=', loc_code)]).mapped(
-            'quantity')
-        capacity = request.env['stock.location'].sudo().search(
-            [('unique_code', '=', loc_code)]).max_capacity
+            [('location_id.loc_3d_code', '=', loc_code)]).mapped('quantity')
+        
+        location = request.env['stock.location'].sudo().search(
+            [('loc_3d_code', '=', loc_code)], limit=1)
+        
+        capacity = location.loc_max_capacity if location else 0
         product_list = []
-        product_list.clear()
+        
         if products:
             for rec in products:
-                product_list.append((rec.product_id.display_name, rec.quantity))
+                lot_info = f" [{rec.lot_id.name}]" if rec.lot_id else ""
+                product_list.append((
+                    rec.product_id.display_name + lot_info, 
+                    rec.quantity
+                ))
+        
         load = math.fsum(quantity_obj)
-        if capacity > 0:
-            space = capacity - load
-        else:
-            space = 0
+        space = capacity - load if capacity > 0 else 0
+        
         data = {
             'capacity': capacity,
             'space': space,
@@ -143,28 +211,35 @@ class Stock3DView(http.Controller):
     @http.route('/3Dstock/data/standalone', type='json', auth='public')
     def get_standalone_stock_data(self, company_id, loc_id):
         """
-        This method is used to handle the request for individual location data.
+        Get location data for individual location 3D view
         ------------------------------------------------
-        @param self: object pointer.
         @param company_id: the current company id.
-        @param loc_id: the selected location code.
-        @return: a dictionary including of selected location's dimensions and
-        positions.
+        @param loc_id: the selected location id.
+        @return: dictionary of location dimensions and positions
         """
-        warehouse = request.env['stock.location'].sudo().search(
-            [('company_id.id', '=', int(company_id)),
-             ('id', '=', int(loc_id))]).mapped('warehouse_id')
+        location = request.env['stock.location'].sudo().browse(int(loc_id))
+        warehouse = location.warehouse_id
+        
         locations = request.env['stock.location'].sudo().search(
             [('company_id.id', '=', int(company_id)),
-             ('active', '=', 'true'),
-             ('usage', '=', 'internal')])
+             ('active', '=', True),
+             ('usage', '=', 'internal'),
+             ('warehouse_id', '=', warehouse.id)])
+        
         location_dict = {}
         for loc in locations:
-            if loc.warehouse_id.id == warehouse.id:
-                length = int(loc.length * 3.779 * 2)
-                width = int(loc.width * 3.779 * 2)
-                height = int(loc.height * 3.779 * 2)
-                location_dict.update(
-                    {loc.unique_code: [loc.pos_x, loc.pos_y, loc.pos_z,
-                                       length, width, height, loc.id]})
+            if loc.loc_3d_code:
+                length = int(loc.loc_length * 3.779 * 2) if loc.loc_length else 50
+                width = int(loc.loc_width * 3.779 * 2) if loc.loc_width else 50
+                height = int(loc.loc_height * 3.779 * 2) if loc.loc_height else 50
+                
+                location_dict.update({
+                    loc.loc_3d_code: [
+                        loc.loc_pos_x or 0, 
+                        loc.loc_pos_y or 0, 
+                        loc.loc_pos_z or 0,
+                        length, width, height, loc.id
+                    ]
+                })
+        
         return location_dict

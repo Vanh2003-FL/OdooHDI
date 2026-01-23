@@ -1,0 +1,229 @@
+/* Warehouse 3D View Styles - Integrated with warehouse_map */
+
+.o_warehouse_3d_view {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f8f9fa;
+}
+
+.o_warehouse_3d_header {
+    background: white;
+    border-bottom: 2px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.warehouse-selector {
+    min-width: 200px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.o_warehouse_3d_container_wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+}
+
+.warehouse3d-canvas {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.warehouse3d-canvas canvas {
+    display: block;
+    outline: none;
+    cursor: grab;
+}
+
+.warehouse3d-canvas canvas:active {
+    cursor: grabbing;
+}
+
+.o_warehouse_3d_sidebar {
+    width: 320px;
+    background: white;
+    border-left: 1px solid #dee2e6;
+    overflow-y: auto;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+}
+
+.product-list {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+.product-item {
+    transition: background-color 0.2s;
+}
+
+.product-item:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.product-color-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Loading state */
+.o_warehouse_3d_view .fa-spinner {
+    color: #007bff;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .o_warehouse_3d_sidebar {
+        width: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .o_warehouse_3d_sidebar {
+        display: none;
+    }
+    
+    .o_warehouse_3d_header .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .legend-item {
+        font-size: 0.75rem;
+    }
+}
+
+/* Legacy 3D view styles compatibility */
+canvas {
+    border: 7px solid #666666;
+    background-color: white;
+    position: relative;
+}
+
+.customselect {
+    bottom: 744px;
+    left: 44px;
+    height: 25px;
+    width: 150px;
+    position: absolute;
+    color: indigo;
+    font-size: 15px;
+}
+
+.rectangle {
+    bottom: 650px;
+    right: 7px;
+    height: 140px;
+    width: 180px;
+    position: absolute;
+}
+
+.square1 {
+    height: 20px;
+    width: 20px;
+    background-color: #cc0000;
+    border-radius: 5px;
+}
+
+.squareText1 {
+    height: 20px;
+    width: 170px;
+    color: black;
+    margin-top: -19px;
+    padding-left: 30px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.square2 {
+    height: 20px;
+    width: 20px;
+    background-color: #e6b800;
+    border-radius: 5px;
+    margin-top: 2px;
+}
+
+.squareText2 {
+    height: 20px;
+    width: 170px;
+    color: black;
+    margin-top: -19px;
+    padding-left: 30px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.square3 {
+    height: 20px;
+    width: 20px;
+    background-color: #00802b;
+    border-radius: 5px;
+    margin-top: 2px;
+}
+
+.squareText3 {
+    height: 20px;
+    width: 170px;
+    color: black;
+    margin-top: -19px;
+    padding-left: 30px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.square4 {
+    height: 20px;
+    width: 20px;
+    background-color: #8c8c8c;
+    border-radius: 5px;
+    margin-top: 2px;
+}
+
+.squareText4 {
+    height: 20px;
+    width: 170px;
+    color: black;
+    margin-top: -19px;
+    padding-left: 30px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.closeBtn {
+    bottom: 744px;
+    right: 10px;
+    height: 30px;
+    width: 30px;
+    position: absolute;
+    border: none;
+    background-color: red;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.closeBtn:hover {
+    background-color: darkred;
+}
