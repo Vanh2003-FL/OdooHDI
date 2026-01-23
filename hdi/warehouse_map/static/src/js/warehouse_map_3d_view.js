@@ -4,9 +4,8 @@ import { Component, useState, onWillStart, onMounted, onWillUnmount } from "@odo
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
-// Three.js sẽ được load từ CDN trong template
+// Three.js sẽ được load từ CDN
 let THREE = null;
-let OrbitControls = null;
 
 export class WarehouseMap3DView extends Component {
     static props = {
@@ -30,12 +29,18 @@ export class WarehouseMap3DView extends Component {
         this.scene = null;
         this.camera = null;
         this.renderer = null;
-        this.controls = null;
         this.raycaster = null;
         this.mouse = null;
         this.cellMeshes = [];
         this.labelSprites = [];
         this.containerRef = null;
+        
+        // Camera controls state
+        this.isMouseDown = false;
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.cameraRotation = { theta: Math.PI / 4, phi: Math.PI / 4 };
+        this.cameraDistance = 30;
 
         onWillStart(async () => {
             await this.loadThreeJS();
@@ -43,7 +48,6 @@ export class WarehouseMap3DView extends Component {
         });
 
         onMounted(() => {
-            // Đợi DOM render xong rồi mới init
             setTimeout(() => {
                 if (this.state.mapData) {
                     this.initThreeJS();
@@ -55,8 +59,17 @@ export class WarehouseMap3DView extends Component {
                     window.addEventListener('resize', this.resizeHandler);
                     
                     // Handle mouse events
-                    this.clickHandler = (event) => this.onMouseClick(event);
                     if (this.containerRef) {
+                        this.mouseDownHandler = (e) => this.onMouseDown(e);
+                        this.mouseMoveHandler = (e) => this.onMouseMove(e);
+                        this.mouseUpHandler = () => this.onMouseUp();
+                        this.wheelHandler = (e) => this.onWheel(e);
+                        this.clickHandler = (e) => this.onMouseClick(e);
+                        
+                        this.containerRef.addEventListener('mousedown', this.mouseDownHandler);
+                        this.containerRef.addEventListener('mousemove', this.mouseMoveHandler);
+                        this.containerRef.addEventListener('mouseup', this.mouseUpHandler);
+                        this.containerRef.addEventListener('wheel', this.wheelHandler);
                         this.containerRef.addEventListener('click', this.clickHandler);
                     }
                 }
@@ -67,8 +80,12 @@ export class WarehouseMap3DView extends Component {
             if (this.resizeHandler) {
                 window.removeEventListener('resize', this.resizeHandler);
             }
-            if (this.clickHandler && this.containerRef) {
-                this.containerRef.removeEventListener('click', this.clickHandler);
+            if (this.containerRef) {
+                if (this.mouseDownHandler) this.containerRef.removeEventListener('mousedown', this.mouseDownHandler);
+                if (this.mouseMoveHandler) this.containerRef.removeEventListener('mousemove', this.mouseMoveHandler);
+                if (this.mouseUpHandler) this.containerRef.removeEventListener('mouseup', this.mouseUpHandler);
+                if (this.wheelHandler) this.containerRef.removeEventListener('wheel', this.wheelHandler);
+                if (this.clickHandler) this.containerRef.removeEventListener('click', this.clickHandler);
             }
             this.disposeThreeJS();
         });
@@ -90,32 +107,19 @@ export class WarehouseMap3DView extends Component {
     }
 
     async loadThreeJS() {
-        // Load Three.js from CDN if not already loaded
         if (window.THREE) {
             THREE = window.THREE;
-            if (window.THREE.OrbitControls) {
-                OrbitControls = window.THREE.OrbitControls;
-            }
             return;
         }
 
         try {
             return new Promise((resolve, reject) => {
-                // Load Three.js
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
                 script.onload = () => {
                     THREE = window.THREE;
-                    
-                    // Load OrbitControls
-                    const controlsScript = document.createElement('script');
-                    controlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js';
-                    controlsScript.onload = () => {
-                        OrbitControls = THREE.OrbitControls;
-                        resolve();
-                    };
-                    controlsScript.onerror = () => reject(new Error('Failed to load OrbitControls'));
-                    document.head.appendChild(controlsScript);
+                    console.log('Three.js loaded successfully');
+                    resolve();
                 };
                 script.onerror = () => reject(new Error('Failed to load Three.js'));
                 document.head.appendChild(script);
@@ -182,7 +186,7 @@ export class WarehouseMap3DView extends Component {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xf0f0f0);
 
-        // Camera - góc nhìn isometric giống mẫu
+        // Camera
         this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
         const mapSize = Math.max(this.state.mapData?.columns || 10, this.state.mapData?.rows || 10) * (this.state.mapData?.cell_width || 1.2);
         this.camera.position.set(mapSize * 0.8, mapSize * 1.2, mapSize * 0.8);
@@ -194,19 +198,14 @@ export class WarehouseMap3DView extends Component {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.containerRef.appendChild(this.renderer.domElement);
 
-        // Controls
-        if (OrbitControls) {
-            this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-            this.controls.enableDamping = true;
-            this.controls.dampingFactor = 0.05;
-            this.controls.maxPolarAngle = Math.PI / 2;
-        }
-
         // Raycaster for mouse picking
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
+        
+        // Update camera position based on rotation
+        this.updateCameraPosition();
 
-        // Lighting - cải thiện ánh sáng
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         this.scene.add(ambientLight);
 
@@ -219,13 +218,13 @@ export class WarehouseMap3DView extends Component {
         directionalLight2.position.set(-10, 20, -10);
         this.scene.add(directionalLight2);
 
-        // Grid helper (if enabled)
+        // Grid helper
         if (this.state.mapData?.show_grid) {
             const gridHelper = new THREE.GridHelper(50, 50);
             this.scene.add(gridHelper);
         }
 
-        // Axes helper (if enabled)
+        // Axes helper
         if (this.state.mapData?.show_axes) {
             const axesHelper = new THREE.AxesHelper(10);
             this.scene.add(axesHelper);
@@ -272,20 +271,16 @@ export class WarehouseMap3DView extends Component {
                             shininess: 30
                         });
                     } else if (lotData) {
-                        // Color based on quantity or availability - giống mẫu
                         const fillPercent = lotData.available_quantity / lotData.quantity;
                         let color, opacity;
                         
                         if (fillPercent <= 0.2) {
-                            // Overload - Đỏ
                             color = 0xE53935;
                             opacity = 0.85;
                         } else if (fillPercent <= 0.5) {
-                            // Almost Full - Vàng/Cam
                             color = 0xFFB300;
                             opacity = 0.85;
                         } else {
-                            // Free Space Available - Xanh lá
                             color = 0x43A047;
                             opacity = 0.75;
                         }
@@ -297,7 +292,6 @@ export class WarehouseMap3DView extends Component {
                             shininess: 40
                         });
                     } else {
-                        // Empty cell - No Product/Load
                         material = new THREE.MeshPhongMaterial({ 
                             color: 0xBDBDBD,
                             transparent: true,
@@ -323,7 +317,7 @@ export class WarehouseMap3DView extends Component {
                         isBlocked: isBlocked
                     };
 
-                    // Add edge helper for better visibility - đậm hơn
+                    // Add edge helper
                     const edges = new THREE.EdgesGeometry(geometry);
                     const line = new THREE.LineSegments(
                         edges,
@@ -349,17 +343,15 @@ export class WarehouseMap3DView extends Component {
     }
 
     addLabel(position, text) {
-        if (!text || text.length > 10) return; // Skip nếu text quá dài
+        if (!text || text.length > 10) return;
         
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         canvas.width = 256;
         canvas.height = 128;
         
-        // Background trong suốt
         context.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Text shadow cho độ nổi
         context.shadowColor = 'rgba(0, 0, 0, 0.5)';
         context.shadowBlur = 4;
         context.shadowOffsetX = 2;
@@ -393,22 +385,58 @@ export class WarehouseMap3DView extends Component {
         
         requestAnimationFrame(() => this.animate());
         
-        if (this.controls) {
-            this.controls.update();
-        }
-        
         this.renderer.render(this.scene, this.camera);
     }
-
-    onWindowResize() {
-        if (!this.containerRef || !this.camera || !this.renderer) return;
-
-        const width = this.containerRef.clientWidth;
-        const height = this.containerRef.clientHeight;
-
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
+    
+    updateCameraPosition() {
+        if (!this.camera) return;
+        
+        const mapSize = Math.max(this.state.mapData?.columns || 10, this.state.mapData?.rows || 10) * (this.state.mapData?.cell_width || 1.2);
+        const centerX = mapSize / 2;
+        const centerZ = mapSize / 2;
+        
+        const x = centerX + this.cameraDistance * Math.sin(this.cameraRotation.theta) * Math.cos(this.cameraRotation.phi);
+        const y = this.cameraDistance * Math.sin(this.cameraRotation.phi);
+        const z = centerZ + this.cameraDistance * Math.cos(this.cameraRotation.theta) * Math.cos(this.cameraRotation.phi);
+        
+        this.camera.position.set(x, y, z);
+        this.camera.lookAt(centerX, 0, centerZ);
+    }
+    
+    onMouseDown(event) {
+        this.isMouseDown = true;
+        this.mouseX = event.clientX;
+        this.mouseY = event.clientY;
+    }
+    
+    onMouseMove(event) {
+        if (!this.isMouseDown) return;
+        
+        const deltaX = event.clientX - this.mouseX;
+        const deltaY = event.clientY - this.mouseY;
+        
+        this.cameraRotation.theta -= deltaX * 0.01;
+        this.cameraRotation.phi -= deltaY * 0.01;
+        
+        this.cameraRotation.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, this.cameraRotation.phi));
+        
+        this.mouseX = event.clientX;
+        this.mouseY = event.clientY;
+        
+        this.updateCameraPosition();
+    }
+    
+    onMouseUp() {
+        this.isMouseDown = false;
+    }
+    
+    onWheel(event) {
+        event.preventDefault();
+        
+        this.cameraDistance += event.deltaY * 0.05;
+        this.cameraDistance = Math.max(10, Math.min(100, this.cameraDistance));
+        
+        this.updateCameraPosition();
     }
 
     onMouseClick(event) {
@@ -466,14 +494,23 @@ export class WarehouseMap3DView extends Component {
     }
 
     onWarehouseChange(event) {
-        // Future: Load different warehouse map
         console.log('Warehouse changed:', event.target.value);
     }
     
-    // Getter for template to create level array
     get levelsArray() {
         if (!this.state.mapData) return [];
         return Array.from({length: this.state.mapData.levels}, (_, i) => i);
+    }
+
+    onWindowResize() {
+        if (!this.containerRef || !this.camera || !this.renderer) return;
+
+        const width = this.containerRef.clientWidth;
+        const height = this.containerRef.clientHeight;
+
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height);
     }
 
     disposeThreeJS() {
@@ -483,15 +520,11 @@ export class WarehouseMap3DView extends Component {
                 this.containerRef.removeChild(this.renderer.domElement);
             }
         }
-        if (this.controls) {
-            this.controls.dispose();
-        }
         this.cellMeshes = [];
         this.labelSprites = [];
         this.scene = null;
         this.camera = null;
         this.renderer = null;
-        this.controls = null;
     }
 }
 
