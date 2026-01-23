@@ -43,6 +43,7 @@ export class WarehouseMap3DView extends Component {
         this.mouseY = 0;
         this.cameraRotation = { theta: Math.PI / 4, phi: Math.PI / 4 };
         this.cameraDistance = 30;
+        this.autoRefreshInterval = null;  // Auto-refresh timer
 
         onWillStart(async () => {
             await this.loadThreeJS();
@@ -78,11 +79,22 @@ export class WarehouseMap3DView extends Component {
                         this.containerRef.addEventListener('wheel', this.wheelHandler);
                         this.containerRef.addEventListener('click', this.clickHandler);
                     }
+                    
+                    // Auto-refresh map data mỗi 3 giây để cập nhật thay đổi
+                    this.autoRefreshInterval = setInterval(() => {
+                        this.refreshMapData();
+                    }, 3000);
                 }
             }, 0);
         });
 
         onWillUnmount(() => {
+            // Clear auto-refresh interval
+            if (this.autoRefreshInterval) {
+                clearInterval(this.autoRefreshInterval);
+                this.autoRefreshInterval = null;
+            }
+            
             if (this.resizeHandler) {
                 window.removeEventListener('resize', this.resizeHandler);
             }
@@ -248,6 +260,17 @@ export class WarehouseMap3DView extends Component {
         }
 
         const { columns, rows, levels, cell_width, cell_depth, cell_height, lots, blocked_cells } = this.state.mapData;
+
+        console.log('=== RENDER 3D MAP ===');
+        console.log('lots structure:', lots);
+        console.log('lots type:', typeof lots);
+        console.log('lots is Array?', Array.isArray(lots));
+        if (lots && Object.keys(lots).length > 0) {
+            const firstKey = Object.keys(lots)[0];
+            console.log('First lot key:', firstKey);
+            console.log('First lot value:', lots[firstKey]);
+        }
+        console.log('====================');
 
         // Clear previous meshes
         this.cellMeshes.forEach(mesh => this.scene.remove(mesh));
@@ -459,11 +482,18 @@ export class WarehouseMap3DView extends Component {
             const mesh = intersects[0].object;
             const userData = mesh.userData;
             
+            console.log('=== CLICKED CELL ===');
+            console.log('Position:', `(${userData.x}, ${userData.y}, ${userData.z})`);
+            console.log('posKey:', userData.posKey);
+            console.log('lotData:', userData.lotData);
+            console.log('isBlocked:', userData.isBlocked);
+            console.log('====== END ======');
+            
             this.state.selectedCell = userData;
             
             if (this.state.assignmentMode) {
-                // Trong chế độ gán vị trí, hiển thị dialog xác nhận
-                this.showPositionAssignmentConfirm(userData);
+                // Trong chế độ gán vị trí từ wizard, phải chọn lô có hàng
+                this.showLotSelectionForAssignment(userData);
             } else {
                 // Chế độ bình thường, hiển thị thông tin ô
                 this.showCellInfo(userData);
@@ -471,45 +501,43 @@ export class WarehouseMap3DView extends Component {
         }
     }
 
-    showPositionAssignmentConfirm(cellData) {
-        const { x, y, z } = cellData;
+    showLotSelectionForAssignment(cellData) {
+        const { x, y, z, lotData, isBlocked } = cellData;
         
-        let message = `Bạn chọn vị trí: (${x}, ${y}, ${z})\\n\\n`;
-        
-        if (cellData.isBlocked) {
+        // Nếu ô bị chặn
+        if (isBlocked) {
             this.notification.add('Ô này bị chặn! Vui lòng chọn ô khác.', { type: 'warning' });
             return;
         }
         
-        if (cellData.lotData) {
-            message += `⚠️ Ô này đã có lot: ${cellData.lotData.lot_name}\\n`;
-            message += `Sản phẩm: ${cellData.lotData.product_name}\\n`;
-            this.notification.add(message, { 
-                type: 'warning',
-                sticky: true
-            });
+        // Nếu ô trống, không thể gán
+        if (!lotData) {
+            this.notification.add('Ô này trống. Vui lòng chọn ô có lô để gán vị trí.', { type: 'warning' });
             return;
         }
         
-        message += 'Xác nhận gán vị trí này?';
-        
-        this.state.selectedPosition = { x, y, z };
-        this.showAssignmentConfirmDialog();
+        // Ô có lô, hiển thị thông tin lô để chọn gán
+        this.showLotConfirmDialog(cellData);
     }
 
-    showAssignmentConfirmDialog() {
-        const { x, y, z } = this.state.selectedPosition;
+    showLotConfirmDialog(cellData) {
+        const { x, y, z, lotData } = cellData;
         
-        // Tạo dialog xác nhận
+        // Tạo dialog xác nhận chọn lô
         const dialog = document.createElement('div');
         dialog.className = 'warehouse-map-3d-confirm-dialog';
         dialog.innerHTML = `
             <div class="dialog-content">
-                <h3>Xác nhận gán vị trí 3D</h3>
-                <p>Vị trí được chọn: <strong>(${x}, ${y}, ${z})</strong></p>
-                <p>Bạn có chắc chắn muốn gán vị trí này?</p>
+                <h3>Chọn lô để gán vị trí 3D</h3>
+                <div class="lot-selection-info">
+                    <p><strong>Sản phẩm:</strong> ${lotData.product_name}</p>
+                    <p><strong>Lot/Serial:</strong> ${lotData.lot_name}</p>
+                    <p><strong>Số lượng:</strong> ${lotData.quantity} ${lotData.uom}</p>
+                    <p><strong>Vị trí mới:</strong> (${x}, ${y}, ${z})</p>
+                </div>
+                <p style="color: #666; margin: 10px 0;">Bạn có muốn gán lô này vào vị trí (${x}, ${y}, ${z})?</p>
                 <div class="dialog-buttons">
-                    <button class="btn-confirm">Xác nhận</button>
+                    <button class="btn-confirm">Chọn lô này</button>
                     <button class="btn-cancel">Hủy</button>
                 </div>
             </div>
@@ -523,16 +551,29 @@ export class WarehouseMap3DView extends Component {
                 left: 50%;
                 transform: translate(-50%, -50%);
                 background: white;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                padding: 20px;
+                border: 2px solid #3498db;
+                border-radius: 6px;
+                padding: 25px;
                 z-index: 10000;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                min-width: 350px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                min-width: 400px;
             }
             .warehouse-map-3d-confirm-dialog h3 {
                 margin-top: 0;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
+                color: #2c3e50;
+                font-size: 18px;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 10px;
+            }
+            .warehouse-map-3d-confirm-dialog .lot-selection-info {
+                background: #ecf0f1;
+                padding: 15px;
+                border-radius: 4px;
+                margin: 15px 0;
+            }
+            .warehouse-map-3d-confirm-dialog .lot-selection-info p {
+                margin: 8px 0;
                 color: #333;
             }
             .warehouse-map-3d-confirm-dialog p {
@@ -546,46 +587,46 @@ export class WarehouseMap3DView extends Component {
                 justify-content: flex-end;
             }
             .warehouse-map-3d-confirm-dialog button {
-                padding: 8px 16px;
+                padding: 10px 20px;
                 border: none;
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 14px;
+                font-weight: 500;
             }
             .warehouse-map-3d-confirm-dialog .btn-confirm {
-                background-color: #28a745;
+                background-color: #27ae60;
                 color: white;
             }
             .warehouse-map-3d-confirm-dialog .btn-confirm:hover {
-                background-color: #218838;
+                background-color: #229954;
             }
             .warehouse-map-3d-confirm-dialog .btn-cancel {
-                background-color: #6c757d;
+                background-color: #95a5a6;
                 color: white;
             }
             .warehouse-map-3d-confirm-dialog .btn-cancel:hover {
-                background-color: #5a6268;
+                background-color: #7f8c8d;
             }
         `;
         
         document.head.appendChild(style);
         document.body.appendChild(dialog);
         
-        // Xử lý click nút xác nhận
+        // Xử lý click nút xác nhận chọn lô
         dialog.querySelector('.btn-confirm').onclick = () => {
-            this.confirmPositionAssignment();
+            this.confirmLotSelection(cellData);
             dialog.remove();
         };
         
         // Xử lý click nút hủy
         dialog.querySelector('.btn-cancel').onclick = () => {
             dialog.remove();
-            this.state.selectedPosition = null;
         };
     }
 
-    confirmPositionAssignment() {
-        const { x, y, z } = this.state.selectedPosition;
+    confirmLotSelection(cellData) {
+        const { x, y, z, lotData } = cellData;
         const wizardId = this.props.context?.move_line_warehouse_map_wizard_id;
         
         if (!wizardId) {
@@ -593,13 +634,14 @@ export class WarehouseMap3DView extends Component {
             return;
         }
         
-        // Gọi Odoo RPC để cập nhật vị trí trong wizard
+        // Gọi Odoo RPC để cập nhật vị trí và lô trong wizard
         this.orm.call('move.line.warehouse.map.wizard', 'update_position_from_3d_view', [wizardId], {
             posx: x,
             posy: y,
             posz: z,
+            quant_id: lotData.quant_id,  // Gửi ID lô được chọn
         }).then(result => {
-            this.notification.add('✓ Vị trí đã được gán thành công!', { type: 'success' });
+            this.notification.add(`✓ Lô ${lotData.lot_name} được gán vị trí thành công!`, { type: 'success' });
             // Đóng action/wizard sau khi gán vị trí
             setTimeout(() => {
                 this.action.doAction({
@@ -609,6 +651,272 @@ export class WarehouseMap3DView extends Component {
         }).catch(error => {
             this.notification.add(`Lỗi khi gán vị trí: ${error.message}`, { type: 'danger' });
         });
+    }
+
+    showCellInfo(cellData) {
+        const { x, y, z, lotData, isBlocked } = cellData;
+        
+        // Tạo dialog hiển thị thông tin ô
+        const dialog = document.createElement('div');
+        dialog.className = 'warehouse-map-3d-info-dialog';
+        
+        let content = `<div class="dialog-content">
+            <h3>📍 Thông tin vị trí (${x}, ${y}, ${z})</h3>`;
+        
+        if (isBlocked) {
+            content += '<p class="blocked-info">🚫 Ô này bị chặn</p>';
+        } else if (lotData) {
+            content += `
+                <div class="lot-info">
+                    <p><strong>Sản phẩm:</strong> ${lotData.product_name}</p>
+                    <p><strong>Lot/Serial:</strong> ${lotData.lot_name}</p>
+                    <p><strong>Số lượng:</strong> ${lotData.quantity} ${lotData.uom}</p>
+                    <p><strong>Khả dụng:</strong> ${lotData.available_quantity} ${lotData.uom}</p>
+                    ${lotData.location_name ? `<p><strong>Vị trí kho:</strong> ${lotData.location_name}</p>` : ''}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-action btn-move" data-action="move" data-quant-id="${lotData.quant_id}">
+                        📦 Chuyển vị trí
+                    </button>
+                    <button class="btn-action btn-pick" data-action="pick" data-quant-id="${lotData.quant_id}">
+                        🛒 Lấy hàng
+                    </button>
+                    <button class="btn-action btn-transfer" data-action="transfer" data-quant-id="${lotData.quant_id}">
+                        🚚 Chuyển kho
+                    </button>
+                </div>
+            `;
+        } else {
+            content += `
+                <p class="empty-info">✓ Ô trống - sẵn sàng gán vị trí</p>
+                <div class="action-buttons">
+                    <button class="btn-action btn-assign-position" data-pos-x="${x}" data-pos-y="${y}" data-pos-z="${z}">
+                        ➕ Chọn lô để gán
+                    </button>
+                </div>
+            `;
+        }
+        
+        content += '<div class="dialog-buttons"><button class="btn-close">Đóng</button></div></div>';
+        
+        dialog.innerHTML = content;
+        
+        // Thêm CSS styling nếu chưa có
+        if (!document.getElementById('warehouse-map-info-dialog-style')) {
+            const style = document.createElement('style');
+            style.id = 'warehouse-map-info-dialog-style';
+            style.textContent = `
+                .warehouse-map-3d-info-dialog {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    border: 2px solid #2c3e50;
+                    border-radius: 8px;
+                    padding: 20px;
+                    z-index: 10000;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    min-width: 450px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                .warehouse-map-3d-info-dialog .dialog-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                }
+                .warehouse-map-3d-info-dialog h3 {
+                    margin: 0 0 10px 0;
+                    color: #2c3e50;
+                    font-size: 18px;
+                    border-bottom: 2px solid #3498db;
+                    padding-bottom: 10px;
+                }
+                .warehouse-map-3d-info-dialog .lot-info,
+                .warehouse-map-3d-info-dialog .blocked-info,
+                .warehouse-map-3d-info-dialog .empty-info {
+                    padding: 12px;
+                    border-radius: 4px;
+                    background: #f8f9fa;
+                }
+                .warehouse-map-3d-info-dialog .lot-info p {
+                    margin: 8px 0;
+                    color: #333;
+                }
+                .warehouse-map-3d-info-dialog .blocked-info {
+                    background: #ffe6e6;
+                    color: #d32f2f;
+                    font-weight: bold;
+                }
+                .warehouse-map-3d-info-dialog .empty-info {
+                    background: #e8f5e9;
+                    color: #388e3c;
+                    font-weight: bold;
+                }
+                .warehouse-map-3d-info-dialog .action-buttons {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 10px;
+                    justify-content: center;
+                }
+                .warehouse-map-3d-info-dialog .action-buttons.multi {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                }
+                .warehouse-map-3d-info-dialog .btn-action {
+                    padding: 10px 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
+                    flex: 1;
+                }
+                .warehouse-map-3d-info-dialog .btn-move {
+                    background-color: #3498db;
+                    color: white;
+                    flex: 1;
+                }
+                .warehouse-map-3d-info-dialog .btn-move:hover {
+                    background-color: #2980b9;
+                    transform: translateY(-2px);
+                }
+                .warehouse-map-3d-info-dialog .btn-pick {
+                    background-color: #f39c12;
+                    color: white;
+                    flex: 1;
+                }
+                .warehouse-map-3d-info-dialog .btn-pick:hover {
+                    background-color: #e67e22;
+                    transform: translateY(-2px);
+                }
+                .warehouse-map-3d-info-dialog .btn-transfer {
+                    background-color: #27ae60;
+                    color: white;
+                    flex: 1;
+                }
+                .warehouse-map-3d-info-dialog .btn-transfer:hover {
+                    background-color: #229954;
+                    transform: translateY(-2px);
+                }
+                .warehouse-map-3d-info-dialog .btn-assign-position {
+                    background-color: #9b59b6;
+                    color: white;
+                    padding: 12px 20px;
+                    font-size: 14px;
+                }
+                .warehouse-map-3d-info-dialog .btn-assign-position:hover {
+                    background-color: #8e44ad;
+                    transform: translateY(-2px);
+                }
+                .warehouse-map-3d-info-dialog .dialog-buttons {
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    border-top: 1px solid #ddd;
+                }
+                .warehouse-map-3d-info-dialog .btn-close {
+                    padding: 8px 20px;
+                    background-color: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+                .warehouse-map-3d-info-dialog .btn-close:hover {
+                    background-color: #5a6268;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(dialog);
+        
+        // Xử lý click nút hành động cho lô có sẵn
+        dialog.querySelectorAll('.btn-action').forEach(btn => {
+            btn.onclick = (e) => {
+                const action = e.target.closest('.btn-action').dataset.action;
+                if (action) {
+                    // Hành động cho lô có sẵn
+                    const quantId = parseInt(e.target.closest('.btn-action').dataset.quantId);
+                    dialog.remove();
+                    this.executeQuantAction(action, quantId);
+                } else {
+                    // Gán vị trí cho ô trống - mở wizard với tọa độ pre-filled
+                    const posX = parseInt(e.target.closest('.btn-action').dataset.posX);
+                    const posY = parseInt(e.target.closest('.btn-action').dataset.posY);
+                    const posZ = parseInt(e.target.closest('.btn-action').dataset.posZ);
+                    dialog.remove();
+                    this.openAssignPositionWizard(posX, posY, posZ);
+                }
+            };
+        });
+        
+        // Đóng dialog khi click nút
+        dialog.querySelector('.btn-close').onclick = () => {
+            dialog.remove();
+        };
+        
+        // Đóng dialog khi click bên ngoài
+        dialog.onclick = (e) => {
+            if (e.target === dialog) {
+                dialog.remove();
+            }
+        };
+    }
+
+    openAssignPositionWizard(posX, posY, posZ) {
+        // Mở wizard để chọn lô và gán vị trí với tọa độ đã được pre-fill
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: `Gán Lot vào vị trí [${posX}, ${posY}]`,
+            res_model: 'move.line.warehouse.map.wizard',
+            view_mode: 'form',
+            views: [[false, 'form']],
+            target: 'new',
+            context: {
+                'default_posx': posX,
+                'default_posy': posY,
+                'default_posz': posZ,
+                'warehouse_map_3d_assign': true,
+                'default_view_mode': 'warehouse_map_3d'
+            },
+        });
+    }
+
+    executeQuantAction(action, quantId) {
+        if (action === 'move') {
+            this.orm.call('stock.quant', 'action_move_location', [quantId], {}).then(result => {
+                if (result) {
+                    this.action.doAction(result);
+                }
+            }).catch(error => {
+                this.notification.add(`Lỗi: ${error.message}`, { type: 'danger' });
+            });
+        } else if (action === 'pick') {
+            this.orm.call('stock.quant', 'action_pick_products', [quantId], {}).then(result => {
+                if (result) {
+                    this.action.doAction(result);
+                }
+            }).catch(error => {
+                this.notification.add(`Lỗi: ${error.message}`, { type: 'danger' });
+            });
+        } else if (action === 'transfer') {
+            this.orm.call('stock.quant', 'action_transfer_warehouse', [quantId], {}).then(result => {
+                if (result) {
+                    this.action.doAction(result);
+                }
+            }).catch(error => {
+                this.notification.add(`Lỗi: ${error.message}`, { type: 'danger' });
+            });
+        }
     }
 
     toggleLevel(level) {
@@ -625,6 +933,43 @@ export class WarehouseMap3DView extends Component {
     async refreshMap() {
         await this.loadMapData();
         this.render3DMap();
+    }
+
+    async refreshMapData() {
+        // Silently refresh map data mỗi vài giây để cập nhật thay đổi
+        try {
+            let mapId = this.getMapId();
+            if (!mapId && this.state.mapData?.id) {
+                mapId = this.state.mapData.id;
+            }
+            
+            console.log('Refreshing map data - mapId:', mapId, 'state.mapData:', this.state.mapData);
+            
+            if (!mapId) {
+                console.warn('No mapId found for refresh');
+                return;
+            }
+            
+            const data = await this.orm.call(
+                'warehouse.map.3d',
+                'get_map_3d_data',
+                [mapId]
+            );
+            
+            console.log('Refreshed lots data:', data.lots);
+            
+            // Chỉ cập nhật nếu dữ liệu thay đổi
+            if (JSON.stringify(data.lots) !== JSON.stringify(this.state.mapData?.lots)) {
+                console.log('Lots data changed, updating map');
+                this.state.mapData = data;
+                this.render3DMap();
+            } else {
+                console.log('Lots data unchanged');
+            }
+        } catch (error) {
+            // Silently fail - không show error notification
+            console.log('Auto-refresh failed:', error);
+        }
     }
 
     onWarehouseChange(event) {

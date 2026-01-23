@@ -10,7 +10,8 @@
                         <h1>Gán vị trí 3D cho sản phẩm</h1>
                     </div>
                     
-                    <group>
+                    <!-- Hiển thị thông tin sản phẩm/lot chỉ khi có move_line_id -->
+                    <group invisible="not move_line_id">
                         <group>
                             <field name="product_id" readonly="1"/>
                             <field name="lot_name" readonly="1"/>
@@ -20,6 +21,11 @@
                             <field name="quantity" readonly="1"/>
                             <field name="location_dest_id" readonly="1"/>
                         </group>
+                    </group>
+                    
+                    <!-- Chọn lô/serial khi từ 3D view -->
+                    <group invisible="move_line_id" string="Chọn Lô/Serial">
+                        <field name="quant_id" required="1" options="{'no_create': True}"/>
                     </group>
                     
                     <group string="Chọn sơ đồ kho 3D">
@@ -36,7 +42,7 @@
                 </sheet>
                 <footer>
                     <button string="Mở sơ đồ 3D" type="object" name="action_open_warehouse_map" 
-                            class="btn-primary"/>
+                            class="btn-primary" invisible="not move_line_id"/>
                     <button string="Xác nhận" type="object" name="action_confirm_position" class="btn-primary"/>
                     <button string="Hủy" special="cancel" class="btn-secondary"/>
                 </footer>

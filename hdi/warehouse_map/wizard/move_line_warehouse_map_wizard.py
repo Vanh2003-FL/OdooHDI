@@ -5,12 +5,12 @@ from odoo.exceptions import UserError
 
 
 class MoveLineWarehouseMapWizard(models.TransientModel):
-    """Wizard để gán vị trí 3D sản phẩm/lot từ bảng nhập kho"""
+    """Wizard để gán vị trí 3D sản phẩm/lot từ bảng nhập kho hoặc từ 3D map"""
     _name = 'move.line.warehouse.map.wizard'
     _description = 'Gán vị trí 3D sản phẩm/Lot trên sơ đồ kho'
 
-    move_line_id = fields.Many2one('stock.move.line', string='Move Line', required=True, readonly=True)
-    picking_id = fields.Many2one('stock.picking', string='Phiếu nhập kho', required=True, readonly=True)
+    move_line_id = fields.Many2one('stock.move.line', string='Move Line', required=False, readonly=True)
+    picking_id = fields.Many2one('stock.picking', string='Phiếu nhập kho', required=False, readonly=True)
     
     # Thông tin sản phẩm
     product_id = fields.Many2one('product.product', string='Sản phẩm', 
@@ -60,6 +60,10 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
     # Chọn sơ đồ kho 3D (không còn 2D)
     warehouse_map_3d_id = fields.Many2one('warehouse.map.3d', string='Sơ đồ kho 3D', required=True)
     
+    # Chọn lô/quant để gán vào vị trí 3D
+    quant_id = fields.Many2one('stock.quant', string='Chọn Lô/Serial', required=False,
+                               help='Chọn lô/serial từ kho để gán vào vị trí 3D')
+    
     # Vị trí 3D trên sơ đồ
     posx = fields.Integer(string='Vị trí X (Cột)', required=True, default=0)
     posy = fields.Integer(string='Vị trí Y (Hàng)', required=True, default=0)
@@ -94,11 +98,9 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         }
     
     def action_confirm_position(self):
-        """Xác nhận và gán vị trí 3D cho move line + cập nhật quant"""
+        """Xác nhận và gán vị trí 3D"""
         self.ensure_one()
         
-        # Không bắt buộc lot_name vì lot có thể chưa được save từ move_line
-        # Chỉ check warehouse_map_3d
         if not self.warehouse_map_3d_id:
             raise UserError(_('Vui lòng chọn sơ đồ kho 3D!'))
         
@@ -132,6 +134,22 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
                 f'Vị trí [{self.posx}, {self.posy}, {self.posz}] đang bị chặn!'
             ))
         
+        # Nếu đến từ 3D view và có chọn quant, gán quant vào vị trí
+        if not self.move_line_id and self.quant_id:
+            # Gán quant vào vị trí 3D
+            self.quant_id.write({
+                'posx': self.posx,
+                'posy': self.posy,
+                'posz': self.posz,
+                'display_on_map': True,
+            })
+            return {'type': 'ir.actions.act_window_close'}
+        
+        # Nếu đến từ 3D view (không có move_line_id), chỉ cần xác nhận
+        if not self.move_line_id:
+            return {'type': 'ir.actions.act_window_close'}
+        
+        # Nếu có move_line_id, cập nhật move_line và quant
         # Kiểm tra vị trí đã bị chiếm không
         existing = self.env['stock.quant'].search([
             ('location_id', 'child_of', self.location_dest_id.id),

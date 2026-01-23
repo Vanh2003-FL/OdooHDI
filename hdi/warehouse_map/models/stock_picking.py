@@ -16,9 +16,13 @@ class StockPicking(models.Model):
         )
         if move_line:
             move_line = move_line[0]
-            # Tìm warehouse.map.3d của warehouse này
+            # Tìm warehouse.map.3d của warehouse này (lấy từ picking_type)
+            warehouse_id = self.picking_type_id.warehouse_id.id if self.picking_type_id.warehouse_id else None
+            if not warehouse_id:
+                raise UserError('Loại phiếu này không có kho gắn liền. Vui lòng cấu hình kho cho loại phiếu.')
+            
             warehouse_map_3d = self.env['warehouse.map.3d'].search([
-                ('warehouse_id', '=', self.warehouse_id.id),
+                ('warehouse_id', '=', warehouse_id),
                 ('active', '=', True),
             ], limit=1)
             
