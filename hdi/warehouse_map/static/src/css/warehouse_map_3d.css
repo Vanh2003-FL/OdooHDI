@@ -9,11 +9,13 @@
 }
 
 #warehouse-map-3d-container {
-    width: 100%;
+    width: calc(100% - 220px);
     height: calc(100vh - 100px);
     min-height: 600px;
     position: relative;
     background: linear-gradient(to bottom, #e8e8e8 0%, #f5f5f5 100%);
+    margin-left: 220px;
+    margin-top: 90px;
 }
 
 .warehouse-map-3d-selector {
@@ -45,27 +47,31 @@
 
 .warehouse-map-3d-controls {
     position: absolute;
-    top: 80px;
+    top: 200px;
     right: 20px;
     background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     z-index: 100;
-    min-width: 200px;
-    max-height: 400px;
+    min-width: 180px;
+    max-width: 220px;
+    max-height: 300px;
     overflow-y: auto;
 }
 
 .warehouse-map-3d-controls h4 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
+    margin: 0 0 8px 0;
+    font-size: 12px;
     font-weight: 600;
+    color: #2c3e50;
 }
 
 .warehouse-map-3d-controls .btn {
     width: 100%;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
 }
 
 .warehouse-map-3d-info {
@@ -73,25 +79,25 @@
     bottom: 20px;
     left: 20px;
     background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     z-index: 100;
-    max-width: 400px;
+    max-width: 220px;
 }
 
 .warehouse-map-3d-info h4 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
+    margin: 0 0 8px 0;
+    font-size: 12px;
     font-weight: 600;
-    color: #333;
+    color: #2c3e50;
 }
 
 .warehouse-map-3d-info .info-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 5px;
-    font-size: 13px;
+    margin-bottom: 4px;
+    font-size: 11px;
 }
 
 .warehouse-map-3d-info .info-label {
@@ -108,32 +114,36 @@
     top: 20px;
     right: 20px;
     background: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+    padding: 12px 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     z-index: 100;
-    min-width: 200px;
+    min-width: 180px;
+    max-width: 220px;
 }
 
 .warehouse-map-3d-legend h4 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
+    margin: 0 0 8px 0;
+    font-size: 12px;
     font-weight: 600;
+    color: #2c3e50;
 }
 
 .warehouse-map-3d-legend .legend-item {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 12px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: #555;
 }
 
 .warehouse-map-3d-legend .legend-color {
-    width: 20px;
-    height: 20px;
-    border-radius: 3px;
-    margin-right: 8px;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    margin-right: 6px;
     border: 1px solid #ccc;
+    flex-shrink: 0;
 }
 
 .warehouse-map-3d-legend .legend-color.available {

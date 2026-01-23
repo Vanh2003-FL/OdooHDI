@@ -24,10 +24,39 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
     # Sơ đồ kho 3D (không còn 2D)
     warehouse_map_3d_id = fields.Many2one('warehouse.map.3d', string='Sơ đồ kho 3D', required=True)
     
+    # Quant cho 3D view
+    quant_id = fields.Many2one('stock.quant', string='Lot/Serial')
+    
+    # Tọa độ 3D
+    posx = fields.Integer(string='Vị trí X (Cột)', default=0)
+    posy = fields.Integer(string='Vị trí Y (Hàng)', default=0)
+    posz = fields.Integer(string='Vị trí Z (Tầng)', default=0)
+    
     @api.model
     def default_get(self, fields_list):
-        """Load dữ liệu từ move_line_id"""
+        """Load dữ liệu từ move_line_id, quant_id hoặc từ context (3D view)"""
         result = super().default_get(fields_list)
+        
+        # Lấy tọa độ 3D từ context (khi mở từ 3D view)
+        if 'posx' in fields_list and 'default_posx' in self._context:
+            result['posx'] = self._context.get('default_posx', 0)
+        if 'posy' in fields_list and 'default_posy' in self._context:
+            result['posy'] = self._context.get('default_posy', 0)
+        if 'posz' in fields_list and 'default_posz' in self._context:
+            result['posz'] = self._context.get('default_posz', 0)
+        
+        # Nếu có quant_id trong context (khi thay đổi vị trí lot hiện tại)
+        if self._context.get('default_quant_id'):
+            quant_id = self._context.get('default_quant_id')
+            if 'quant_id' in fields_list:
+                result['quant_id'] = quant_id
+            
+            # Load thông tin lot từ quant để display
+            quant = self.env['stock.quant'].browse(quant_id)
+            if 'product_id' in fields_list:
+                result['product_id'] = quant.product_id.id
+            if 'quantity' in fields_list:
+                result['quantity'] = quant.quantity
         
         if self._context.get('default_move_line_id'):
             move_line = self.env['stock.move.line'].browse(self._context.get('default_move_line_id'))

@@ -36,6 +36,10 @@ export class WarehouseMap3DView extends Component {
         this.cellMeshes = [];
         this.labelSprites = [];
         this.containerRef = null;
+        this.hoveredCell = null;  // Ô đang hover
+        this.tooltipDialog = null;  // Dialog tooltip
+        this.selectedLevel = 0;  // Tầng được chọn để lọc danh sách lô
+        this.currentDialog = null;  // Dialog hiện tại đang mở
         
         // Camera controls state
         this.isMouseDown = false;
@@ -105,6 +109,25 @@ export class WarehouseMap3DView extends Component {
                 if (this.wheelHandler) this.containerRef.removeEventListener('wheel', this.wheelHandler);
                 if (this.clickHandler) this.containerRef.removeEventListener('click', this.clickHandler);
             }
+            
+            // Xoá sidebar khi rời khỏi view
+            const sidebar = document.getElementById('warehouse-map-lots-sidebar');
+            if (sidebar) {
+                sidebar.remove();
+            }
+            
+            // Xoá tooltip khi rời khỏi view
+            if (this.tooltipDialog) {
+                this.tooltipDialog.remove();
+                this.tooltipDialog = null;
+            }
+            
+            // Xoá dialog hiện tại nếu còn mở
+            if (this.currentDialog) {
+                this.currentDialog.remove();
+                this.currentDialog = null;
+            }
+            
             this.disposeThreeJS();
         });
     }
@@ -276,6 +299,9 @@ export class WarehouseMap3DView extends Component {
         this.cellMeshes.forEach(mesh => this.scene.remove(mesh));
         this.cellMeshes = [];
 
+        // Collect all lots for sidebar
+        const lotsList = [];
+
         // Create cells
         for (let z = 0; z < levels; z++) {
             for (let y = 0; y < rows; y++) {
@@ -320,6 +346,15 @@ export class WarehouseMap3DView extends Component {
                             opacity: opacity,
                             shininess: 40
                         });
+                        
+                        // Thêm vào danh sách
+                        lotsList.push({
+                            x, y, z,
+                            product: lotData.product_name,
+                            lot: lotData.lot_name,
+                            quantity: lotData.quantity,
+                            uom: lotData.uom
+                        });
                     } else {
                         material = new THREE.MeshPhongMaterial({ 
                             color: 0xBDBDBD,
@@ -358,6 +393,19 @@ export class WarehouseMap3DView extends Component {
                         })
                     );
                     cube.add(line);
+                    
+                    // Thêm glow effect cho ô có lô
+                    if (lotData) {
+                        const glowGeometry = new THREE.BoxGeometry(cell_width * 0.95, cell_height * 0.95, cell_depth * 0.95);
+                        const glowMaterial = new THREE.MeshBasicMaterial({
+                            color: 0xffffff,
+                            transparent: true,
+                            opacity: 0.15,
+                            side: THREE.BackSide
+                        });
+                        const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+                        cube.add(glowMesh);
+                    }
 
                     this.scene.add(cube);
                     this.cellMeshes.push(cube);
@@ -369,6 +417,187 @@ export class WarehouseMap3DView extends Component {
                 }
             }
         }
+        
+        // Cập nhật sidebar danh sách lô
+        this.updateLotsSidebar(lotsList);
+    }
+    
+    updateLotsSidebar(lotsList) {
+        let sidebar = document.getElementById('warehouse-map-lots-sidebar');
+        
+        if (!sidebar) {
+            sidebar = document.createElement('div');
+            sidebar.id = 'warehouse-map-lots-sidebar';
+            sidebar.className = 'warehouse-map-lots-sidebar';
+            
+            const style = document.createElement('style');
+            style.id = 'warehouse-map-lots-sidebar-style';
+            style.textContent = `
+                .warehouse-map-lots-sidebar {
+                    position: fixed;
+                    left: 0;
+                    top: 90px;
+                    width: 220px;
+                    height: calc(100vh - 90px);
+                    background: white;
+                    border-right: 1px solid #ddd;
+                    overflow-y: auto;
+                    z-index: 1000;
+                    box-shadow: 1px 0 4px rgba(0,0,0,0.08);
+                    padding: 8px;
+                }
+                .warehouse-map-lots-sidebar h3 {
+                    margin: 0 0 8px 0;
+                    color: #2c3e50;
+                    font-size: 13px;
+                    border-bottom: 2px solid #3498db;
+                    padding-bottom: 5px;
+                }
+                .warehouse-map-lots-sidebar .level-selector {
+                    margin-bottom: 8px;
+                    padding-bottom: 8px;
+                    border-bottom: 1px solid #eee;
+                }
+                .warehouse-map-lots-sidebar .level-buttons {
+                    display: flex;
+                    gap: 3px;
+                    flex-wrap: wrap;
+                }
+                .warehouse-map-lots-sidebar .btn-level {
+                    padding: 4px 8px;
+                    background: #ecf0f1;
+                    border: 1px solid #bdc3c7;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    font-size: 10px;
+                    font-weight: 600;
+                    color: #555;
+                    transition: all 0.2s;
+                    flex: 1;
+                    text-align: center;
+                    min-width: 35px;
+                }
+                .warehouse-map-lots-sidebar .btn-level:hover {
+                    background: #d5dbdb;
+                }
+                .warehouse-map-lots-sidebar .btn-level.active {
+                    background: #3498db;
+                    color: white;
+                    border-color: #2980b9;
+                }
+                .warehouse-map-lots-sidebar .lot-item {
+                    padding: 6px;
+                    margin-bottom: 5px;
+                    background: #f8f9fa;
+                    border-left: 2px solid #3498db;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 9px;
+                }
+                .warehouse-map-lots-sidebar .lot-item:hover {
+                    background: #ecf0f1;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                }
+                .warehouse-map-lots-sidebar .lot-item .position {
+                    color: #3498db;
+                    font-weight: bold;
+                    font-size: 9px;
+                    margin-bottom: 2px;
+                }
+                .warehouse-map-lots-sidebar .lot-item .product {
+                    color: #2c3e50;
+                    font-weight: bold;
+                    font-size: 9px;
+                    margin-bottom: 1px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .warehouse-map-lots-sidebar .lot-item .lot-name {
+                    color: #555;
+                    font-size: 8px;
+                    margin-bottom: 1px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .warehouse-map-lots-sidebar .lot-item .quantity {
+                    color: #27ae60;
+                    font-size: 8px;
+                }
+                .warehouse-map-lots-sidebar .empty-message {
+                    color: #95a5a6;
+                    text-align: center;
+                    padding: 10px 5px;
+                    font-size: 9px;
+                }
+            `;
+            
+            if (!document.getElementById('warehouse-map-lots-sidebar-style')) {
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(sidebar);
+        }
+        
+        // Lấy danh sách tầng duy nhất
+        const levels = [...new Set(lotsList.map(lot => lot.z))].sort((a, b) => a - b);
+        
+        // Lọc lô theo tầng được chọn
+        const filteredLots = lotsList.filter(lot => lot.z === this.selectedLevel);
+        
+        let html = `
+            <h3>📦 Lô</h3>
+            <div class="level-selector">
+                <div style="color: #666; font-size: 9px; margin-bottom: 3px; font-weight: bold;">Tầng:</div>
+                <div class="level-buttons">
+        `;
+        
+        levels.forEach(level => {
+            const isActive = level === this.selectedLevel ? 'active' : '';
+            html += `<button class="btn-level ${isActive}" data-level="${level}">T${level}</button>`;
+        });
+        
+        html += `</div></div>`;
+        
+        if (filteredLots.length === 0) {
+            html += '<div class="empty-message">Không có</div>';
+        } else {
+            html += `<div style="color: #666; font-size: 8px; margin-bottom: 5px; font-weight: bold;">T${this.selectedLevel} (${filteredLots.length})</div>`;
+            filteredLots.forEach((lot, index) => {
+                html += `
+                    <div class="lot-item" data-lot-index="${index}">
+                        <div class="position">[${lot.x}, ${lot.y}]</div>
+                        <div class="product">${lot.product}</div>
+                        <div class="lot-name">${lot.lot}</div>
+                        <div class="quantity">${lot.quantity}${lot.uom}</div>
+                    </div>
+                `;
+            });
+        }
+        
+        sidebar.innerHTML = html;
+        
+        // Click chọn tầng
+        sidebar.querySelectorAll('.btn-level').forEach(btn => {
+            btn.onclick = () => {
+                this.selectedLevel = parseInt(btn.dataset.level);
+                this.updateLotsSidebar(lotsList);
+            };
+        });
+        
+        // Click để xem thông tin lô
+        sidebar.querySelectorAll('.lot-item').forEach((item, index) => {
+            item.onclick = () => {
+                const lot = filteredLots[index];
+                const posKey = `${lot.x}_${lot.y}_${lot.z}`;
+                const cellMesh = this.cellMeshes.find(m => m.userData.posKey === posKey);
+                if (cellMesh) {
+                    this.showCellInfo(cellMesh.userData);
+                }
+            };
+        });
     }
 
     addLabel(position, text) {
@@ -453,10 +682,141 @@ export class WarehouseMap3DView extends Component {
         this.mouseY = event.clientY;
         
         this.updateCameraPosition();
+        
+        // Nếu không đang drag, check hover
+        if (!this.isMouseDown) {
+            this.checkHoveredCell(event);
+        }
     }
     
     onMouseUp() {
         this.isMouseDown = false;
+    }
+    
+    checkHoveredCell(event) {
+        if (!this.containerRef || !this.raycaster || !this.camera) return;
+
+        const rect = this.containerRef.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.cellMeshes);
+
+        if (intersects.length > 0) {
+            let mesh = intersects[0].object;
+            
+            // Nếu click vào line segments (edge), lấy parent mesh
+            if (mesh.parent && mesh.parent.userData) {
+                mesh = mesh.parent;
+            }
+            
+            const cellData = mesh.userData;
+            
+            // Chỉ show tooltip nếu ô có lô
+            if (cellData.lotData) {
+                this.showHoverTooltip(event, cellData);
+                this.hoveredCell = cellData;
+            } else {
+                this.hideHoverTooltip();
+                this.hoveredCell = null;
+            }
+        } else {
+            this.hideHoverTooltip();
+            this.hoveredCell = null;
+        }
+    }
+
+    showHoverTooltip(event, cellData) {
+        const { x, y, z, lotData } = cellData;
+        
+        if (!this.tooltipDialog) {
+            this.tooltipDialog = document.createElement('div');
+            this.tooltipDialog.className = 'warehouse-map-3d-hover-tooltip';
+            
+            const style = document.createElement('style');
+            style.id = 'warehouse-map-hover-tooltip-style';
+            style.textContent = `
+                .warehouse-map-3d-hover-tooltip {
+                    position: fixed;
+                    background: white;
+                    border: 2px solid #3498db;
+                    border-radius: 6px;
+                    padding: 12px;
+                    z-index: 9999;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                    font-size: 12px;
+                    min-width: 250px;
+                    max-width: 300px;
+                    pointer-events: none;
+                }
+                .warehouse-map-3d-hover-tooltip h4 {
+                    margin: 0 0 8px 0;
+                    color: #2c3e50;
+                    font-size: 13px;
+                }
+                .warehouse-map-3d-hover-tooltip p {
+                    margin: 4px 0;
+                    color: #555;
+                }
+                .warehouse-map-3d-hover-tooltip .btn-view-lot {
+                    display: block;
+                    margin-top: 8px;
+                    padding: 6px 12px;
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    text-align: center;
+                }
+                .warehouse-map-3d-hover-tooltip .btn-view-lot:hover {
+                    background-color: #2980b9;
+                }
+            `;
+            
+            if (!document.getElementById('warehouse-map-hover-tooltip-style')) {
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(this.tooltipDialog);
+        }
+        
+        this.tooltipDialog.innerHTML = `
+            <h4>📦 ${lotData.product_name}</h4>
+            <p><strong>Lot:</strong> ${lotData.lot_name}</p>
+            <p><strong>Số lượng:</strong> ${lotData.quantity} ${lotData.uom}</p>
+            <p><strong>Vị trí:</strong> (${x}, ${y}, ${z})</p>
+            <button class="btn-view-lot">Xem Lô này</button>
+        `;
+        
+        // Position tooltip
+        let left = event.clientX + 15;
+        let top = event.clientY + 15;
+        
+        if (left + 300 > window.innerWidth) {
+            left = event.clientX - 315;
+        }
+        if (top + 200 > window.innerHeight) {
+            top = event.clientY - 215;
+        }
+        
+        this.tooltipDialog.style.left = left + 'px';
+        this.tooltipDialog.style.top = top + 'px';
+        this.tooltipDialog.style.display = 'block';
+        
+        // Click để xem lô
+        this.tooltipDialog.querySelector('.btn-view-lot').onclick = () => {
+            this.showCellInfo(cellData);
+            this.hideHoverTooltip();
+        };
+    }
+
+    hideHoverTooltip() {
+        if (this.tooltipDialog) {
+            this.tooltipDialog.style.display = 'none';
+        }
     }
     
     onWheel(event) {
@@ -479,7 +839,13 @@ export class WarehouseMap3DView extends Component {
         const intersects = this.raycaster.intersectObjects(this.cellMeshes);
 
         if (intersects.length > 0) {
-            const mesh = intersects[0].object;
+            let mesh = intersects[0].object;
+            
+            // Nếu click vào line segments (edge), lấy parent mesh
+            if (mesh.parent && mesh.parent.userData) {
+                mesh = mesh.parent;
+            }
+            
             const userData = mesh.userData;
             
             console.log('=== CLICKED CELL ===');
@@ -656,6 +1022,18 @@ export class WarehouseMap3DView extends Component {
     showCellInfo(cellData) {
         const { x, y, z, lotData, isBlocked } = cellData;
         
+        console.log('=== SHOW CELL INFO ===');
+        console.log('cellData:', cellData);
+        console.log('lotData:', lotData);
+        console.log('isBlocked:', isBlocked);
+        console.log('====================');
+        
+        // Đóng dialog cũ nếu đang mở
+        if (this.currentDialog) {
+            this.currentDialog.remove();
+            this.currentDialog = null;
+        }
+        
         // Tạo dialog hiển thị thông tin ô
         const dialog = document.createElement('div');
         dialog.className = 'warehouse-map-3d-info-dialog';
@@ -684,13 +1062,16 @@ export class WarehouseMap3DView extends Component {
                     <button class="btn-action btn-transfer" data-action="transfer" data-quant-id="${lotData.quant_id}">
                         🚚 Chuyển kho
                     </button>
+                    <button class="btn-action btn-change-position" data-action="change" data-quant-id="${lotData.quant_id}" data-posx="${x}" data-posy="${y}" data-posz="${z}">
+                        🔄 Chuyên vị trí
+                    </button>
                 </div>
             `;
         } else {
             content += `
                 <p class="empty-info">✓ Ô trống - sẵn sàng gán vị trí</p>
                 <div class="action-buttons">
-                    <button class="btn-action btn-assign-position" data-pos-x="${x}" data-pos-y="${y}" data-pos-z="${z}">
+                    <button class="btn-action btn-assign-position" data-posx="${x}" data-posy="${y}" data-posz="${z}">
                         ➕ Chọn lô để gán
                     </button>
                 </div>
@@ -816,44 +1197,59 @@ export class WarehouseMap3DView extends Component {
                     display: flex;
                     gap: 10px;
                     justify-content: flex-end;
+                    align-items: center;
                     margin-top: 15px;
                     padding-top: 15px;
                     border-top: 1px solid #ddd;
                 }
                 .warehouse-map-3d-info-dialog .btn-close {
-                    padding: 8px 20px;
-                    background-color: #6c757d;
-                    color: white;
+                    padding: 8px 16px;
+                    background: none;
+                    color: #6c757d;
                     border: none;
-                    border-radius: 4px;
                     cursor: pointer;
                     font-size: 14px;
-                    font-weight: 500;
+                    font-weight: 600;
                 }
                 .warehouse-map-3d-info-dialog .btn-close:hover {
-                    background-color: #5a6268;
+                    color: #3498db;
                 }
             `;
             document.head.appendChild(style);
         }
         
         document.body.appendChild(dialog);
+        this.currentDialog = dialog;
+        
         
         // Xử lý click nút hành động cho lô có sẵn
         dialog.querySelectorAll('.btn-action').forEach(btn => {
             btn.onclick = (e) => {
                 const action = e.target.closest('.btn-action').dataset.action;
-                if (action) {
+                const button = e.target.closest('.btn-action');
+                
+                if (action === 'move' || action === 'pick' || action === 'transfer') {
                     // Hành động cho lô có sẵn
-                    const quantId = parseInt(e.target.closest('.btn-action').dataset.quantId);
+                    const quantId = parseInt(button.dataset.quantId);
                     dialog.remove();
+                    this.currentDialog = null;
                     this.executeQuantAction(action, quantId);
+                } else if (action === 'change') {
+                    // Thay đổi vị trí của lot hiện tại - mở wizard với quant_id và tọa độ
+                    const quantId = parseInt(button.dataset.quantId);
+                    const posX = parseInt(button.dataset.posx);
+                    const posY = parseInt(button.dataset.posy);
+                    const posZ = parseInt(button.dataset.posz);
+                    dialog.remove();
+                    this.currentDialog = null;
+                    this.openAssignPositionWizardWithQuant(quantId, posX, posY, posZ);
                 } else {
                     // Gán vị trí cho ô trống - mở wizard với tọa độ pre-filled
-                    const posX = parseInt(e.target.closest('.btn-action').dataset.posX);
-                    const posY = parseInt(e.target.closest('.btn-action').dataset.posY);
-                    const posZ = parseInt(e.target.closest('.btn-action').dataset.posZ);
+                    const posX = parseInt(button.dataset.posx);
+                    const posY = parseInt(button.dataset.posy);
+                    const posZ = parseInt(button.dataset.posz);
                     dialog.remove();
+                    this.currentDialog = null;
                     this.openAssignPositionWizard(posX, posY, posZ);
                 }
             };
@@ -862,12 +1258,14 @@ export class WarehouseMap3DView extends Component {
         // Đóng dialog khi click nút
         dialog.querySelector('.btn-close').onclick = () => {
             dialog.remove();
+            this.currentDialog = null;
         };
         
         // Đóng dialog khi click bên ngoài
         dialog.onclick = (e) => {
             if (e.target === dialog) {
                 dialog.remove();
+                this.currentDialog = null;
             }
         };
     }
@@ -882,6 +1280,26 @@ export class WarehouseMap3DView extends Component {
             views: [[false, 'form']],
             target: 'new',
             context: {
+                'default_posx': posX,
+                'default_posy': posY,
+                'default_posz': posZ,
+                'warehouse_map_3d_assign': true,
+                'default_view_mode': 'warehouse_map_3d'
+            },
+        });
+    }
+
+    openAssignPositionWizardWithQuant(quantId, posX, posY, posZ) {
+        // Mở wizard để thay đổi vị trí lot hiện tại
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: `Chuyên vị trí Lot sang [${posX}, ${posY}]`,
+            res_model: 'move.line.warehouse.map.wizard',
+            view_mode: 'form',
+            views: [[false, 'form']],
+            target: 'new',
+            context: {
+                'default_quant_id': quantId,
                 'default_posx': posX,
                 'default_posy': posY,
                 'default_posz': posZ,

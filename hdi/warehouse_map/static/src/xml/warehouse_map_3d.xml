@@ -63,21 +63,22 @@
                 
                 <!-- Legend - giống mẫu -->
                 <div class="warehouse-map-3d-legend">
+                    <h4>Chỉ số</h4>
                     <div class="legend-item">
                         <div class="legend-color reserved"></div>
-                        <span><strong>Overload</strong></span>
+                        <span>Quá tải</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color partial"></div>
-                        <span><strong>Almost Full</strong></span>
+                        <span>Gần đầy</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color available"></div>
-                        <span><strong>Free Space Available</strong></span>
+                        <span>Còn chỗ trống</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color empty"></div>
-                        <span><strong>No Product/Load</strong></span>
+                        <span>Không có hàng</span>
                     </div>
                 </div>
                 

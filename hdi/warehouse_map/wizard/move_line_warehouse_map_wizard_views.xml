@@ -25,7 +25,7 @@
                     
                     <!-- Chọn lô/serial khi từ 3D view -->
                     <group invisible="move_line_id" string="Chọn Lô/Serial">
-                        <field name="quant_id" required="1" options="{'no_create': True}"/>
+                        <field name="quant_id" options="{'no_create': True}"/>
                     </group>
                     
                     <group string="Chọn sơ đồ kho 3D">
