@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_assign_lot_position_3d_wizard_form" model="ir.ui.view">
+        <field name="name">assign.lot.position.3d.wizard.form</field>
+        <field name="model">assign.lot.position.3d.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Gán tọa độ 3D cho Lot/Serial">
+                <sheet>
+                    <group>
+                        <group string="Thông tin sơ đồ">
+                            <field name="warehouse_map_3d_id" 
+                                   options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                        <group string="Thông tin sản phẩm">
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="lot_id" 
+                                   domain="[('product_id', '=', product_id)]"
+                                   options="{'no_create': True}"
+                                   context="{'default_product_id': product_id}"/>
+                            <field name="location_id" options="{'no_create': True}"/>
+                            <field name="quant_id" invisible="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Tọa độ 3D">
+                        <group>
+                            <field name="posx" 
+                                   string="Vị trí X (Cột)"
+                                   help="Tọa độ theo chiều ngang (0 đến n-1)"/>
+                            <field name="posy" 
+                                   string="Vị trí Y (Hàng)"
+                                   help="Tọa độ theo chiều dài (0 đến n-1)"/>
+                        </group>
+                        <group>
+                            <field name="posz" 
+                                   string="Vị trí Z (Tầng)"
+                                   help="Tọa độ theo chiều cao - Tầng kệ (0 đến n-1)"/>
+                            <field name="display_on_map"/>
+                        </group>
+                    </group>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <p><strong>Lưu ý:</strong></p>
+                        <ul>
+                            <li>Tọa độ bắt đầu từ 0</li>
+                            <li>X: Cột (chiều rộng kho)</li>
+                            <li>Y: Hàng (chiều dài kho)</li>
+                            <li>Z: Tầng (chiều cao - tầng kệ)</li>
+                            <li>Mỗi vị trí (X, Y, Z) chỉ có thể chứa 1 lot/serial</li>
+                        </ul>
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_assign_position" 
+                            string="Gán tọa độ" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Hủy" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_assign_lot_position_3d_wizard" model="ir.actions.act_window">
+        <field name="name">Gán tọa độ 3D cho Lot/Serial</field>
+        <field name="res_model">assign.lot.position.3d.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
