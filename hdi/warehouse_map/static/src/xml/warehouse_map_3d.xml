@@ -34,12 +34,12 @@
                     <!-- Level selector -->
                     <div class="level-selector" t-if="state.mapData">
                         <h5 style="width: 100%; margin: 10px 0 5px 0; font-size: 13px;">Chọn tầng:</h5>
-                        <t t-foreach="Array.from({length: state.mapData.levels}, (_, i) => i)" t-as="level" t-key="level">
+                        <t t-foreach="this.levelsArray" t-as="level_idx" t-key="level_idx">
                             <button 
                                 class="btn btn-sm btn-level"
-                                t-att-class="{'active': !state.showAllLevels and state.currentLevel === level}"
-                                t-on-click="() => this.toggleLevel(level)">
-                                <t t-esc="level"/>
+                                t-att-class="!state.showAllLevels and state.currentLevel === level_idx ? 'active' : ''"
+                                t-on-click="() => this.toggleLevel(level_idx)">
+                                <t t-esc="level_idx"/>
                             </button>
                         </t>
                     </div>

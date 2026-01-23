@@ -43,17 +43,24 @@ export class WarehouseMap3DView extends Component {
         });
 
         onMounted(() => {
-            this.initThreeJS();
-            this.render3DMap();
-            this.animate();
-            
-            // Handle window resize
-            this.resizeHandler = () => this.onWindowResize();
-            window.addEventListener('resize', this.resizeHandler);
-            
-            // Handle mouse events
-            this.clickHandler = (event) => this.onMouseClick(event);
-            this.containerRef.addEventListener('click', this.clickHandler);
+            // Đợi DOM render xong rồi mới init
+            setTimeout(() => {
+                if (this.state.mapData) {
+                    this.initThreeJS();
+                    this.render3DMap();
+                    this.animate();
+                    
+                    // Handle window resize
+                    this.resizeHandler = () => this.onWindowResize();
+                    window.addEventListener('resize', this.resizeHandler);
+                    
+                    // Handle mouse events
+                    this.clickHandler = (event) => this.onMouseClick(event);
+                    if (this.containerRef) {
+                        this.containerRef.addEventListener('click', this.clickHandler);
+                    }
+                }
+            }, 0);
         });
 
         onWillUnmount(() => {
@@ -92,26 +99,33 @@ export class WarehouseMap3DView extends Component {
             return;
         }
 
-        return new Promise((resolve, reject) => {
-            // Load Three.js
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
-            script.onload = () => {
-                THREE = window.THREE;
-                
-                // Load OrbitControls
-                const controlsScript = document.createElement('script');
-                controlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js';
-                controlsScript.onload = () => {
-                    OrbitControls = THREE.OrbitControls;
-                    resolve();
+        try {
+            return new Promise((resolve, reject) => {
+                // Load Three.js
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
+                script.onload = () => {
+                    THREE = window.THREE;
+                    
+                    // Load OrbitControls
+                    const controlsScript = document.createElement('script');
+                    controlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js';
+                    controlsScript.onload = () => {
+                        OrbitControls = THREE.OrbitControls;
+                        resolve();
+                    };
+                    controlsScript.onerror = () => reject(new Error('Failed to load OrbitControls'));
+                    document.head.appendChild(controlsScript);
                 };
-                controlsScript.onerror = reject;
-                document.head.appendChild(controlsScript);
-            };
-            script.onerror = reject;
-            document.head.appendChild(script);
-        });
+                script.onerror = () => reject(new Error('Failed to load Three.js'));
+                document.head.appendChild(script);
+            });
+        } catch (error) {
+            console.error('Error loading Three.js:', error);
+            this.notification.add('Không thể tải thư viện 3D. Vui lòng kiểm tra kết nối internet.', {
+                type: 'danger',
+            });
+        }
     }
 
     async loadMapData() {
@@ -152,7 +166,14 @@ export class WarehouseMap3DView extends Component {
 
     initThreeJS() {
         this.containerRef = document.getElementById('warehouse-map-3d-container');
-        if (!this.containerRef || !THREE) return;
+        if (!this.containerRef) {
+            console.error('Container not found: warehouse-map-3d-container');
+            return;
+        }
+        if (!THREE) {
+            console.error('THREE.js not loaded');
+            return;
+        }
 
         const width = this.containerRef.clientWidth;
         const height = this.containerRef.clientHeight;
@@ -212,7 +233,14 @@ export class WarehouseMap3DView extends Component {
     }
 
     render3DMap() {
-        if (!this.state.mapData || !this.scene || !THREE) return;
+        if (!this.state.mapData || !this.scene || !THREE) {
+            console.log('Cannot render 3D map:', {
+                hasMapData: !!this.state.mapData,
+                hasScene: !!this.scene,
+                hasTHREE: !!THREE
+            });
+            return;
+        }
 
         const { columns, rows, levels, cell_width, cell_depth, cell_height, lots, blocked_cells } = this.state.mapData;
 
@@ -441,16 +469,29 @@ export class WarehouseMap3DView extends Component {
         // Future: Load different warehouse map
         console.log('Warehouse changed:', event.target.value);
     }
+    
+    // Getter for template to create level array
+    get levelsArray() {
+        if (!this.state.mapData) return [];
+        return Array.from({length: this.state.mapData.levels}, (_, i) => i);
+    }
 
     disposeThreeJS() {
         if (this.renderer) {
             this.renderer.dispose();
+            if (this.containerRef && this.renderer.domElement) {
+                this.containerRef.removeChild(this.renderer.domElement);
+            }
         }
         if (this.controls) {
             this.controls.dispose();
         }
         this.cellMeshes = [];
         this.labelSprites = [];
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controls = null;
     }
 }
 

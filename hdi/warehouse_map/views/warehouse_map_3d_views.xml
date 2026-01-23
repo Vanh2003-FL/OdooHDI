@@ -1,5 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Action cho blocked cells 3D - phải định nghĩa trước khi dùng -->
+    <record id="action_warehouse_map_blocked_cell_3d" model="ir.actions.act_window">
+        <field name="name">Ô bị chặn 3D</field>
+        <field name="res_model">warehouse.map.blocked.cell.3d</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{
+            'search_default_warehouse_map_3d_id': active_id,
+        }</field>
+        <field name="domain">[('warehouse_map_3d_id', '=', active_id)]</field>
+    </record>
+
+    <!-- Blocked cells 3D views -->
+    <record id="view_warehouse_map_blocked_cell_3d_form" model="ir.ui.view">
+        <field name="name">warehouse.map.blocked.cell.3d.form</field>
+        <field name="model">warehouse.map.blocked.cell.3d</field>
+        <field name="arch" type="xml">
+            <form string="Ô bị chặn 3D">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="warehouse_map_3d_id"/>
+                            <field name="posx"/>
+                            <field name="posy"/>
+                            <field name="posz"/>
+                        </group>
+                        <group>
+                            <field name="reason"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_warehouse_map_blocked_cell_3d_list" model="ir.ui.view">
+        <field name="name">warehouse.map.blocked.cell.3d.list</field>
+        <field name="model">warehouse.map.blocked.cell.3d</field>
+        <field name="arch" type="xml">
+            <list string="Ô bị chặn 3D">
+                <field name="warehouse_map_3d_id"/>
+                <field name="posx"/>
+                <field name="posy"/>
+                <field name="posz"/>
+                <field name="reason"/>
+            </list>
+        </field>
+    </record>
+
     <!-- Form view cho warehouse map 3D -->
     <record id="view_warehouse_map_3d_form" model="ir.ui.view">
         <field name="name">warehouse.map.3d.form</field>
@@ -154,52 +202,5 @@
                 Sơ đồ kho 3D cho phép quản lý vị trí hàng hóa trong không gian 3 chiều với tọa độ X, Y, Z.
             </p>
         </field>
-    </record>
-
-    <!-- Blocked cells 3D views -->
-    <record id="view_warehouse_map_blocked_cell_3d_form" model="ir.ui.view">
-        <field name="name">warehouse.map.blocked.cell.3d.form</field>
-        <field name="model">warehouse.map.blocked.cell.3d</field>
-        <field name="arch" type="xml">
-            <form string="Ô bị chặn 3D">
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="warehouse_map_3d_id"/>
-                            <field name="posx"/>
-                            <field name="posy"/>
-                            <field name="posz"/>
-                        </group>
-                        <group>
-                            <field name="reason"/>
-                        </group>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_warehouse_map_blocked_cell_3d_list" model="ir.ui.view">
-        <field name="name">warehouse.map.blocked.cell.3d.list</field>
-        <field name="model">warehouse.map.blocked.cell.3d</field>
-        <field name="arch" type="xml">
-            <list string="Ô bị chặn 3D">
-                <field name="warehouse_map_3d_id"/>
-                <field name="posx"/>
-                <field name="posy"/>
-                <field name="posz"/>
-                <field name="reason"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="action_warehouse_map_blocked_cell_3d" model="ir.actions.act_window">
-        <field name="name">Ô bị chặn 3D</field>
-        <field name="res_model">warehouse.map.blocked.cell.3d</field>
-        <field name="view_mode">list,form</field>
-        <field name="context">{
-            'search_default_warehouse_map_3d_id': active_id,
-        }</field>
-        <field name="domain">[('warehouse_map_3d_id', '=', active_id)]</field>
     </record>
 </odoo>
