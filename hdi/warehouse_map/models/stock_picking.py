@@ -8,7 +8,7 @@ class StockPicking(models.Model):
     _inherit = 'stock.picking'
     
     def action_assign_warehouse_map_position(self):
-        """Mở wizard gán vị trí cho phiếu nhập kho"""
+        """Mở wizard gán vị trí 3D cho phiếu nhập kho"""
         self.ensure_one()
         # Lấy move_line đầu tiên nếu có tracking
         move_line = self.move_line_ids.filtered(
@@ -16,8 +16,17 @@ class StockPicking(models.Model):
         )
         if move_line:
             move_line = move_line[0]
+            # Tìm warehouse.map.3d của warehouse này
+            warehouse_map_3d = self.env['warehouse.map.3d'].search([
+                ('warehouse_id', '=', self.warehouse_id.id),
+                ('active', '=', True),
+            ], limit=1)
+            
+            if not warehouse_map_3d:
+                raise UserError('Không có sơ đồ kho 3D nào được kích hoạt cho kho này. Vui lòng tạo sơ đồ kho 3D trước.')
+            
             return {
-                'name': 'Gán vị trí sản phẩm/Lot',
+                'name': 'Gán vị trí 3D cho sản phẩm/Lot',
                 'type': 'ir.actions.act_window',
                 'res_model': 'move.line.warehouse.map.wizard',
                 'view_mode': 'form',
@@ -25,6 +34,7 @@ class StockPicking(models.Model):
                 'context': {
                     'default_move_line_id': move_line.id,
                     'default_picking_id': self.id,
+                    'default_warehouse_map_3d_id': warehouse_map_3d.id,
                 }
             }
         else:

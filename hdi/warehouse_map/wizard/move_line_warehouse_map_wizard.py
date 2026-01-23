@@ -5,9 +5,9 @@ from odoo.exceptions import UserError
 
 
 class MoveLineWarehouseMapWizard(models.TransientModel):
-    """Wizard để gán vị trí sản phẩm/lot từ bảng nhập kho"""
+    """Wizard để gán vị trí 3D sản phẩm/lot từ bảng nhập kho"""
     _name = 'move.line.warehouse.map.wizard'
-    _description = 'Gán vị trí sản phẩm/Lot trên sơ đồ kho'
+    _description = 'Gán vị trí 3D sản phẩm/Lot trên sơ đồ kho'
 
     move_line_id = fields.Many2one('stock.move.line', string='Move Line', required=True, readonly=True)
     picking_id = fields.Many2one('stock.picking', string='Phiếu nhập kho', required=True, readonly=True)
@@ -20,6 +20,9 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
     quantity = fields.Float(string='Số lượng', readonly=True)
     location_dest_id = fields.Many2one('stock.location', string='Vị trí đích', 
                                         readonly=True)
+    
+    # Sơ đồ kho 3D (không còn 2D)
+    warehouse_map_3d_id = fields.Many2one('warehouse.map.3d', string='Sơ đồ kho 3D', required=True)
     
     @api.model
     def default_get(self, fields_list):
@@ -54,74 +57,87 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         
         return result
     
-    # Chọn sơ đồ kho
-    warehouse_map_id = fields.Many2one('warehouse.map', string='Sơ đồ kho', required=True)
+    # Chọn sơ đồ kho 3D (không còn 2D)
+    warehouse_map_3d_id = fields.Many2one('warehouse.map.3d', string='Sơ đồ kho 3D', required=True)
     
-    # Vị trí trên sơ đồ
-    posx = fields.Integer(string='Vị trí X (Cột)', required=True)
-    posy = fields.Integer(string='Vị trí Y (Hàng)', required=True)
+    # Vị trí 3D trên sơ đồ
+    posx = fields.Integer(string='Vị trí X (Cột)', required=True, default=0)
+    posy = fields.Integer(string='Vị trí Y (Hàng)', required=True, default=0)
+    posz = fields.Integer(string='Vị trí Z (Tầng)', required=True, default=0)
     
-    # Chế độ xem
-    view_mode = fields.Selection([
-        ('form', 'Nhập tọa độ trực tiếp'),
-        ('map', 'Chọn từ sơ đồ kho'),
-    ], string='Cách chọn vị trí', default='form')
-    
-    @api.onchange('warehouse_map_id')
+    @api.onchange('warehouse_map_3d_id')
     def _onchange_warehouse_map(self):
         """Reset position when changing warehouse map"""
         self.posx = 0
         self.posy = 0
+        self.posz = 0
     
     def action_open_warehouse_map(self):
-        """Mở sơ đồ kho để chọn vị trí"""
+        """Mở sơ đồ kho 3D để chọn vị trí"""
         self.ensure_one()
         
-        if not self.warehouse_map_id:
-            raise UserError(_('Vui lòng chọn sơ đồ kho trước!'))
+        if not self.warehouse_map_3d_id:
+            raise UserError(_('Vui lòng chọn sơ đồ kho 3D trước!'))
         
-        # Mở warehouse map view
+        # Mở warehouse map 3D view
         return {
             'type': 'ir.actions.client',
-            'tag': 'warehouse_map_view',
-            'name': f'Gán vị trí - {self.warehouse_map_id.name}',
+            'tag': 'warehouse_map_3d_view',
+            'name': f'Gán vị trí 3D - {self.warehouse_map_3d_id.name}',
             'context': {
-                'active_id': self.warehouse_map_id.id,
+                'active_id': self.warehouse_map_3d_id.id,
                 'move_line_warehouse_map_wizard_id': self.id,
                 'default_posx': self.posx,
                 'default_posy': self.posy,
+                'default_posz': self.posz,
             }
         }
     
     def action_confirm_position(self):
-        """Xác nhận và gán vị trí cho move line + cập nhật quant"""
+        """Xác nhận và gán vị trí 3D cho move line + cập nhật quant"""
         self.ensure_one()
         
         # Không bắt buộc lot_name vì lot có thể chưa được save từ move_line
-        # Chỉ check warehouse_map
-        if not self.warehouse_map_id:
-            raise UserError(_('Vui lòng chọn sơ đồ kho!'))
+        # Chỉ check warehouse_map_3d
+        if not self.warehouse_map_3d_id:
+            raise UserError(_('Vui lòng chọn sơ đồ kho 3D!'))
         
-        # Kiểm tra hợp lệ
-        if self.posx < 0 or self.posy < 0:
-            raise UserError(_('Vị trí X, Y phải >= 0!'))
+        # Kiểm tra hợp lệ 3D
+        if self.posx < 0 or self.posy < 0 or self.posz < 0:
+            raise UserError(_('Vị trí X, Y, Z phải >= 0!'))
         
-        # Cấm gán vị trí [0, 0] vì đó là vị trí mặc định (chưa gán)
-        if self.posx == 0 and self.posy == 0:
-            raise UserError(_('Vị trí [0, 0] là vị trí mặc định! Vui lòng chọn vị trí khác (X > 0 hoặc Y > 0)'))
+        # Cấm gán vị trí [0, 0, 0] vì đó là vị trí mặc định (chưa gán)
+        if self.posx == 0 and self.posy == 0 and self.posz == 0:
+            raise UserError(_('Vị trí [0, 0, 0] là vị trí mặc định! Vui lòng chọn vị trí khác'))
         
-        if self.posx >= self.warehouse_map_id.columns:
+        if self.posx >= self.warehouse_map_3d_id.columns:
             raise UserError(_('Vị trí X vượt quá số cột của sơ đồ!'))
         
-        if self.posy >= self.warehouse_map_id.rows:
+        if self.posy >= self.warehouse_map_3d_id.rows:
             raise UserError(_('Vị trí Y vượt quá số hàng của sơ đồ!'))
         
-        # Kiểm tra vị trí đã bị chiếm không (bỏ qua vị trí [0, 0] vì đó là mặc định)
+        if self.posz >= self.warehouse_map_3d_id.levels:
+            raise UserError(_('Vị trí Z vượt quá số tầng của sơ đồ!'))
+        
+        # Kiểm tra vị trí đã bị chặn không
+        blocked = self.env['warehouse.map.blocked.cell.3d'].search([
+            ('warehouse_map_3d_id', '=', self.warehouse_map_3d_id.id),
+            ('posx', '=', self.posx),
+            ('posy', '=', self.posy),
+            ('posz', '=', self.posz),
+        ], limit=1)
+        
+        if blocked:
+            raise UserError(_(
+                f'Vị trí [{self.posx}, {self.posy}, {self.posz}] đang bị chặn!'
+            ))
+        
+        # Kiểm tra vị trí đã bị chiếm không
         existing = self.env['stock.quant'].search([
             ('location_id', 'child_of', self.location_dest_id.id),
             ('posx', '=', self.posx),
             ('posy', '=', self.posy),
-            ('posz', '=', 0),  # Luôn dùng tầng 0
+            ('posz', '=', self.posz),
             ('display_on_map', '=', True),
             ('quantity', '>', 0),
             ('product_id.tracking', '!=', 'none'),
@@ -131,7 +147,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         
         if existing:
             raise UserError(_(
-                f'Vị trí [{self.posx}, {self.posy}] đã có lot khác: '
+                f'Vị trí [{self.posx}, {self.posy}, {self.posz}] đã có lot khác: '
                 f'{existing.display_name}'
             ))
         
@@ -139,7 +155,7 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
         update_vals = {
             'posx': self.posx,
             'posy': self.posy,
-            'posz': 0,  # Luôn gán tầng 0
+            'posz': self.posz,
             'position_assigned': True,  # Đánh dấu đã gán vị trí
         }
         
@@ -160,9 +176,21 @@ class MoveLineWarehouseMapWizard(models.TransientModel):
             quants.write({
                 'posx': self.posx,
                 'posy': self.posy,
-                'posz': 0,  # Luôn gán tầng 0
+                'posz': self.posz,
                 'display_on_map': True,
             })
         
         return {'type': 'ir.actions.act_window_close'}
+    
+    @api.model
+    def update_position_from_3d_view(self, wizard_id, posx, posy, posz):
+        """Cập nhật vị trí từ 3D view và xác nhận"""
+        wizard = self.browse(wizard_id)
+        wizard.write({
+            'posx': posx,
+            'posy': posy,
+            'posz': posz,
+        })
+        # Gọi action_confirm_position để xác nhận
+        return wizard.action_confirm_position()
 

@@ -23,6 +23,8 @@ export class WarehouseMap3DView extends Component {
             selectedCell: null,
             currentLevel: 0,
             showAllLevels: true,
+            assignmentMode: false,  // Mode để gán vị trí từ wizard
+            selectedPosition: null,  // Vị trí được chọn trong mode gán vị trí
         });
 
         // Three.js objects
@@ -45,6 +47,10 @@ export class WarehouseMap3DView extends Component {
         onWillStart(async () => {
             await this.loadThreeJS();
             await this.loadMapData();
+            // Kiểm tra nếu trong chế độ gán vị trí từ wizard
+            if (this.props.context?.move_line_warehouse_map_wizard_id) {
+                this.state.assignmentMode = true;
+            }
         });
 
         onMounted(() => {
@@ -454,27 +460,155 @@ export class WarehouseMap3DView extends Component {
             const userData = mesh.userData;
             
             this.state.selectedCell = userData;
-            this.showCellInfo(userData);
+            
+            if (this.state.assignmentMode) {
+                // Trong chế độ gán vị trí, hiển thị dialog xác nhận
+                this.showPositionAssignmentConfirm(userData);
+            } else {
+                // Chế độ bình thường, hiển thị thông tin ô
+                this.showCellInfo(userData);
+            }
         }
     }
 
-    showCellInfo(cellData) {
-        const { x, y, z, lotData, isBlocked } = cellData;
+    showPositionAssignmentConfirm(cellData) {
+        const { x, y, z } = cellData;
         
-        let message = `Vị trí: (${x}, ${y}, ${z})`;
+        let message = `Bạn chọn vị trí: (${x}, ${y}, ${z})\\n\\n`;
         
-        if (isBlocked) {
-            message += '\nÔ bị chặn';
-        } else if (lotData) {
-            message += `\nSản phẩm: ${lotData.product_name}`;
-            message += `\nLot: ${lotData.lot_name}`;
-            message += `\nSố lượng: ${lotData.quantity} ${lotData.uom}`;
-            message += `\nKhả dụng: ${lotData.available_quantity} ${lotData.uom}`;
-        } else {
-            message += '\nÔ trống';
+        if (cellData.isBlocked) {
+            this.notification.add('Ô này bị chặn! Vui lòng chọn ô khác.', { type: 'warning' });
+            return;
         }
         
-        this.notification.add(message, { type: 'info' });
+        if (cellData.lotData) {
+            message += `⚠️ Ô này đã có lot: ${cellData.lotData.lot_name}\\n`;
+            message += `Sản phẩm: ${cellData.lotData.product_name}\\n`;
+            this.notification.add(message, { 
+                type: 'warning',
+                sticky: true
+            });
+            return;
+        }
+        
+        message += 'Xác nhận gán vị trí này?';
+        
+        this.state.selectedPosition = { x, y, z };
+        this.showAssignmentConfirmDialog();
+    }
+
+    showAssignmentConfirmDialog() {
+        const { x, y, z } = this.state.selectedPosition;
+        
+        // Tạo dialog xác nhận
+        const dialog = document.createElement('div');
+        dialog.className = 'warehouse-map-3d-confirm-dialog';
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <h3>Xác nhận gán vị trí 3D</h3>
+                <p>Vị trí được chọn: <strong>(${x}, ${y}, ${z})</strong></p>
+                <p>Bạn có chắc chắn muốn gán vị trí này?</p>
+                <div class="dialog-buttons">
+                    <button class="btn-confirm">Xác nhận</button>
+                    <button class="btn-cancel">Hủy</button>
+                </div>
+            </div>
+        `;
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            .warehouse-map-3d-confirm-dialog {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 20px;
+                z-index: 10000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                min-width: 350px;
+            }
+            .warehouse-map-3d-confirm-dialog h3 {
+                margin-top: 0;
+                margin-bottom: 15px;
+                color: #333;
+            }
+            .warehouse-map-3d-confirm-dialog p {
+                margin: 10px 0;
+                color: #666;
+            }
+            .warehouse-map-3d-confirm-dialog .dialog-buttons {
+                margin-top: 20px;
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+            }
+            .warehouse-map-3d-confirm-dialog button {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+            .warehouse-map-3d-confirm-dialog .btn-confirm {
+                background-color: #28a745;
+                color: white;
+            }
+            .warehouse-map-3d-confirm-dialog .btn-confirm:hover {
+                background-color: #218838;
+            }
+            .warehouse-map-3d-confirm-dialog .btn-cancel {
+                background-color: #6c757d;
+                color: white;
+            }
+            .warehouse-map-3d-confirm-dialog .btn-cancel:hover {
+                background-color: #5a6268;
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(dialog);
+        
+        // Xử lý click nút xác nhận
+        dialog.querySelector('.btn-confirm').onclick = () => {
+            this.confirmPositionAssignment();
+            dialog.remove();
+        };
+        
+        // Xử lý click nút hủy
+        dialog.querySelector('.btn-cancel').onclick = () => {
+            dialog.remove();
+            this.state.selectedPosition = null;
+        };
+    }
+
+    confirmPositionAssignment() {
+        const { x, y, z } = this.state.selectedPosition;
+        const wizardId = this.props.context?.move_line_warehouse_map_wizard_id;
+        
+        if (!wizardId) {
+            this.notification.add('Lỗi: Không tìm thấy wizard ID.', { type: 'danger' });
+            return;
+        }
+        
+        // Gọi Odoo RPC để cập nhật vị trí trong wizard
+        this.orm.call('move.line.warehouse.map.wizard', 'update_position_from_3d_view', [wizardId], {
+            posx: x,
+            posy: y,
+            posz: z,
+        }).then(result => {
+            this.notification.add('✓ Vị trí đã được gán thành công!', { type: 'success' });
+            // Đóng action/wizard sau khi gán vị trí
+            setTimeout(() => {
+                this.action.doAction({
+                    type: 'ir.actions.act_window_close',
+                });
+            }, 500);
+        }).catch(error => {
+            this.notification.add(`Lỗi khi gán vị trí: ${error.message}`, { type: 'danger' });
+        });
     }
 
     toggleLevel(level) {

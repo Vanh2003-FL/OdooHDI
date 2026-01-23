@@ -4,10 +4,10 @@
         <field name="name">move.line.warehouse.map.wizard.form</field>
         <field name="model">move.line.warehouse.map.wizard</field>
         <field name="arch" type="xml">
-            <form string="Gán vị trí trên sơ đồ kho">
+            <form string="Gán vị trí 3D trên sơ đồ kho">
                 <sheet>
                     <div class="oe_title">
-                        <h1>Gán vị trí cho sản phẩm</h1>
+                        <h1>Gán vị trí 3D cho sản phẩm</h1>
                     </div>
                     
                     <group>
@@ -22,31 +22,21 @@
                         </group>
                     </group>
                     
-                    <group string="Chọn sơ đồ kho">
-                        <field name="warehouse_map_id" required="1"/>
+                    <group string="Chọn sơ đồ kho 3D">
+                        <field name="warehouse_map_3d_id" required="1"/>
                     </group>
                     
-                    <group string="Chọn cách nhập vị trí">
-                        <field name="view_mode" widget="radio" options="{'horizontal': true}"/>
-                    </group>
-                    
-                    <group string="Vị trí trên sơ đồ" invisible="view_mode == 'map'">
+                    <group string="Tọa độ 3D">
                         <group>
                             <field name="posx"/>
                             <field name="posy"/>
+                            <field name="posz"/>
                         </group>
-                    </group>
-                    
-                    <group invisible="view_mode == 'form'">
-                        <p>
-                            <strong>Nhấp vào sơ đồ kho để chọn vị trí</strong><br/>
-                            Sau đó nhấp nút "Xác nhận" để lưu vị trí đã chọn.
-                        </p>
                     </group>
                 </sheet>
                 <footer>
-                    <button string="Mở sơ đồ kho" type="object" name="action_open_warehouse_map" 
-                            invisible="view_mode == 'form'" class="btn-primary"/>
+                    <button string="Mở sơ đồ 3D" type="object" name="action_open_warehouse_map" 
+                            class="btn-primary"/>
                     <button string="Xác nhận" type="object" name="action_confirm_position" class="btn-primary"/>
                     <button string="Hủy" special="cancel" class="btn-secondary"/>
                 </footer>
