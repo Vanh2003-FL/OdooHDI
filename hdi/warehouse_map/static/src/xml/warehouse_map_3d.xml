@@ -24,9 +24,6 @@
                 <!-- Controls panel -->
                 <div class="warehouse-map-3d-controls">
                     <h4>Điều khiển</h4>
-                    <button class="btn btn-primary btn-sm" t-on-click="() => this.refreshMap()">
-                        <i class="fa fa-refresh"/> Làm mới
-                    </button>
                     <button class="btn btn-secondary btn-sm" t-on-click="() => this.showAllLevels()">
                         <i class="fa fa-layer-group"/> Hiện tất cả tầng
                     </button>
@@ -74,7 +71,7 @@
                     </div>
                     <div class="legend-item">
                         <div class="legend-color available"></div>
-                        <span>Còn chỗ trống</span>
+                        <span>Có lô</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color empty"></div>

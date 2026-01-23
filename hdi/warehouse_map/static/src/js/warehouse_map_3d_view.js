@@ -1350,7 +1350,15 @@ export class WarehouseMap3DView extends Component {
 
     async refreshMap() {
         await this.loadMapData();
+        
+        // Reinitialize Three.js if renderer is missing
+        if (!this.renderer || !this.scene) {
+            this.initThreeJS();
+            this.animate();
+        }
+        
         this.render3DMap();
+        this.notification.add('✓ Đã làm mới sơ đồ', { type: 'success' });
     }
 
     async refreshMapData() {
