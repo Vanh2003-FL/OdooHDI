@@ -47,6 +47,53 @@ class Stock3DView(http.Controller):
             warehouse_list.append((rec.id, rec.name))
         return warehouse_list
 
+    @http.route('/3Dstock/locations', type='json', auth='public')
+    def get_locations_3d(self, company_id, wh_id):
+        """
+        NEW: Get 3D shelf/location data for warehouse layout
+        Returns all locations with 3D dimensions and positions
+        ------------------------------------------------
+        @param company_id: current company id.
+        @param wh_id: the selected warehouse id.
+        @return: list of locations with 3D properties
+        """
+        warehouse = request.env['stock.warehouse'].sudo().browse(int(wh_id))
+        
+        # Get all internal locations that have 3D properties
+        locations = request.env['stock.location'].sudo().search([
+            ('warehouse_id', '=', int(wh_id)),
+            ('usage', '=', 'internal'),
+            ('active', '=', True),
+        ])
+        
+        locations_data = []
+        for loc in locations:
+            # Skip parent/root locations
+            if loc.id in (
+                warehouse.lot_stock_id.id, 
+                warehouse.wh_input_stock_loc_id.id,
+                warehouse.wh_qc_stock_loc_id.id,
+                warehouse.wh_pack_stock_loc_id.id, 
+                warehouse.wh_output_stock_loc_id.id):
+                continue
+            
+            # Only include locations with 3D config
+            if loc.loc_length > 0 or loc.loc_width > 0 or loc.loc_height > 0:
+                locations_data.append({
+                    'id': loc.id,
+                    'name': loc.name,
+                    'loc_3d_code': loc.loc_3d_code or loc.name,
+                    'loc_pos_x': float(loc.loc_pos_x or 0),
+                    'loc_pos_y': float(loc.loc_pos_y or 0),
+                    'loc_pos_z': float(loc.loc_pos_z or 0),
+                    'loc_length': float(loc.loc_length or 100),
+                    'loc_width': float(loc.loc_width or 80),
+                    'loc_height': float(loc.loc_height or 200),
+                    'loc_max_capacity': float(loc.loc_max_capacity or 0),
+                })
+        
+        return locations_data
+
     @http.route('/3Dstock/data/products', type='json', auth='public')
     def get_product_positions_3d(self, company_id, wh_id):
         """
@@ -142,6 +189,64 @@ class Stock3DView(http.Controller):
                     })
 
         return location_dict
+
+    @http.route('/3Dstock/save-shelf', type='json', auth='user')
+    def save_shelf(self, company_id, wh_id, shelf_code, loc_length, loc_width, loc_height, loc_pos_x, loc_pos_y, loc_pos_z):
+        """
+        Create a new shelf/location with 3D properties
+        ------------------------------------------------
+        @param company_id: the current company id.
+        @param wh_id: the warehouse id.
+        @param shelf_code: the shelf code/name.
+        @param loc_length: shelf length (X).
+        @param loc_width: shelf width (Z).
+        @param loc_height: shelf height (Y).
+        @param loc_pos_x: shelf position X.
+        @param loc_pos_y: shelf position Y.
+        @param loc_pos_z: shelf position Z.
+        @return: success message or error.
+        """
+        try:
+            # Get warehouse object
+            warehouse = request.env['stock.warehouse'].sudo().browse(int(wh_id))
+            if not warehouse:
+                return {
+                    'success': False,
+                    'message': 'Warehouse not found'
+                }
+            
+            # Get stock location
+            stock_location = warehouse.lot_stock_id
+            
+            # Create new location (shelf)
+            location = request.env['stock.location'].sudo().create({
+                'name': shelf_code,
+                'loc_3d_code': shelf_code,
+                'parent_location_id': stock_location.id,
+                'usage': 'internal',
+                'active': True,
+                'company_id': int(company_id),
+                'warehouse_id': int(wh_id),
+                # 3D properties
+                'loc_length': float(loc_length),
+                'loc_width': float(loc_width),
+                'loc_height': float(loc_height),
+                'loc_pos_x': float(loc_pos_x),
+                'loc_pos_y': float(loc_pos_y),
+                'loc_pos_z': float(loc_pos_z),
+            })
+            
+            return {
+                'success': True,
+                'message': f'Shelf "{shelf_code}" created successfully',
+                'shelf_id': location.id,
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'Error creating shelf: {str(e)}'
+            }
 
     @http.route('/3Dstock/save-position', type='json', auth='user')
     def save_product_position(self, company_id, wh_id, product_id, pos_x, pos_y, pos_z):

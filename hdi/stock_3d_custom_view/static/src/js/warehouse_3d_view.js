@@ -19,10 +19,12 @@ export class Warehouse3DView extends Component {
         this.state = useState({
             warehouses: [],
             selectedWarehouse: null,
+            locations: [],  // Shelves/racks from stock.location
             products: [],
             loading: true,
-            assignmentMode: false,
+            viewMode: 'view',  // 'view' | 'editor' | 'assignment'
             selectedCoords: null,  // {x, y, z} from click
+            pendingShelfData: null,  // Temporary shelf being created
         });
 
         onMounted(() => {
@@ -73,22 +75,36 @@ export class Warehouse3DView extends Component {
 
     async onWarehouseChange(ev) {
         this.state.selectedWarehouse = parseInt(ev.target.value);
-        this.state.assignmentMode = false;  // Reset assignment mode on warehouse change
+        this.state.viewMode = 'view';  // Reset to view mode on warehouse change
         this.state.selectedCoords = null;
         await this.load3DView();
     }
 
+    toggleEditorMode() {
+        // Only admins can edit warehouse layout
+        if (this.state.viewMode === 'editor') {
+            this.state.viewMode = 'view';
+            this.notification.add(_t("Exited editor mode"), { type: "info" });
+        } else {
+            this.state.viewMode = 'editor';
+            this.state.selectedCoords = null;
+            this.notification.add(_t("Click on 3D area to create a new shelf, then enter shelf details"), { type: "info" });
+        }
+    }
+
     toggleAssignmentMode() {
-        this.state.assignmentMode = !this.state.assignmentMode;
-        this.state.selectedCoords = null;  // Clear selection when toggling
+        if (this.state.viewMode === 'assignment') {
+            this.state.viewMode = 'view';
+            this.notification.add(_t("Exited assignment mode"), { type: "info" });
+        } else {
+            this.state.viewMode = 'assignment';
+            this.state.selectedCoords = null;
+            this.notification.add(_t("Click on a shelf to assign products"), { type: "info" });
+        }
         
         // Update cursor for canvas view
         if (this.canvasElement) {
-            this.canvasElement.style.cursor = this.state.assignmentMode ? 'crosshair' : 'default';
-        }
-        
-        if (this.state.assignmentMode) {
-            this.notification.add(_t("Click on a point in the 3D view to assign position"), { type: "info" });
+            this.canvasElement.style.cursor = this.state.viewMode !== 'view' ? 'crosshair' : 'grab';
         }
     }
 
@@ -103,11 +119,12 @@ export class Warehouse3DView extends Component {
                 company_id = 1;  // Fallback
             }
             
-            // Load location boxes (shelves/racks structure)
-            const locationData = await rpc('/3Dstock/data', {
+            // Load location boxes (shelves/racks structure) from stock.location
+            const locationsData = await rpc('/3Dstock/locations', {
                 company_id: company_id,
                 wh_id: this.state.selectedWarehouse,
             });
+            this.state.locations = locationsData || [];
             
             // Load product positions from warehouse_map
             let productsData = await rpc('/3Dstock/data/products', {
@@ -153,7 +170,7 @@ export class Warehouse3DView extends Component {
             // Initialize Three.js scene with a small delay to ensure DOM is ready
             setTimeout(() => {
                 try {
-                    this.init3DScene(locationData, productsData);
+                    this.init3DScene(this.state.locations, productsData);
                 } catch (error) {
                     console.error("Error initializing 3D scene:", error);
                     this.notification.add(_t("Failed to initialize 3D scene: %s", error.message), { type: "danger" });
@@ -168,7 +185,7 @@ export class Warehouse3DView extends Component {
         }
     }
 
-    init3DScene(locationData, productsData) {
+    init3DScene(locationsData, productsData) {
         // Clean up existing scene
         const container = document.getElementById('warehouse3d-container');
         if (!container) {
@@ -180,7 +197,7 @@ export class Warehouse3DView extends Component {
         // Check if container has dimensions
         if (container.clientWidth === 0 || container.clientHeight === 0) {
             console.warn("Container has zero dimensions, retrying...");
-            setTimeout(() => this.init3DScene(locationData, productsData), 200);
+            setTimeout(() => this.init3DScene(locationsData, productsData), 200);
             return;
         }
         
@@ -192,7 +209,7 @@ export class Warehouse3DView extends Component {
         // Check if Three.js is available
         if (typeof THREE === 'undefined' || !window.THREE) {
             console.warn("Three.js library not available, showing fallback view");
-            this.showFallbackView(container, productsData);
+            this.showFallbackView(container, locationsData, productsData);
             return;
         }
 
@@ -241,30 +258,31 @@ export class Warehouse3DView extends Component {
             const gridHelper = new THREE.GridHelper(1000, 20, 0x888888, 0xcccccc);
             scene.add(gridHelper);
 
-            // Draw location boxes (shelves/racks) - semi-transparent
-            if (locationData && Object.keys(locationData).length > 0) {
-                for (const [code, [posX, posY, posZ, length, width, height]] of Object.entries(locationData)) {
-                const geometry = new THREE.BoxGeometry(length, height, width);
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0xcccccc,
-                    transparent: true,
-                    opacity: 0.3,
-                    wireframe: false,
-                });
-                
-                const box = new THREE.Mesh(geometry, material);
-                box.position.set(posX, posY + height/2, posZ);
-                
-                // Add edges for better visibility
-                const edges = new THREE.EdgesGeometry(geometry);
-                const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 });
-                const wireframe = new THREE.LineSegments(edges, lineMaterial);
-                box.add(wireframe);
-                
-                scene.add(box);
-                
-                // Add label
-                this.addTextLabel(scene, code, posX, posY + height + 10, posZ);
+            // Draw location boxes (shelves/racks)
+            if (locationsData && locationsData.length > 0) {
+                for (const location of locationsData) {
+                    const geometry = new THREE.BoxGeometry(location.loc_length, location.loc_height, location.loc_width);
+                    const material = new THREE.MeshPhongMaterial({
+                        color: 0xcccccc,
+                        transparent: true,
+                        opacity: 0.3,
+                        wireframe: false,
+                    });
+                    
+                    const box = new THREE.Mesh(geometry, material);
+                    box.position.set(location.loc_pos_x, location.loc_pos_y + location.loc_height/2, location.loc_pos_z);
+                    box.userData = location;  // Store location data for click events
+                    
+                    // Add edges for better visibility
+                    const edges = new THREE.EdgesGeometry(geometry);
+                    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 });
+                    const wireframe = new THREE.LineSegments(edges, lineMaterial);
+                    box.add(wireframe);
+                    
+                    scene.add(box);
+                    
+                    // Add label
+                    this.addTextLabel(scene, location.loc_3d_code || location.name, location.loc_pos_x, location.loc_pos_y + location.loc_height + 10, location.loc_pos_z);
                 }
             }
 
@@ -300,8 +318,8 @@ export class Warehouse3DView extends Component {
                 raycaster.setFromCamera(pointer, camera);
                 const intersects = raycaster.intersectObjects(scene.children, true);
 
-                if (this.state.assignmentMode) {
-                    // In assignment mode, capture the clicked position
+                if (this.state.viewMode === 'editor') {
+                    // In editor mode, create new shelf at clicked position
                     if (intersects.length > 0) {
                         const point = intersects[0].point;
                         this.state.selectedCoords = {
@@ -309,17 +327,28 @@ export class Warehouse3DView extends Component {
                             y: Math.round(point.y),
                             z: Math.round(point.z),
                         };
-                        this.notification.add(
-                            _t(`Position selected: X=${this.state.selectedCoords.x}, Y=${this.state.selectedCoords.y}, Z=${this.state.selectedCoords.z}`),
-                            { type: "success" }
-                        );
+                        this.showCreateShelfDialog();
+                    }
+                } else if (this.state.viewMode === 'assignment') {
+                    // In assignment mode, select a shelf to assign products
+                    if (intersects.length > 0) {
+                        const object = intersects[0].object;
+                        if (object.userData && object.userData.loc_3d_code) {
+                            this.state.selectedCoords = object.userData;
+                            this.notification.add(
+                                _t(`Shelf selected: ${object.userData.loc_3d_code || object.userData.name}`),
+                                { type: "success" }
+                            );
+                        }
                     }
                 } else {
-                    // In normal mode, show product details
+                    // In normal mode, show product/location details
                     if (intersects.length > 0) {
                         const object = intersects[0].object;
                         if (object.userData && object.userData.product_name) {
                             this.showProductDetails(object.userData);
+                        } else if (object.userData && object.userData.loc_3d_code) {
+                            this.showLocationDetails(object.userData);
                         }
                     }
                 }
@@ -357,22 +386,22 @@ export class Warehouse3DView extends Component {
         }
     }
 
-    showFallbackView(container, productsData) {
+    showFallbackView(container, locationsData, productsData) {
         // Show a Canvas-based 3D view without Three.js
         const canvas = document.createElement('canvas');
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
-        canvas.style.cursor = this.state.assignmentMode ? 'crosshair' : 'default';
+        canvas.style.cursor = this.state.viewMode !== 'view' ? 'crosshair' : 'grab';
         container.appendChild(canvas);
         
         const ctx = canvas.getContext('2d');
         
         // Simple 3D isometric projection
-        this.draw3DWarehouse(ctx, canvas, productsData);
+        this.draw3DWarehouse(ctx, canvas, locationsData, productsData);
         
-        // Add click handler for position assignment
+        // Add click handler
         canvas.addEventListener('click', (event) => {
-            if (this.state.assignmentMode) {
+            if (this.state.viewMode !== 'view') {
                 const rect = canvas.getBoundingClientRect();
                 const x = event.clientX - rect.left;
                 const y = event.clientY - rect.top;
@@ -392,13 +421,9 @@ export class Warehouse3DView extends Component {
                     z: pos3dz,
                 };
                 
-                this.notification.add(
-                    _t(`Position selected: X=${pos3dx}, Y=${pos3dy}, Z=${pos3dz}`),
-                    { type: "success" }
-                );
-                
-                // Redraw with selection indicator
-                this.draw3DWarehouse(ctx, canvas, productsData);
+                if (this.state.viewMode === 'editor') {
+                    this.showCreateShelfDialog();
+                }
             }
         });
         
@@ -406,7 +431,7 @@ export class Warehouse3DView extends Component {
         window.addEventListener('resize', () => {
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            this.draw3DWarehouse(ctx, canvas, productsData);
+            this.draw3DWarehouse(ctx, canvas, locationsData, productsData);
         });
         
         // Store canvas reference for updates
@@ -414,7 +439,7 @@ export class Warehouse3DView extends Component {
         this.canvasContext = ctx;
     }
     
-    draw3DWarehouse(ctx, canvas, productsData) {
+    draw3DWarehouse(ctx, canvas, locationsData, productsData) {
         // Clear canvas
         ctx.fillStyle = '#f0f0f0';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -428,13 +453,11 @@ export class Warehouse3DView extends Component {
         const gridSize = 40;
         
         for (let i = -10; i <= 10; i++) {
-            // Horizontal lines (isometric)
             ctx.beginPath();
             ctx.moveTo(centerX + i * gridSize, centerY - 5 * gridSize);
             ctx.lineTo(centerX + i * gridSize, centerY + 5 * gridSize);
             ctx.stroke();
             
-            // Diagonal lines (isometric)
             ctx.beginPath();
             ctx.moveTo(centerX - 10 * gridSize + i * gridSize / 2, centerY - 5 * gridSize + i * gridSize / 2);
             ctx.lineTo(centerX + 10 * gridSize + i * gridSize / 2, centerY + 5 * gridSize + i * gridSize / 2);
@@ -442,72 +465,52 @@ export class Warehouse3DView extends Component {
         }
         
         // Draw location boxes (shelves)
-        ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-        
-        // Simple shelf representation
-        const shelfWidth = 150;
-        const shelfHeight = 100;
-        
-        for (let z = 0; z < 3; z++) {
-            for (let x = -1; x <= 1; x++) {
-                const screenX = centerX + x * shelfWidth - z * 30;
-                const screenY = centerY - z * 20;
+        if (locationsData && locationsData.length > 0) {
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1;
+            
+            for (const location of locationsData) {
+                const scale = 0.3;
+                const screenX = centerX + location.loc_pos_x * scale - location.loc_pos_z * scale * 0.5;
+                const screenY = centerY + location.loc_pos_y * scale - location.loc_pos_z * scale * 0.5;
                 
-                // Draw shelf box (simple rectangle for now)
-                ctx.fillRect(screenX, screenY, shelfWidth, shelfHeight);
-                ctx.strokeRect(screenX, screenY, shelfWidth, shelfHeight);
+                const boxWidth = location.loc_length * scale;
+                const boxHeight = location.loc_height * scale;
+                
+                ctx.fillRect(screenX - boxWidth/2, screenY - boxHeight/2, boxWidth, boxHeight);
+                ctx.strokeRect(screenX - boxWidth/2, screenY - boxHeight/2, boxWidth, boxHeight);
+                
+                // Draw label
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(location.loc_3d_code || location.name, screenX, screenY + boxHeight + 12);
             }
         }
         
         // Draw products
-        for (const product of productsData) {
-            const color = '#' + product.color.toString(16).padStart(6, '0');
-            ctx.fillStyle = color;
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            
-            // Calculate isometric position
-            const scale = 0.3;
-            const screenX = centerX + product.pos_x * scale - product.pos_z * scale * 0.5;
-            const screenY = centerY + product.pos_y * scale - product.pos_z * scale * 0.5;
-            
-            // Draw product box
-            const boxSize = 15;
-            ctx.fillRect(screenX - boxSize/2, screenY - boxSize/2, boxSize, boxSize);
-            ctx.strokeRect(screenX - boxSize/2, screenY - boxSize/2, boxSize, boxSize);
-            
-            // Draw label
-            ctx.fillStyle = '#000';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(product.lot_name, screenX, screenY + boxSize + 12);
-            ctx.font = '9px Arial';
-            ctx.fillText(`Q:${product.quantity}`, screenX, screenY + boxSize + 23);
+        if (productsData && productsData.length > 0) {
+            for (const product of productsData) {
+                const color = '#' + product.color.toString(16).padStart(6, '0');
+                ctx.fillStyle = color;
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                
+                const scale = 0.3;
+                const screenX = centerX + product.pos_x * scale - product.pos_z * scale * 0.5;
+                const screenY = centerY + product.pos_y * scale - product.pos_z * scale * 0.5;
+                
+                const boxSize = 15;
+                ctx.fillRect(screenX - boxSize/2, screenY - boxSize/2, boxSize, boxSize);
+                ctx.strokeRect(screenX - boxSize/2, screenY - boxSize/2, boxSize, boxSize);
+                
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(product.lot_name, screenX, screenY + boxSize + 12);
+            }
         }
-        
-        // Draw legend
-        ctx.fillStyle = '#333';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('3D Warehouse Map (Canvas Render)', 20, 25);
-        
-        ctx.font = '10px Arial';
-        ctx.fillStyle = '#00802b';
-        ctx.fillRect(20, 35, 12, 12);
-        ctx.fillStyle = '#333';
-        ctx.fillText('High Stock (>100)', 38, 43);
-        
-        ctx.fillStyle = '#e6b800';
-        ctx.fillRect(20, 50, 12, 12);
-        ctx.fillStyle = '#333';
-        ctx.fillText('Medium Stock (50-100)', 38, 58);
-        
-        ctx.fillStyle = '#cc0000';
-        ctx.fillRect(20, 65, 12, 12);
-        ctx.fillStyle = '#333';
-        ctx.fillText('Low Stock (<50)', 38, 73);
     }
 
     addTextLabel(scene, text, x, y, z, color = 0x000000, size = 12) {
@@ -555,13 +558,135 @@ export class Warehouse3DView extends Component {
         });
     }
 
+    showLocationDetails(locationData) {
+        const message = `
+            <strong>${_t("Location")}:</strong> ${locationData.loc_3d_code || locationData.name}<br/>
+            <strong>${_t("Position")}:</strong> X:${locationData.loc_pos_x}, Y:${locationData.loc_pos_y}, Z:${locationData.loc_pos_z}<br/>
+            <strong>${_t("Dimensions")}:</strong> L:${locationData.loc_length}, W:${locationData.loc_width}, H:${locationData.loc_height}
+        `;
+        
+        this.notification.add(message, { 
+            type: "info",
+            title: _t("Shelf Details"),
+            sticky: false,
+        });
+    }
+
+    async showCreateShelfDialog() {
+        // Dialog to create a new shelf at clicked position
+        const coords = this.state.selectedCoords;
+        
+        const form = document.createElement('div');
+        form.style.cssText = "padding:20px;";
+        form.innerHTML = `
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:5px;"><strong>Shelf Name/Code:</strong></label>
+                <input type="text" id="shelf-code" placeholder="e.g., SHELF-001" style="width:100%; padding:8px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:5px;"><strong>Length (X):</strong></label>
+                <input type="number" id="shelf-length" value="100" style="width:100%; padding:8px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:5px;"><strong>Width (Z):</strong></label>
+                <input type="number" id="shelf-width" value="80" style="width:100%; padding:8px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:5px;"><strong>Height (Y):</strong></label>
+                <input type="number" id="shelf-height" value="200" style="width:100%; padding:8px; box-sizing:border-box;">
+            </div>
+            <div style="padding:10px; background:#f5f5f5; border-radius:4px;">
+                <strong>Position:</strong> X=${coords.x}, Y=${coords.y}, Z=${coords.z}
+            </div>
+        `;
+
+        const savedShelf = await new Promise((resolve) => {
+            this.dialog.add(
+                window.owl.components.ConfirmationDialog || CustomDialog,
+                {
+                    title: _t("Create New Shelf"),
+                    body: form,
+                    confirmLabel: _t("Create"),
+                    cancelLabel: _t("Cancel"),
+                    onConfirm: async () => {
+                        const code = document.getElementById('shelf-code').value;
+                        const length = parseInt(document.getElementById('shelf-length').value) || 100;
+                        const width = parseInt(document.getElementById('shelf-width').value) || 80;
+                        const height = parseInt(document.getElementById('shelf-height').value) || 200;
+
+                        if (!code) {
+                            this.notification.add(_t("Please enter shelf code"), { type: "warning" });
+                            resolve(null);
+                            return;
+                        }
+
+                        await this.saveShelf({
+                            code: code,
+                            length: length,
+                            width: width,
+                            height: height,
+                            pos_x: coords.x,
+                            pos_y: coords.y,
+                            pos_z: coords.z,
+                        });
+                        resolve(true);
+                    },
+                    onCancel: () => resolve(false),
+                },
+                { onClose: () => {} }
+            );
+        });
+    }
+
+    async saveShelf(shelfData) {
+        try {
+            let company_id;
+            try {
+                company_id = this.env.services.user.context.allowed_company_ids[0];
+            } catch (e) {
+                company_id = 1;
+            }
+
+            const result = await rpc('/3Dstock/save-shelf', {
+                company_id: company_id,
+                wh_id: this.state.selectedWarehouse,
+                shelf_code: shelfData.code,
+                loc_length: shelfData.length,
+                loc_width: shelfData.width,
+                loc_height: shelfData.height,
+                loc_pos_x: shelfData.pos_x,
+                loc_pos_y: shelfData.pos_y,
+                loc_pos_z: shelfData.pos_z,
+            });
+
+            if (result.success) {
+                this.notification.add(
+                    _t("Shelf created successfully"),
+                    { type: "success" }
+                );
+                this.state.selectedCoords = null;
+                await this.load3DView();
+            } else {
+                this.notification.add(
+                    result.message || _t("Failed to create shelf"),
+                    { type: "danger" }
+                );
+            }
+        } catch (error) {
+            console.error("Error saving shelf:", error);
+            this.notification.add(_t("Error: %s", error.message), { type: "danger" });
+        }
+    }
+
     async assignPositionToProduct() {
-        // Show simple input dialog to select which product to assign this position to
-        if (!this.state.selectedCoords) {
-            this.notification.add(_t("Please select a position first"), { type: "warning" });
+        // Assign product to selected shelf (in assignment mode)
+        if (!this.state.selectedCoords || !this.state.selectedCoords.loc_3d_code) {
+            this.notification.add(_t("Please select a shelf first"), { type: "warning" });
             return;
         }
 
+        const shelf = this.state.selectedCoords;
+        
         // Create product dropdown
         let selectedProductId = null;
         const isConfirmed = await new Promise((resolve) => {
@@ -577,8 +702,9 @@ export class Warehouse3DView extends Component {
             const container = document.createElement('div');
             container.style.cssText = "padding:20px;";
             container.innerHTML = `
-                <h4>Assign Position</h4>
-                <p>Position: X=${this.state.selectedCoords.x.toFixed(2)}, Y=${this.state.selectedCoords.y.toFixed(2)}, Z=${this.state.selectedCoords.z.toFixed(2)}</p>
+                <h4>Assign Product to Shelf</h4>
+                <p><strong>Shelf:</strong> ${shelf.loc_3d_code || shelf.name}</p>
+                <p><strong>Position:</strong> X=${shelf.loc_pos_x}, Y=${shelf.loc_pos_y}, Z=${shelf.loc_pos_z}</p>
                 <p style="margin-top:15px;"><strong>Select Product:</strong></p>
             `;
             container.appendChild(select);
@@ -586,7 +712,7 @@ export class Warehouse3DView extends Component {
             this.dialog.add(
                 window.owl.components.ConfirmationDialog || CustomDialog,
                 {
-                    title: _t("Assign Position to Product"),
+                    title: _t("Assign Product to Shelf"),
                     body: container,
                     confirmLabel: _t("Assign"),
                     cancelLabel: _t("Cancel"),
@@ -601,13 +727,13 @@ export class Warehouse3DView extends Component {
         });
 
         if (isConfirmed && selectedProductId) {
-            await this.savePositionToProduct(parseInt(selectedProductId));
+            await this.saveProductToShelf(parseInt(selectedProductId), shelf);
         } else if (isConfirmed) {
             this.notification.add(_t("Please select a product"), { type: "warning" });
         }
     }
 
-    async savePositionToProduct(productId) {
+    async saveProductToShelf(productId, shelf) {
         try {
             let company_id;
             try {
@@ -620,28 +746,27 @@ export class Warehouse3DView extends Component {
                 company_id: company_id,
                 wh_id: this.state.selectedWarehouse,
                 product_id: productId,
-                pos_x: this.state.selectedCoords.x,
-                pos_y: this.state.selectedCoords.y,
-                pos_z: this.state.selectedCoords.z,
+                pos_x: shelf.loc_pos_x,
+                pos_y: shelf.loc_pos_y,
+                pos_z: shelf.loc_pos_z,
             });
 
             if (result.success) {
                 this.notification.add(
-                    _t("Position assigned successfully"),
+                    _t("Product assigned to shelf successfully"),
                     { type: "success" }
                 );
-                // Reload the 3D view to show updated positions
                 this.state.selectedCoords = null;
-                this.state.assignmentMode = false;
+                this.state.viewMode = 'view';
                 await this.load3DView();
             } else {
                 this.notification.add(
-                    result.message || _t("Failed to assign position"),
+                    result.message || _t("Failed to assign product"),
                     { type: "danger" }
                 );
             }
         } catch (error) {
-            console.error("Error saving position:", error);
+            console.error("Error saving product position:", error);
             this.notification.add(_t("Error: %s", error.message), { type: "danger" });
         }
     }
