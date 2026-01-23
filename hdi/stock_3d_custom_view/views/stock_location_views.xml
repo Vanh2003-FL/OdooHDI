@@ -66,7 +66,7 @@
     <!--client action for new integrated warehouse 3d view-->
     <record id="warehouse_3d_map_action" model="ir.actions.client">
         <field name="name">Warehouse 3D Map</field>
-        <field name="tag">stock_3d_custom_view.warehouse_3d_view</field>
+        <field name="tag">warehouse_3d_view_action_v18</field>
     </record>
     
     <!-- Menu item for warehouse 3D view -->

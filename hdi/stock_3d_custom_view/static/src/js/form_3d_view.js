@@ -326,4 +326,14 @@ export class Stock3DFormView extends Component {
 }
 
 Stock3DFormView.template = "stock_3d_custom_view.Location3DFormView"
-registry.category("actions").add("open_form_3d_view", Stock3DFormView);
+
+// Register as client action (safe registration)
+try {
+    const actions = registry.category("actions");
+    // Only register if not already present
+    if (!actions.contains("open_form_3d_view")) {
+        actions.add("open_form_3d_view", Stock3DFormView);
+    }
+} catch (e) {
+    console.warn("Failed to register open_form_3d_view:", e);
+}

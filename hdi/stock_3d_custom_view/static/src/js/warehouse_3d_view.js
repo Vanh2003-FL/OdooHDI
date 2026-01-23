@@ -556,43 +556,55 @@ export class Warehouse3DView extends Component {
     }
 
     async assignPositionToProduct() {
-        // Show dialog to select which product to assign this position to
+        // Show simple input dialog to select which product to assign this position to
         if (!this.state.selectedCoords) {
             this.notification.add(_t("Please select a position first"), { type: "warning" });
             return;
         }
 
-        const ProductSelector = await import("@web/core/dialog");
-        const selectedProduct = await this.dialog.add(ProductSelector, {
-            title: _t("Assign Position"),
-            message: _t("Select a product to assign to position X:%s, Y:%s, Z:%s", 
-                this.state.selectedCoords.x, this.state.selectedCoords.y, this.state.selectedCoords.z),
-            body: `
-                <select id="product-selector" style="width:100%; padding:8px; margin:10px 0;">
-                    <option value="">-- Select Product --</option>
-                    ${this.state.products.map(p => 
-                        `<option value="${p.id}">${p.product_name} (${p.lot_name})</option>`
-                    ).join('')}
-                </select>
-            `,
-            buttons: [
+        // Create product dropdown
+        let selectedProductId = null;
+        const isConfirmed = await new Promise((resolve) => {
+            const select = document.createElement('select');
+            select.style.cssText = "width:100%; padding:8px; margin:10px 0;";
+            select.innerHTML = `
+                <option value="">-- Select Product --</option>
+                ${this.state.products.map(p => 
+                    `<option value="${p.id}">${p.product_name} (${p.lot_name})</option>`
+                ).join('')}
+            `;
+
+            const container = document.createElement('div');
+            container.style.cssText = "padding:20px;";
+            container.innerHTML = `
+                <h4>Assign Position</h4>
+                <p>Position: X=${this.state.selectedCoords.x.toFixed(2)}, Y=${this.state.selectedCoords.y.toFixed(2)}, Z=${this.state.selectedCoords.z.toFixed(2)}</p>
+                <p style="margin-top:15px;"><strong>Select Product:</strong></p>
+            `;
+            container.appendChild(select);
+
+            this.dialog.add(
+                window.owl.components.ConfirmationDialog || CustomDialog,
                 {
-                    text: _t("Cancel"),
-                    classes: "btn-secondary",
-                    close: true,
-                },
-                {
-                    text: _t("Assign"),
-                    classes: "btn-primary",
-                    click: async () => {
-                        const productId = document.getElementById('product-selector').value;
-                        if (productId) {
-                            await this.savePositionToProduct(parseInt(productId));
-                        }
+                    title: _t("Assign Position to Product"),
+                    body: container,
+                    confirmLabel: _t("Assign"),
+                    cancelLabel: _t("Cancel"),
+                    onConfirm: () => {
+                        selectedProductId = select.value;
+                        resolve(selectedProductId ? true : false);
                     },
+                    onCancel: () => resolve(false),
                 },
-            ],
+                { onClose: () => {} }
+            );
         });
+
+        if (isConfirmed && selectedProductId) {
+            await this.savePositionToProduct(parseInt(selectedProductId));
+        } else if (isConfirmed) {
+            this.notification.add(_t("Please select a product"), { type: "warning" });
+        }
     }
 
     async savePositionToProduct(productId) {
@@ -639,5 +651,13 @@ export class Warehouse3DView extends Component {
     }
 }
 
-// Register as client action
-registry.category("actions").add("stock_3d_custom_view.warehouse_3d_view", Warehouse3DView);
+// Register as client action (safe registration)
+try {
+    const actions = registry.category("actions");
+    // Only register if not already present
+    if (!actions.contains("warehouse_3d_view_action_v18")) {
+        actions.add("warehouse_3d_view_action_v18", Warehouse3DView);
+    }
+} catch (e) {
+    console.warn("Failed to register warehouse_3d_view_action_v18:", e);
+}
