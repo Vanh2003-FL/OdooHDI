@@ -86,6 +86,7 @@
                 <separator string="DANH SÁCH SERIAL"/>
                 <field name="serial_item_ids" nolabel="1" readonly="1">
                     <list>
+                        <field name="product_id"/>
                         <field name="serial_number"/>
                     </list>
                 </field>
