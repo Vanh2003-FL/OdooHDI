@@ -242,10 +242,15 @@ class StockLotSelectionWizard(models.TransientModel):
                 'sequence': wml.sequence,
             })
         
+        # Reload picking để cập nhật data
+        self.picking_id._onchange_picking_type()
+        
+        # Quay lại phiếu nhập kho
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'stock.lot',
-            'res_id': lot.id,
+            'res_model': 'stock.picking',
+            'res_id': self.picking_id.id,
             'view_mode': 'form',
+            'views': [[False, 'form']],
             'target': 'current',
         }

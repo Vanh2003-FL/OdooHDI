@@ -11,7 +11,7 @@
                 <button name="action_assign_serials_to_lot" 
                         type="object" 
                         string="Gom Serial vào Lot" 
-                        invisible="picking_type_code != 'incoming' or state == 'done' or state == 'cancel'"
+                        invisible="picking_type_code != 'incoming' or state not in ('draft', 'assigned')"
                         help="Chọn và gom nhiều serial vào 1 lot"/>
             </xpath>
         </field>
