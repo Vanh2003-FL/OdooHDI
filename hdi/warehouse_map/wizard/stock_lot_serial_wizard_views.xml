@@ -7,22 +7,16 @@
             <form string="Gom Serial vào Lot">
                 <group>
                     <field name="picking_id" readonly="1"/>
-                    <field name="product_id" readonly="1"/>
+                    <field name="product_id" readonly="1" invisible="1"/>
                     <field name="total_serials" readonly="1"/>
                 </group>
                 
-                <separator string="🔍 QUÉT BARCODE SERIAL"/>
-                <group>
-                    <field name="barcode_input" placeholder="Quét barcode sản phẩm..." autofocus="autofocus"/>
-                    <field name="scanned_count" readonly="1"/>
-                </group>
-                
-                <separator string="SERIAL ĐÃ QUÉT"/>
-                <field name="scanned_serial_ids" nolabel="1">
-                    <tree>
-                        <field name="product_code" readonly="1"/>
-                        <field name="serial_number" readonly="1"/>
-                    </tree>
+                <separator string="NHẬP SERIAL CHO TỪNG SẢN PHẨM"/>
+                <field name="wizard_move_line_ids" nolabel="1">
+                    <list editable="bottom">
+                        <field name="product_id" readonly="1"/>
+                        <field name="serial_number" placeholder="Quét barcode hoặc nhập serial..."/>
+                    </list>
                 </field>
                 
                 <separator string="CHỌN LOT"/>

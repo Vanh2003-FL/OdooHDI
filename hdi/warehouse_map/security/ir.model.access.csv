@@ -10,3 +10,4 @@ access_move_line_warehouse_map_wizard,move.line.warehouse.map.wizard,model_move_
 access_stock_serial_item_user,stock.serial.item.user,model_stock_serial_item,stock.group_stock_user,1,1,1,1
 access_stock_serial_item_manager,stock.serial.item.manager,model_stock_serial_item,stock.group_stock_manager,1,1,1,1
 access_stock_lot_serial_wizard,stock.lot.serial.wizard,model_stock_lot_serial_wizard,stock.group_stock_user,1,1,1,1
+access_stock_wizard_move_line_user,stock.wizard.move.line.user,model_stock_wizard_move_line,stock.group_stock_user,1,1,1,1

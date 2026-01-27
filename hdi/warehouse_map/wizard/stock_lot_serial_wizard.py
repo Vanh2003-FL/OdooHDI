@@ -11,62 +11,59 @@ class StockLotSerialWizard(models.TransientModel):
 
     picking_id = fields.Many2one('stock.picking', string='Phiếu nhập kho', required=True, readonly=True)
     move_line_ids = fields.Many2many('stock.move.line', string='Move Line (Serial)', required=True)
-    product_id = fields.Many2one('product.product', string='Sản phẩm', related='move_line_ids.product_id', readonly=True)
     
-    # Quét barcode serial
-    barcode_input = fields.Char(string='🔍 Quét Barcode Serial')
-    scanned_serial_ids = fields.One2many('stock.scanned.serial', 'wizard_id', string='Serial đã quét')
-    scanned_count = fields.Integer(string='Số serial đã quét', compute='_compute_scanned_count')
+    # Chọn sản phẩm - auto detect hoặc cho user chọn
+    product_id = fields.Many2one('product.product', string='Sản phẩm', 
+                                  domain="[('tracking', 'in', ('lot', 'serial'))]", readonly=True)
     
-    @api.depends('scanned_serial_ids')
-    def _compute_scanned_count(self):
-        """Đếm số serial đã quét"""
-        for wizard in self:
-            wizard.scanned_count = len(wizard.scanned_serial_ids)
+    # Danh sách move_line với serial_number để user nhập
+    wizard_move_line_ids = fields.One2many('stock.wizard.move.line', 'wizard_id', 
+                                            string='Sản phẩm')
     
-    @api.onchange('barcode_input')
-    def _onchange_barcode_input(self):
-        """Quét barcode: tìm product từ barcode và thêm vào danh sách serial"""
-        if not self.barcode_input:
-            return
+    @api.model
+    def default_get(self, fields_list):
+        """Auto-detect product và populate wizard_move_line"""
+        result = super().default_get(fields_list)
         
-        barcode = self.barcode_input.strip()
+        # Lấy move_line từ context
+        if self._context.get('default_move_line_ids'):
+            move_line_data = self._context['default_move_line_ids']
+            move_line_ids = []
+            
+            # Handle tuple format (6, 0, [ids]) from context
+            if isinstance(move_line_data, list):
+                if move_line_data and isinstance(move_line_data[0], tuple):
+                    # Format: [(6, 0, [1, 2, 3, ...])]
+                    move_line_ids = move_line_data[0][2] if len(move_line_data[0]) > 2 else []
+                else:
+                    # Direct list: [1, 2, 3, ...]
+                    move_line_ids = move_line_data
+            
+            if move_line_ids:
+                # Lấy danh sách move_line record
+                move_lines = self.env['stock.move.line'].browse(move_line_ids)
+                
+                # Filter valid move_lines
+                move_lines = move_lines.exists()
+                
+                if move_lines:
+                    # Kiểm tra tất cả cùng product không
+                    products = move_lines.mapped('product_id').ids
+                    if len(set(products)) == 1:
+                        # Tất cả cùng product → auto detect
+                        result['product_id'] = products[0]
+                    
+                    # Populate wizard_move_line với TẤT CẢ move_lines
+                    wizard_lines = []
+                    for idx, move_line in enumerate(move_lines, 1):
+                        wizard_lines.append((0, 0, {
+                            'move_line_id': move_line.id,
+                            'product_id': move_line.product_id.id,
+                            'sequence': idx * 10,
+                        }))
+                    result['wizard_move_line_ids'] = wizard_lines
         
-        # Tìm product từ barcode
-        product = self.env['product.product'].search([
-            ('barcode', '=', barcode)
-        ], limit=1)
-        
-        if not product:
-            raise UserError(_('❌ Không tìm thấy sản phẩm với barcode: %s') % barcode)
-        
-        # Kiểm tra sản phẩm có tracking không
-        if product.tracking == 'none':
-            raise UserError(_('❌ Sản phẩm này không có tracking lot/serial!'))
-        
-        # Kiểm tra sản phẩm có khớp với move_line không
-        if self.product_id and product.id != self.product_id.id:
-            raise UserError(_('❌ Barcode không khớp! Phải quét sản phẩm: %s') % self.product_id.name)
-        
-        # Kiểm tra barcode đã quét chưa
-        existing = self.env['stock.scanned.serial'].search([
-            ('wizard_id', '=', self.id),
-            ('serial_number', '=', barcode)
-        ], limit=1)
-        
-        if existing:
-            raise UserError(_('⚠️ Barcode này đã quét rồi: %s') % barcode)
-        
-        # Thêm serial vào danh sách
-        self.env['stock.scanned.serial'].create({
-            'wizard_id': self.id,
-            'product_id': product.id,
-            'serial_number': barcode,
-            'sequence': (len(self.scanned_serial_ids) + 1) * 10,
-        })
-        
-        # Clear input field
-        self.barcode_input = ''
+        return result
     
     # Tạo hoặc chọn lot
     lot_create_option = fields.Selection([
@@ -84,11 +81,11 @@ class StockLotSerialWizard(models.TransientModel):
     
     total_serials = fields.Integer(string='Tổng serial', compute='_compute_total_serials')
     
-    @api.depends('move_line_ids')
+    @api.depends('wizard_move_line_ids')
     def _compute_total_serials(self):
         """Đếm số serial được chọn"""
         for wizard in self:
-            wizard.total_serials = len(wizard.move_line_ids)
+            wizard.total_serials = len(wizard.wizard_move_line_ids)
     
     @api.onchange('lot_create_option')
     def _onchange_lot_create_option(self):
@@ -106,16 +103,23 @@ class StockLotSerialWizard(models.TransientModel):
         if not self.move_line_ids:
             raise UserError(_('Vui lòng chọn ít nhất 1 move_line!'))
         
-        # Kiểm tra đã quét serial chưa
-        if not self.scanned_serial_ids:
-            raise UserError(_('⚠️ Vui lòng quét ít nhất 1 serial!'))
+        if not self.product_id:
+            raise UserError(_('Vui lòng chọn sản phẩm!'))
         
-        # Kiểm tra số serial quét khớp với số move_line không
-        if len(self.scanned_serial_ids) != len(self.move_line_ids):
-            raise UserError(_(
-                f'❌ Số serial quét ({len(self.scanned_serial_ids)}) không khớp '
-                f'với số move_line ({len(self.move_line_ids)})!'
-            ))
+        if not self.wizard_move_line_ids:
+            raise UserError(_('Không có sản phẩm nào để xử lý!'))
+        
+        # Kiểm tra tất cả serial đã được nhập
+        for wml in self.wizard_move_line_ids:
+            if not wml.serial_number or not wml.serial_number.strip():
+                raise UserError(_(
+                    f'❌ Serial chưa được nhập cho sản phẩm: {wml.product_id.name}'
+                ))
+        
+        # Kiểm tra serial không trùng
+        serial_numbers = [wml.serial_number.strip() for wml in self.wizard_move_line_ids]
+        if len(serial_numbers) != len(set(serial_numbers)):
+            raise UserError(_('❌ Có serial bị trùng lặp!'))
         
         # Bước 1: Tạo hoặc lấy lot_id
         if self.lot_create_option == 'create_new':
@@ -138,14 +142,17 @@ class StockLotSerialWizard(models.TransientModel):
             lot = self.existing_lot_id
         
         # Bước 2: Cập nhật tất cả move_line với lot_id này
-        self.move_line_ids.write({'lot_id': lot.id})
+        filtered_move_lines = self.move_line_ids.filtered(
+            lambda x: x.product_id.id == self.product_id.id
+        )
+        filtered_move_lines.write({'lot_id': lot.id})
         
-        # Bước 3: Tạo stock.serial.item records từ scanned_serial_ids
-        for scanned in self.scanned_serial_ids:
+        # Bước 3: Tạo stock.serial.item records từ wizard_move_line_ids
+        for wml in self.wizard_move_line_ids:
             self.env['stock.serial.item'].create({
                 'lot_id': lot.id,
-                'serial_number': scanned.serial_number,
-                'sequence': scanned.sequence,
+                'serial_number': wml.serial_number.strip(),
+                'sequence': wml.sequence,
             })
         
         return {
@@ -157,20 +164,13 @@ class StockLotSerialWizard(models.TransientModel):
         }
 
 
-class StockScannedSerial(models.TransientModel):
-    _name = 'stock.scanned.serial'
-    _description = 'Serial Đã Quét (Temp)'
-    _order = 'sequence, id'
+class StockWizardMoveLine(models.TransientModel):
+    _name = 'stock.wizard.move.line'
+    _description = 'Move Line trong Wizard Gom Serial'
+    _order = 'sequence'
     
     wizard_id = fields.Many2one('stock.lot.serial.wizard', string='Wizard', ondelete='cascade')
-    product_id = fields.Many2one('product.product', string='Sản phẩm')
-    product_code = fields.Char(string='Mã sản phẩm', related='product_id.default_code', readonly=True)
-    serial_number = fields.Char(string='Barcode/Serial', required=True)
+    move_line_id = fields.Many2one('stock.move.line', string='Move Line', readonly=True)
+    product_id = fields.Many2one('product.product', string='Sản phẩm', readonly=True)
+    serial_number = fields.Char(string='Serial/Barcode', required=True)
     sequence = fields.Integer(string='Thứ tự', default=10)
-    
-    def name_get(self):
-        result = []
-        for record in self:
-            name = f"{record.product_code} - {record.serial_number}" if record.product_code else record.serial_number
-            result.append((record.id, name))
-        return result
