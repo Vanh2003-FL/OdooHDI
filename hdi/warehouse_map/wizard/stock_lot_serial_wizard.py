@@ -16,13 +16,16 @@ class StockLotSerialWizard(models.TransientModel):
     product_id = fields.Many2one('product.product', string='Sản phẩm', 
                                   domain="[('tracking', 'in', ('lot', 'serial'))]")
     
+    # Số lượng serial user muốn nhập
+    total_serial_count = fields.Integer(string='Tổng số serial cần nhập', default=1)
+    
     # Danh sách move_line với serial_number để user nhập
     wizard_move_line_ids = fields.One2many('stock.wizard.move.line', 'wizard_id', 
                                             string='Sản phẩm')
     
     @api.model
     def default_get(self, fields_list):
-        """Auto-detect product và populate wizard_move_line"""
+        """Auto-detect product từ move_line"""
         result = super().default_get(fields_list)
         
         # Lấy move_line từ context
@@ -31,7 +34,6 @@ class StockLotSerialWizard(models.TransientModel):
             move_line_ids = []
             
             # Handle tuple format (6, 0, [ids]) from context
-            # The format comes as: [(6, 0, [id1, id2, id3])]
             if isinstance(move_line_data, list) and move_line_data:
                 first_item = move_line_data[0]
                 if isinstance(first_item, tuple) and len(first_item) == 3:
@@ -63,49 +65,39 @@ class StockLotSerialWizard(models.TransientModel):
                             if len(set(products)) == 1:
                                 # Tất cả cùng product → auto detect
                                 result['product_id'] = products[0]
+                                # Mặc định = 1, user sẽ chỉnh số lượng
+                                result['total_serial_count'] = 1
                             
-                            # Populate wizard_move_line với TẤT CẢ move_lines
-                            wizard_lines = []
-                            for idx, move_line in enumerate(move_lines, 1):
-                                wizard_lines.append((0, 0, {
-                                    'move_line_id': move_line.id,
-                                    'product_id': move_line.product_id.id,
-                                    'sequence': idx * 10,
-                                }))
-                            result['wizard_move_line_ids'] = wizard_lines
+                            # Không populate wizard_move_line_ids - để user nhập tổng số serial
+                            result['wizard_move_line_ids'] = []
                 except (TypeError, ValueError):
                     # If conversion fails, silently skip
                     pass
         
         return result
     
-    total_serials = fields.Integer(string='Tổng serial', compute='_compute_total_serials')
-    
-    @api.depends('wizard_move_line_ids')
-    def _compute_total_serials(self):
-        """Đếm số serial được chọn"""
-        for wizard in self:
-            wizard.total_serials = len(wizard.wizard_move_line_ids)
-    
     @api.onchange('product_id')
     def _onchange_product_id(self):
         """Cập nhật wizard_move_line khi thay đổi product"""
-        if self.product_id and self.move_line_ids:
-            # Filter move_line theo product được chọn
-            filtered_move_lines = self.move_line_ids.filtered(
-                lambda x: x.product_id.id == self.product_id.id
-            )
+        # Không populate từ move_line, chỉ reset để user nhập tổng số cần
+        # Trigger onchange total_serial_count để generate rows
+        if self.product_id:
+            self._onchange_total_serial_count()
+    
+    @api.onchange('total_serial_count', 'product_id')
+    def _onchange_total_serial_count(self):
+        """Tự động generate dòng nhập serial theo số lượng user nhập"""
+        if self.product_id and self.total_serial_count > 0:
+            # Xóa tất cả dòng cũ trước, sau đó tạo dòng mới
+            wizard_lines = [(5, 0, 0)]  # Lệnh xóa tất cả dòng
             
-            if filtered_move_lines:
-                # Cập nhật wizard_move_line_ids
-                wizard_lines = []
-                for idx, move_line in enumerate(filtered_move_lines, 1):
-                    wizard_lines.append((0, 0, {
-                        'move_line_id': move_line.id,
-                        'product_id': move_line.product_id.id,
-                        'sequence': idx * 10,
-                    }))
-                self.wizard_move_line_ids = wizard_lines
+            # Tạo dòng trống theo số lượng user nhập
+            for idx in range(1, self.total_serial_count + 1):
+                wizard_lines.append((0, 0, {
+                    'product_id': self.product_id.id,
+                    'sequence': idx * 10,
+                }))
+            self.wizard_move_line_ids = wizard_lines
     
     def action_confirm_serials(self):
         """Xác nhận serial đã nhập và mở popup chọn lot"""

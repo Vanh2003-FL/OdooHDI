@@ -362,17 +362,30 @@ export class WarehouseMapView extends Component {
 
         this.closeContextMenu();
 
-        await this.action.doAction({
-            name: 'Chi tiết Lot',
-            type: 'ir.actions.act_window',
-            res_model: 'stock.lot.detail.wizard',
-            view_mode: 'form',
-            views: [[false, 'form']],
-            target: 'new',
-            context: {
-                'default_quant_id': lotData.quant_id,
-            }
-        });
+        try {
+            // Tạo wizard record dùng ORM service (records phải là array)
+            const wizardIds = await this.orm.create('stock.lot.detail.wizard', [{
+                'quant_id': lotData.quant_id,
+            }]);
+
+            const wizardId = wizardIds[0];
+
+            // Mở wizard popup với res_id
+            await this.action.doAction({
+                name: 'Chi tiết Lot',
+                type: 'ir.actions.act_window',
+                res_model: 'stock.lot.detail.wizard',
+                res_id: wizardId,
+                view_mode: 'form',
+                views: [[false, 'form']],
+                target: 'new',
+            });
+        } catch (error) {
+            console.error('Error opening stock detail wizard:', error);
+            this.notification.add('Lỗi khi mở chi tiết Lot: ' + error.message, {
+                type: 'danger',
+            });
+        }
     }
 
     async viewLocation() {

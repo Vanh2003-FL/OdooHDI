@@ -8,7 +8,7 @@
                 <group>
                     <field name="picking_id" readonly="1"/>
                     <field name="product_id" nolabel="1"/>
-                    <field name="total_serials" readonly="1"/>
+                    <field name="total_serial_count" string="Tổng số serial cần nhập"/>
                 </group>
                 
                 <separator string="NHẬP SERIAL CHO TỪNG SẢN PHẨM"/>
