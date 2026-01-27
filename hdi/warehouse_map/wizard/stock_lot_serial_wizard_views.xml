@@ -68,4 +68,32 @@
             </form>
         </field>
     </record>
+    
+    <!-- View cho Wizard Xem Chi Tiết Lot -->
+    <record id="view_stock_lot_detail_wizard_form" model="ir.ui.view">
+        <field name="name">stock.lot.detail.wizard.form</field>
+        <field name="model">stock.lot.detail.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Chi tiết Lot">
+                <group>
+                    <field name="quant_id" invisible="1"/>
+                    <field name="product_id" readonly="1"/>
+                    <field name="lot_id" readonly="1"/>
+                    <field name="location_id" readonly="1"/>
+                    <field name="quantity" readonly="1"/>
+                </group>
+                
+                <separator string="DANH SÁCH SERIAL"/>
+                <field name="serial_item_ids" nolabel="1" readonly="1">
+                    <list>
+                        <field name="serial_number"/>
+                    </list>
+                </field>
+                
+                <footer>
+                    <button string="Đóng" class="btn-default" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

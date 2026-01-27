@@ -365,11 +365,13 @@ export class WarehouseMapView extends Component {
         await this.action.doAction({
             name: 'Chi tiết Lot',
             type: 'ir.actions.act_window',
-            res_model: 'stock.quant',
-            res_id: lotData.quant_id,
+            res_model: 'stock.lot.detail.wizard',
             view_mode: 'form',
             views: [[false, 'form']],
-            target: 'current',
+            target: 'new',
+            context: {
+                'default_quant_id': lotData.quant_id,
+            }
         });
     }
 

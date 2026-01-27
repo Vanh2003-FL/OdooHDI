@@ -254,3 +254,44 @@ class StockLotSelectionWizard(models.TransientModel):
             'views': [[False, 'form']],
             'target': 'current',
         }
+
+
+class StockLotDetailWizard(models.TransientModel):
+    _name = 'stock.lot.detail.wizard'
+    _description = 'Xem chi tiết Lot với Serial'
+
+    quant_id = fields.Many2one('stock.quant', string='Quant', required=True, readonly=True)
+    lot_id = fields.Many2one('stock.lot', string='Lot', required=True, readonly=True, related='quant_id.lot_id')
+    product_id = fields.Many2one('product.product', string='Sản phẩm', required=True, readonly=True, related='quant_id.product_id')
+    location_id = fields.Many2one('stock.location', string='Vị trí', readonly=True, related='quant_id.location_id')
+    quantity = fields.Float(string='Số lượng', readonly=True, related='quant_id.quantity')
+    
+    # Danh sách serial của lot
+    serial_item_ids = fields.One2many('stock.serial.item', compute='_compute_serial_items',
+                                        string='Danh sách Serial')
+    
+    @api.depends('lot_id')
+    def _compute_serial_items(self):
+        """Lấy danh sách serial từ lot"""
+        for wizard in self:
+            if wizard.lot_id:
+                wizard.serial_item_ids = self.env['stock.serial.item'].search([
+                    ('lot_id', '=', wizard.lot_id.id)
+                ], order='sequence asc')
+            else:
+                wizard.serial_item_ids = False
+    
+    @api.model
+    def default_get(self, fields_list):
+        """Auto-load từ context"""
+        result = super().default_get(fields_list)
+        
+        quant_id = self._context.get('default_quant_id')
+        if quant_id:
+            quant = self.env['stock.quant'].browse(quant_id)
+            if quant.exists():
+                result['quant_id'] = quant.id
+                if quant.lot_id:
+                    result['lot_id'] = quant.lot_id.id
+        
+        return result
