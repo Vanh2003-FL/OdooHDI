@@ -17,24 +17,18 @@
                 </group>
                 
                 <!-- Option 1: Tạo lot mới -->
-                <group attrs="{'invisible': [('lot_create_option', '!=', 'create_new')]}">
+                <group invisible="lot_create_option != 'create_new'">
                     <field name="lot_name" placeholder="VD: LOT20260127001" required="1"/>
                     <field name="lot_barcode" placeholder="VD: LOT-20260127-001" required="0"/>
                 </group>
                 
                 <!-- Option 2: Chọn lot đã tạo -->
-                <group attrs="{'invisible': [('lot_create_option', '!=', 'select_existing')]}">
+                <group invisible="lot_create_option != 'select_existing'">
                     <field name="existing_lot_id" required="1"/>
                 </group>
                 
                 <separator string="Serial được gom vào"/>
-                <field name="move_line_ids" nolabel="1">
-                    <tree>
-                        <field name="product_id" readonly="1"/>
-                        <field name="lot_id" readonly="1"/>
-                        <field name="quantity" readonly="1"/>
-                    </tree>
-                </field>
+                <field name="move_line_ids" nolabel="1" widget="many2many_tags"/>
                 
                 <footer>
                     <button name="action_confirm_assign_serials" string="Gom Serial vào Lot" type="object" class="btn-primary"/>
