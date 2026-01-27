@@ -10,6 +10,20 @@ class StockLocation(models.Model):
     color_code = fields.Char(string='Mã màu', help='Mã màu hiển thị trên sơ đồ (hex color)')
 
 
+class StockLot(models.Model):
+    _inherit = 'stock.lot'
+    
+    barcode = fields.Char(string='Barcode Lô', unique=True, help='Barcode duy nhất cho lô')
+    serial_ids = fields.One2many('stock.serial.item', 'lot_id', string='Danh sách Serial')
+    serial_count = fields.Integer(string='Số serial', compute='_compute_serial_count', store=True)
+    
+    @api.depends('serial_ids')
+    def _compute_serial_count(self):
+        """Tính số serial trong lot"""
+        for lot in self:
+            lot.serial_count = len(lot.serial_ids)
+
+
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
     
