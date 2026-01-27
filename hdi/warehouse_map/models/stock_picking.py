@@ -30,6 +30,31 @@ class StockPicking(models.Model):
         else:
             raise UserError('Không có sản phẩm nào có Lot/Serial trong phiếu nhập này')
     
+    def action_assign_serials_to_lot(self):
+        """Mở wizard gom serial vào lot"""
+        self.ensure_one()
+        
+        # Lấy move_line có tracking
+        move_lines = self.move_line_ids.filtered(
+            lambda x: x.product_id.tracking in ('lot', 'serial')
+        )
+        
+        if not move_lines:
+            raise UserError(_('Không có sản phẩm nào có Lot/Serial trong phiếu nhập này'))
+        
+        return {
+            'name': 'Gom Serial vào Lot',
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.lot.serial.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_picking_id': self.id,
+                'default_move_line_ids': [(6, 0, move_lines.ids)],
+                'default_product_id': move_lines[0].product_id.id if move_lines else False,
+            }
+        }
+    
     def button_validate(self):
         """Override validate - chỉ cho phép gán vị trí AFTER xác nhận"""
         # Proceed với validate bình thường

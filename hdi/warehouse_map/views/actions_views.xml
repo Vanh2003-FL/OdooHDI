@@ -21,4 +21,17 @@ if records:
     action = records[0].action_assign_warehouse_map_position()
         </field>
     </record>
+
+    <!-- Server Action: Gom Serial vào Lot từ Picking -->
+    <record id="action_stock_lot_serial_from_picking" model="ir.actions.server">
+        <field name="name">Gom Serial vào Lot</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_view_types">form</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    action = records[0].action_assign_serials_to_lot()
+        </field>
+    </record>
 </odoo>

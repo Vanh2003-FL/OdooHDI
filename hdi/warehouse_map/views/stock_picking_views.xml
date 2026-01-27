@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Override stock.picking form để thêm nút gán vị trí -->
+    <!-- Override stock.picking form để thêm nút gom serial vào lot -->
     <record id="view_picking_form_warehouse_map" model="ir.ui.view">
         <field name="name">stock.picking.form.warehouse.map</field>
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <!-- Thêm nút gán vị trí sau button validate -->
-            <xpath expr="//button[@name='button_validate']" position="after">
-                <button name="action_assign_warehouse_map_position" 
+            <!-- Thêm nút gom serial vào lot trong header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_assign_serials_to_lot" 
                         type="object" 
-                        string="↪ Gán vị trí sơ đồ" 
-                        class="btn-info"
-                        invisible="picking_type_code != 'incoming' or state != 'done'"
-                        help="Gán vị trí sản phẩm/Lot từ sơ đồ kho sau khi xác nhận"/>
+                        string="Gom Serial vào Lot" 
+                        invisible="picking_type_code != 'incoming' or state == 'done' or state == 'cancel'"
+                        help="Chọn và gom nhiều serial vào 1 lot"/>
             </xpath>
         </field>
     </record>
