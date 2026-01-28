@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- View chi tiết lot với danh sách serial -->
+    <record id="view_stock_lot_detail_form" model="ir.ui.view">
+        <field name="name">stock.lot.detail.form</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <form string="Chi tiết Lot" readonly="1">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_picking" type="object" 
+                                class="oe_stat_button" icon="fa-truck">
+                            <field string="Phiếu kho" name="picking_count" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="name" string="Lot"/>
+                            <field name="product_id" string="Sản phẩm"/>
+                            <field name="barcode" string="Barcode Lot"/>
+                        </group>
+                        <group>
+                            <field name="serial_count" string="Tổng Serial"/>
+                            <field name="create_date" string="Ngày tạo"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="DANH SÁCH SERIAL CHƯA XUẤT (CÓ SẴN)"/>
+                    <field name="serial_ids" nolabel="1" domain="[('is_picked', '=', False)]"
+                           decoration-success="not is_picked">
+                        <tree create="false" delete="false" edit="false">
+                            <field name="product_code" string="Sản phẩm" width="150"/>
+                            <field name="serial_number" string="Serial/Barcode" width="150"/>
+                            <field name="barcode" string="Barcode QR" optional="show"/>
+                            <field name="note" string="Ghi chú" optional="show"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Action để mở chi tiết lot -->
+    <record id="action_stock_lot_detail" model="ir.actions.act_window">
+        <field name="name">Chi tiết Lot</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_stock_lot_detail_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

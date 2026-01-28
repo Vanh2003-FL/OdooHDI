@@ -33,6 +33,12 @@
                                            class="text-success"
                                            invisible="not product_id"/>
                                 </group>
+                                <group>
+                                    <button name="%(action_stock_lot_detail)d" type="action" 
+                                            string="Xem Chi tiết Lot" class="btn-info"
+                                            invisible="not lot_id"
+                                            icon="fa-info-circle"/>
+                                </group>
                                 <group string="Quét Barcode và Số lượng">
                                     <field name="product_barcode_input" 
                                            placeholder="Quét barcode sản phẩm để xác nhận..."
@@ -63,16 +69,7 @@
                                 </group>
                                 
                                 <group>
-                                    <field name="scanned_serial_ids" nolabel="1" colspan="2">
-                                        <tree decoration-success="True" create="false" delete="true">
-                                            <field name="serial_number" string="Serial Number"/>
-                                            <field name="barcode" string="Barcode" optional="show"/>
-                                            <button name="action_remove_serial" type="object" 
-                                                    icon="fa-trash" 
-                                                    string="Xóa"
-                                                    invisible="context.get('hide_remove', False)"/>
-                                        </tree>
-                                    </field>
+                                    <field name="scanned_serial_ids" nolabel="1" colspan="2" widget="many2many_tags"/>
                                 </group>
                                 
                                 <div class="alert alert-success" role="alert">

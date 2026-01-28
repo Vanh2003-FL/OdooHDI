@@ -108,7 +108,7 @@ class StockPicking(models.Model):
         """Cập nhật display_on_map cho quants sau khi pick/transfer
         
         Logic:
-        - Nếu quantity = 0: Ẩn khỏi sơ đồ (display_on_map = False)
+        - Nếu quantity <= 0: Ẩn khỏi sơ đồ (display_on_map = False) và set qty = 0
         - Nếu quantity > 0: Vẫn hiển thị với số lượng còn lại
         """
         for picking in self:
@@ -121,9 +121,10 @@ class StockPicking(models.Model):
                 ])
                 
                 for quant in quants_source:
-                    # Nếu quantity = 0 → Ẩn khỏi sơ đồ
-                    if quant.quantity == 0 and quant.display_on_map:
+                    # Nếu quantity <= 0 → Ẩn khỏi sơ đồ và fix quantity
+                    if quant.quantity <= 0:
                         quant.write({
+                            'quantity': 0,
                             'display_on_map': False,
                             'posx': False,
                             'posy': False,

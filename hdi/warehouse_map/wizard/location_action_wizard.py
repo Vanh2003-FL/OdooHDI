@@ -44,15 +44,15 @@ class LocationActionWizard(models.TransientModel):
     def _compute_available_qty(self):
         """Tính số lượng có sẵn tại location"""
         for record in self:
-            if record.product_id and record.location_id:
+            if record.product_id and record.location_id and record.lot_id:
                 quants = self.env['stock.quant'].search([
                     ('product_id', '=', record.product_id.id),
                     ('location_id', '=', record.location_id.id),
-                    ('lot_id', '=', record.lot_id.id if record.lot_id else False),
+                    ('lot_id', '=', record.lot_id.id),
                     ('display_on_map', '=', True),
                 ])
-                # Tính available = quantity - reserved_quantity
-                record.available_qty = sum(q.quantity - q.reserved_quantity for q in quants)
+                # Tính available = quantity (không trừ reserved_quantity)
+                record.available_qty = sum(q.quantity for q in quants)
             else:
                 record.available_qty = 0.0
     
@@ -128,29 +128,41 @@ class LocationActionWizard(models.TransientModel):
             if not self.lot_id:
                 raise UserError(_('Vui lòng chọn lot trước khi quét serial!'))
             
-            # Tìm serial trong lot
+            # Tìm serial trong lot bằng serial_number HOẶC barcode
             serial = self.env['stock.serial.item'].search([
-                ('serial_number', '=', self.serial_barcode_input),
                 ('lot_id', '=', self.lot_id.id),
+                '|',
+                ('serial_number', '=', self.serial_barcode_input),
+                ('barcode', '=', self.serial_barcode_input),
             ], limit=1)
             
             if not serial:
                 raise UserError(_(
-                    f'Serial "{self.serial_barcode_input}" không tồn tại trong Lot {self.lot_id.name}!\n'
-                    f'Vui lòng kiểm tra lại.'
+                    f'Serial/Barcode "{self.serial_barcode_input}" không tồn tại trong Lot {self.lot_id.name}!\n'
+                    f'Vui lòng kiểm tra lại hoặc quét barcode/QR khác.'
+                ))
+            
+            # Kiểm tra sản phẩm có khớp không
+            if serial.product_id != self.product_id:
+                raise UserError(_(
+                    f'Barcode không khớp với sản phẩm!\n'
+                    f'Sản phẩm từ lot: {self.product_id.name}\n'
+                    f'Sản phẩm từ barcode: {serial.product_id.name}\n'
+                    f'Serial: {serial.serial_number}\n'
+                    f'Vui lòng quét đúng barcode sản phẩm đã nhập.'
                 ))
             
             # Kiểm tra serial đã được quét chưa
             if serial in self.scanned_serial_ids:
                 raise UserError(_(
-                    f'Serial "{self.serial_barcode_input}" đã được quét rồi!\n'
+                    f'Serial "{serial.serial_number}" đã được quét rồi!\n'
                     f'Vui lòng quét serial khác.'
                 ))
             
             # Kiểm tra serial đã được pick chưa
             if serial.is_picked:
                 raise UserError(_(
-                    f'Serial "{self.serial_barcode_input}" đã được xuất kho!\n'
+                    f'Serial "{serial.serial_number}" đã được xuất kho!\n'
                     f'Không thể xuất lại.'
                 ))
             
@@ -205,12 +217,14 @@ class LocationActionWizard(models.TransientModel):
         # Validate số lượng
         if self.product_id and self.quantity <= 0:
             raise UserError(_('Số lượng phải lớn hơn 0!'))
-            
-        if self.product_id and self.quantity > self.available_qty:
+        
+        # Validate số lượng không vượt available
+        available = max(0, self.available_qty)  # Đảm bảo không âm
+        if self.product_id and self.quantity > available:
             raise UserError(_(
-                'Số lượng yêu cầu ({:.2f}) vượt quá số lượng có sẵn ({:.2f})!\n'
-                'Vui lòng kiểm tra lại.'
-            ).format(self.quantity, self.available_qty))
+                f'Số lượng yêu cầu ({self.quantity:.2f}) vượt quá số lượng có sẵn ({available:.2f})!\n'
+                f'Vui lòng kiểm tra lại.'
+            ))
         
         # Tạo picking
         picking_vals = {
