@@ -31,6 +31,14 @@ class LocationActionWizard(models.TransientModel):
     # Barcode scanning
     barcode_lot_input = fields.Char(string='Quét Barcode Lot/Serial')
     product_barcode_input = fields.Char(string='Quét Barcode Sản phẩm')
+    serial_barcode_input = fields.Char(string='Quét Serial Number Sản phẩm')
+    
+    # Serial tracking
+    scanned_serial_ids = fields.Many2many('stock.serial.item', string='Serial đã quét')
+    available_serial_ids = fields.Many2many('stock.serial.item', 'wizard_available_serial_rel', 
+                                            string='Serial có sẵn', compute='_compute_available_serials')
+    scanned_serial_count = fields.Integer(string='Số serial đã quét', compute='_compute_scanned_count')
+    product_tracking = fields.Selection(related='product_id.tracking', string='Loại tracking')
     
     @api.depends('product_id', 'lot_id', 'location_id')
     def _compute_available_qty(self):
@@ -47,6 +55,25 @@ class LocationActionWizard(models.TransientModel):
                 record.available_qty = sum(q.quantity - q.reserved_quantity for q in quants)
             else:
                 record.available_qty = 0.0
+    
+    @api.depends('lot_id')
+    def _compute_available_serials(self):
+        """Lấy danh sách serial có sẵn trong lot"""
+        for record in self:
+            if record.lot_id:
+                serials = self.env['stock.serial.item'].search([
+                    ('lot_id', '=', record.lot_id.id),
+                    ('is_picked', '=', False),  # Chưa được pick
+                ])
+                record.available_serial_ids = serials
+            else:
+                record.available_serial_ids = False
+    
+    @api.depends('scanned_serial_ids')
+    def _compute_scanned_count(self):
+        """Đếm số serial đã quét"""
+        for record in self:
+            record.scanned_serial_count = len(record.scanned_serial_ids)
     
     @api.onchange('barcode_lot_input')
     def _onchange_barcode_lot_input(self):
@@ -94,6 +121,46 @@ class LocationActionWizard(models.TransientModel):
             else:
                 raise UserError(_(f'Không tìm thấy sản phẩm với barcode "{self.product_barcode_input}"!'))
     
+    @api.onchange('serial_barcode_input')
+    def _onchange_serial_barcode_input(self):
+        """Quét serial number của từng sản phẩm trong lot"""
+        if self.serial_barcode_input:
+            if not self.lot_id:
+                raise UserError(_('Vui lòng chọn lot trước khi quét serial!'))
+            
+            # Tìm serial trong lot
+            serial = self.env['stock.serial.item'].search([
+                ('serial_number', '=', self.serial_barcode_input),
+                ('lot_id', '=', self.lot_id.id),
+            ], limit=1)
+            
+            if not serial:
+                raise UserError(_(
+                    f'Serial "{self.serial_barcode_input}" không tồn tại trong Lot {self.lot_id.name}!\n'
+                    f'Vui lòng kiểm tra lại.'
+                ))
+            
+            # Kiểm tra serial đã được quét chưa
+            if serial in self.scanned_serial_ids:
+                raise UserError(_(
+                    f'Serial "{self.serial_barcode_input}" đã được quét rồi!\n'
+                    f'Vui lòng quét serial khác.'
+                ))
+            
+            # Kiểm tra serial đã được pick chưa
+            if serial.is_picked:
+                raise UserError(_(
+                    f'Serial "{self.serial_barcode_input}" đã được xuất kho!\n'
+                    f'Không thể xuất lại.'
+                ))
+            
+            # Thêm serial vào danh sách đã quét
+            self.scanned_serial_ids = [(4, serial.id)]
+            self.serial_barcode_input = ''  # Clear field
+            
+            # Auto-update quantity
+            self.quantity = len(self.scanned_serial_ids)
+    
     @api.onchange('location_id', 'action_type')
     def _onchange_location_action(self):
         """Tự động chọn picking type phù hợp"""
@@ -119,6 +186,21 @@ class LocationActionWizard(models.TransientModel):
         
         if not self.product_id and not self.quant_ids:
             raise UserError(_('Vui lòng chọn sản phẩm từ sơ đồ hoặc chọn thủ công!'))
+        
+        # Validate tracking by serial
+        if self.product_id and self.product_id.tracking == 'serial':
+            if not self.scanned_serial_ids:
+                raise UserError(_(
+                    'Sản phẩm này yêu cầu tracking theo Serial Number!\n'
+                    'Vui lòng quét barcode/QR của từng sản phẩm cần xuất.'
+                ))
+            
+            if len(self.scanned_serial_ids) != int(self.quantity):
+                raise UserError(_(
+                    f'Số serial đã quét ({len(self.scanned_serial_ids)}) '
+                    f'không khớp với số lượng ({int(self.quantity)})!\n'
+                    f'Vui lòng quét đủ số lượng serial cần xuất.'
+                ))
         
         # Validate số lượng
         if self.product_id and self.quantity <= 0:
@@ -154,6 +236,10 @@ class LocationActionWizard(models.TransientModel):
         
         # Confirm picking
         picking.action_confirm()
+        
+        # Đánh dấu serial đã được pick (nếu có)
+        if self.scanned_serial_ids:
+            self.scanned_serial_ids.write({'is_picked': True})
         
         # Auto-validate nếu là pick (xuất kho) hoặc transfer (chuyển kho)
         if self.action_type in ('pick', 'transfer'):
