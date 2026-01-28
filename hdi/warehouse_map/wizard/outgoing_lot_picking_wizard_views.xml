@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Outgoing Lot Picking Wizard Form View -->
+        <record id="outgoing_lot_picking_wizard_form" model="ir.ui.view">
+            <field name="name">outgoing.lot.picking.wizard.form</field>
+            <field name="model">outgoing.lot.picking.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Xuất Kho Theo Lot">
+                    <!-- Thông tin Lot -->
+                    <group string="📦 Thông Tin Lot" colspan="4">
+                        <field name="warehouse_map_id" invisible="1"/>
+                        <field name="quant_id"/>
+                        <field name="lot_id" readonly="1"/>
+                        <field name="product_id" readonly="1"/>
+                        <field name="location_id" readonly="1"/>
+                        <field name="quantity_available" string="Số lượng kho"/>
+                    </group>
+                    
+                    <!-- Danh sách Serial trong Lot -->
+                    <group string="📋 Danh sách Serial trong Lot" colspan="4">
+                        <field name="serial_item_ids" nolabel="1" colspan="4">
+                            <tree edit="false" delete="false">
+                                <field name="sequence"/>
+                                <field name="serial_number"/>
+                                <field name="product_code"/>
+                            </tree>
+                        </field>
+                    </group>
+                    
+                    <!-- Quét Barcode -->
+                    <group string="🔍 Quét Barcode Sản Phẩm" colspan="4">
+                        <field name="scanned_barcode" nolabel="1" colspan="3"
+                               placeholder="Quét hoặc nhập barcode sản phẩm..."
+                               attrs="{'autofocus': True}"/>
+                        <button name="action_scan_product" string="✅ Quét" type="object" class="btn-primary" colspan="1"/>
+                    </group>
+                    
+                    <!-- Danh sách Sản phẩm Quét -->
+                    <group string="✅ Sản Phẩm Đã Quét" colspan="4">
+                        <field name="total_quantity" string="Tổng số lượng" readonly="1"/>
+                        <field name="scanned_product_ids" nolabel="1" colspan="4">
+                            <tree edit="false" create="false">
+                                <field name="sequence"/>
+                                <field name="serial_number"/>
+                                <field name="product_id"/>
+                            </tree>
+                        </field>
+                    </group>
+                    
+                    <!-- Thông tin Phiếu Xuất -->
+                    <group string="📤 Thông Tin Phiếu Xuất" colspan="4">
+                        <field name="destination_location_id" colspan="2"/>
+                        <field name="picking_type_id" colspan="2"/>
+                    </group>
+                    
+                    <!-- Action Buttons -->
+                    <footer>
+                        <button name="action_remove_scanned" string="🔙 Xoá Cuối" type="object" class="btn-warning"/>
+                        <button name="action_clear_all" string="🗑️ Xoá Tất Cả" type="object" class="btn-warning"/>
+                        <button name="action_create_picking" string="✅ Tạo Phiếu Xuất" type="object" class="btn-success"/>
+                        <button name="action_wizard_close" string="Đóng" type="special" class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Action to open wizard -->
+        <record id="action_outgoing_lot_picking_wizard" model="ir.actions.act_window">
+            <field name="name">Xuất Kho Theo Lot</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">outgoing.lot.picking.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>

@@ -22,6 +22,7 @@
         'wizard/block_cell_wizard_views.xml',
         'wizard/move_line_warehouse_map_wizard_views.xml',
         'wizard/stock_lot_serial_wizard_views.xml',
+        'wizard/outgoing_lot_picking_wizard_views.xml',
         'views/menu_views.xml',
     ],
     'demo': [

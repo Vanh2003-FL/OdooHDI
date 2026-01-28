@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class StockLocation(models.Model):
@@ -8,6 +9,8 @@ class StockLocation(models.Model):
 
     display_on_map = fields.Boolean(string='Hiển thị trên sơ đồ', default=True)
     color_code = fields.Char(string='Mã màu', help='Mã màu hiển thị trên sơ đồ (hex color)')
+    warehouse_map_id = fields.Many2one('warehouse.map', string='Sơ đồ kho',
+                                       help='Sơ đồ kho tương ứng với vị trí này')
 
 
 class StockLot(models.Model):
@@ -87,6 +90,27 @@ class StockQuant(models.Model):
                 'default_lot_id': self.lot_id.id if self.lot_id else False,
                 'default_quantity': self.quantity - self.reserved_quantity,
                 'default_action_type': 'pick',
+            }
+        }
+    
+    def action_outgoing_lot_picking(self):
+        """Action xuất kho với quét barcode từ sơ đồ"""
+        self.ensure_one()
+        
+        # Kiểm tra quant có lot không
+        if not self.lot_id:
+            raise UserError(_('Sản phẩm này không có Lot! Vui lòng chọn vị trí khác.'))
+        
+        # Mở wizard xuất kho
+        return {
+            'name': _('Xuất Kho Theo Lot'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'outgoing.lot.picking.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_quant_id': self.id,
+                'default_warehouse_map_id': self.location_id.warehouse_map_id.id if self.location_id.warehouse_map_id else False,
             }
         }
     
