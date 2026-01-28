@@ -17,7 +17,47 @@
                     </group>
                     
                     <notebook>
-                        <page string="Chọn sản phẩm/Lot">
+                        <page string="Thông tin xuất/chuyển">
+                            <group>
+                                <group string="Thông tin Lot (từ sơ đồ)">
+                                    <field name="product_id" readonly="1" 
+                                           invisible="not product_id"
+                                           options="{'no_open': True}"/>
+                                    <field name="lot_id" readonly="1" 
+                                           invisible="not lot_id"
+                                           options="{'no_open': True}"/>
+                                    <field name="available_qty" 
+                                           string="Số lượng có sẵn"
+                                           readonly="1"
+                                           class="text-success"
+                                           invisible="not product_id"/>
+                                </group>
+                                <group string="Quét Barcode & Số lượng">
+                                    <field name="product_barcode_input" 
+                                           placeholder="Quét barcode sản phẩm để xác nhận..."
+                                           class="oe_inline"
+                                           help="Quét barcode sản phẩm để xác nhận sản phẩm xuất"/>
+                                    <field name="quantity" required="1" 
+                                           invisible="not product_id"
+                                           class="oe_inline"
+                                           help="Nhập số lượng cần xuất/chuyển"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-warning" role="alert" invisible="product_id">
+                                <p><i class="fa fa-exclamation-triangle"/> Vui lòng chọn lot từ sơ đồ kho hoặc chọn thủ công ở tab "Chọn sản phẩm/Lot"</p>
+                            </div>
+                            <div class="alert alert-info" role="alert" invisible="not product_id">
+                                <h4><i class="fa fa-info-circle"/> Hướng dẫn:</h4>
+                                <ol>
+                                    <li>Lot <strong><field name="lot_id" readonly="1" class="oe_inline" nolabel="1"/></strong> đã được chọn từ sơ đồ</li>
+                                    <li>Quét barcode sản phẩm để xác nhận sản phẩm xuất</li>
+                                    <li>Nhập số lượng cần xuất (tối đa: <strong><field name="available_qty" readonly="1" class="oe_inline" nolabel="1"/></strong>)</li>
+                                    <li>Nhấn "Xác nhận" để hoàn tất</li>
+                                </ol>
+                            </div>
+                        </page>
+                        
+                        <page string="Chọn sản phẩm/Lot" invisible="product_id">
                             <group>
                                 <field name="quant_ids" widget="many2many_tags" 
                                        domain="[('location_id', '=', location_id), ('quantity', '>', 0)]"

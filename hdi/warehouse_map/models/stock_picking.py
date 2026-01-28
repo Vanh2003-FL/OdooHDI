@@ -64,6 +64,10 @@ class StockPicking(models.Model):
         if self.picking_type_code == 'incoming':
             self._update_quants_positions_from_move_lines()
         
+        # Cập nhật display_on_map cho outgoing (xuất kho) và internal (chuyển kho)
+        if self.picking_type_code in ('outgoing', 'internal'):
+            self._update_quants_display_on_map()
+        
         return result
     
     def _update_quants_positions_from_move_lines(self):
@@ -99,4 +103,49 @@ class StockPicking(models.Model):
                             'posz': move_line.posz or 0,
                             'display_on_map': True,
                         })
+    
+    def _update_quants_display_on_map(self):
+        """Cập nhật display_on_map cho quants sau khi pick/transfer
+        
+        Logic:
+        - Nếu quantity = 0: Ẩn khỏi sơ đồ (display_on_map = False)
+        - Nếu quantity > 0: Vẫn hiển thị với số lượng còn lại
+        """
+        for picking in self:
+            for move_line in picking.move_line_ids:
+                # Xử lý cho location nguồn (nơi lấy hàng ra)
+                quants_source = self.env['stock.quant'].search([
+                    ('product_id', '=', move_line.product_id.id),
+                    ('location_id', '=', move_line.location_id.id),
+                    ('lot_id', '=', move_line.lot_id.id if move_line.lot_id else False),
+                ])
+                
+                for quant in quants_source:
+                    # Nếu quantity = 0 → Ẩn khỏi sơ đồ
+                    if quant.quantity == 0 and quant.display_on_map:
+                        quant.write({
+                            'display_on_map': False,
+                            'posx': False,
+                            'posy': False,
+                            'posz': 0,
+                        })
+                    # Nếu quantity > 0 → Giữ nguyên trên sơ đồ
+                    elif quant.quantity > 0 and quant.display_on_map:
+                        # Không cần update gì, giữ nguyên position và display_on_map
+                        pass
+                
+                # Xử lý cho location đích (internal transfer)
+                if self.picking_type_code == 'internal':
+                    quants_dest = self.env['stock.quant'].search([
+                        ('product_id', '=', move_line.product_id.id),
+                        ('location_id', '=', move_line.location_dest_id.id),
+                        ('lot_id', '=', move_line.lot_id.id if move_line.lot_id else False),
+                    ])
+                    
+                    # Set display_on_map = True cho quant ở vị trí đích (nếu có)
+                    for quant in quants_dest:
+                        if quant.quantity > 0 and not quant.display_on_map:
+                            # Chỉ hiển thị nếu có gán vị trí (posx, posy)
+                            if quant.posx and quant.posy:
+                                quant.write({'display_on_map': True})
 

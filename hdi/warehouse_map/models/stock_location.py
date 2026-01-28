@@ -72,6 +72,26 @@ class StockQuant(models.Model):
             else:
                 quant.days_in_stock = 0
     
+    def write(self, vals):
+        """Override write để tự động ẩn quant khi quantity = 0"""
+        result = super().write(vals)
+        
+        # Nếu quantity thay đổi, kiểm tra cần ẩn không
+        if 'quantity' in vals:
+            for quant in self:
+                # Nếu quantity = 0 và đang hiển thị → Ẩn khỏi sơ đồ
+                if quant.quantity == 0 and quant.display_on_map:
+                    quant.display_on_map = False
+                    quant.posx = False
+                    quant.posy = False
+                    quant.posz = 0
+                # Nếu quantity > 0 và đang hiển thị → Giữ nguyên
+                elif quant.quantity > 0 and quant.display_on_map:
+                    # Không làm gì, giữ nguyên vị trí
+                    pass
+        
+        return result
+    
     def action_pick_products(self):
         """Action lấy hàng từ vị trí"""
         self.ensure_one()

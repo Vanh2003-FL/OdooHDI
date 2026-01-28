@@ -24,8 +24,75 @@ class LocationActionWizard(models.TransientModel):
     product_id = fields.Many2one('product.product', string='Sản phẩm')
     lot_id = fields.Many2one('stock.lot', string='Lot/Serial')
     quantity = fields.Float(string='Số lượng', default=1.0)
+    available_qty = fields.Float(string='Số lượng có sẵn', compute='_compute_available_qty', readonly=True)
     
     picking_type_id = fields.Many2one('stock.picking.type', string='Loại phiếu')
+    
+    # Barcode scanning
+    barcode_lot_input = fields.Char(string='Quét Barcode Lot/Serial')
+    product_barcode_input = fields.Char(string='Quét Barcode Sản phẩm')
+    
+    @api.depends('product_id', 'lot_id', 'location_id')
+    def _compute_available_qty(self):
+        """Tính số lượng có sẵn tại location"""
+        for record in self:
+            if record.product_id and record.location_id:
+                quants = self.env['stock.quant'].search([
+                    ('product_id', '=', record.product_id.id),
+                    ('location_id', '=', record.location_id.id),
+                    ('lot_id', '=', record.lot_id.id if record.lot_id else False),
+                    ('display_on_map', '=', True),
+                ])
+                # Tính available = quantity - reserved_quantity
+                record.available_qty = sum(q.quantity - q.reserved_quantity for q in quants)
+            else:
+                record.available_qty = 0.0
+    
+    @api.onchange('barcode_lot_input')
+    def _onchange_barcode_lot_input(self):
+        """Scan barcode lot để auto-fill thông tin"""
+        if self.barcode_lot_input:
+            lot = self.env['stock.lot'].search([
+                ('barcode', '=', self.barcode_lot_input),
+            ], limit=1)
+            
+            if lot:
+                self.lot_id = lot.id
+                self.product_id = lot.product_id.id
+                # Auto-fill available quantity
+                self.quantity = self.available_qty if self.available_qty > 0 else 1.0
+                self.barcode_lot_input = ''  # Clear sau khi scan
+            else:
+                raise UserError(_(f'Không tìm thấy Lot với barcode "{self.barcode_lot_input}"!'))
+    
+    @api.onchange('product_barcode_input')
+    def _onchange_product_barcode_input(self):
+        """Scan barcode sản phẩm để xác nhận sản phẩm xuất"""
+        if self.product_barcode_input:
+            product = self.env['product.product'].search([
+                ('barcode', '=', self.product_barcode_input),
+            ], limit=1)
+            
+            if product:
+                # Nếu đã có product_id từ context (chọn lot từ sơ đồ)
+                if self.product_id:
+                    # Kiểm tra barcode có khớp với product đã chọn không
+                    if product.id != self.product_id.id:
+                        raise UserError(_(
+                            f'Barcode không khớp!\n'
+                            f'Sản phẩm từ lot: {self.product_id.name}\n'
+                            f'Sản phẩm từ barcode: {product.name}\n'
+                            f'Vui lòng quét đúng barcode sản phẩm.'
+                        ))
+                    # Nếu khớp, thông báo thành công
+                    self.product_barcode_input = ''
+                    # Không cần làm gì thêm, chỉ xác nhận
+                else:
+                    # Nếu chưa có product (chọn thủ công), set product
+                    self.product_id = product.id
+                    self.product_barcode_input = ''
+            else:
+                raise UserError(_(f'Không tìm thấy sản phẩm với barcode "{self.product_barcode_input}"!'))
     
     @api.onchange('location_id', 'action_type')
     def _onchange_location_action(self):
@@ -49,6 +116,19 @@ class LocationActionWizard(models.TransientModel):
         
         if not self.picking_type_id:
             raise UserError(_('Vui lòng chọn loại phiếu!'))
+        
+        if not self.product_id and not self.quant_ids:
+            raise UserError(_('Vui lòng chọn sản phẩm từ sơ đồ hoặc chọn thủ công!'))
+        
+        # Validate số lượng
+        if self.product_id and self.quantity <= 0:
+            raise UserError(_('Số lượng phải lớn hơn 0!'))
+            
+        if self.product_id and self.quantity > self.available_qty:
+            raise UserError(_(
+                'Số lượng yêu cầu ({:.2f}) vượt quá số lượng có sẵn ({:.2f})!\n'
+                'Vui lòng kiểm tra lại.'
+            ).format(self.quantity, self.available_qty))
         
         # Tạo picking
         picking_vals = {
@@ -75,15 +155,34 @@ class LocationActionWizard(models.TransientModel):
         # Confirm picking
         picking.action_confirm()
         
-        # Mở form picking
-        return {
-            'name': _('Phiếu kho'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.picking',
-            'res_id': picking.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+        # Auto-validate nếu là pick (xuất kho) hoặc transfer (chuyển kho)
+        if self.action_type in ('pick', 'transfer'):
+            try:
+                # Validate picking để trigger update quantity
+                picking.button_validate()
+                return {
+                    'type': 'ir.actions.act_window_close',
+                }
+            except Exception as e:
+                # Nếu có lỗi, mở form để user xử lý
+                return {
+                    'name': _('Phiếu kho'),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking',
+                    'res_id': picking.id,
+                    'view_mode': 'form',
+                    'target': 'current',
+                }
+        else:
+            # Move thì mở form
+            return {
+                'name': _('Phiếu kho'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'res_id': picking.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
     
     def _get_dest_location(self):
         """Lấy vị trí đích dựa vào loại action"""
