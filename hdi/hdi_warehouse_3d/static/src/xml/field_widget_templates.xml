@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Warehouse Layout Field Widget -->
+    <t t-name="hdi_warehouse_3d.WarehouseLayoutFieldWidget">
+        <div class="warehouse-layout-field-widget">
+            <div class="widget-toolbar">
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary" t-on-click="toggleViewMode">
+                        <i t-attf-class="fa fa-#{state.viewMode === '3d' ? 'map' : 'cube'}"/>
+                        <t t-if="state.viewMode === '3d'">Switch to 2D</t>
+                        <t t-else="">Switch to 3D</t>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" t-on-click="toggleHeatmap">
+                        <i class="fa fa-fire"/>
+                        <t t-if="state.showHeatmap">Hide Heatmap</t>
+                        <t t-else="">Show Heatmap</t>
+                    </button>
+                    <button class="btn btn-sm btn-info" t-on-click="toggleEditable" 
+                            t-if="state.viewMode === '2d' and !props.readonly">
+                        <i class="fa fa-edit"/>
+                        <t t-if="state.editable">Lock</t>
+                        <t t-else="">Edit</t>
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-light ms-auto" t-on-click="openFullscreen">
+                    <i class="fa fa-expand"/> Fullscreen
+                </button>
+            </div>
+
+            <div class="widget-viewer">
+                <t t-if="state.viewMode === '3d'">
+                    <Warehouse3DViewer 
+                        layoutId="layoutId"
+                        viewMode="'3d'"
+                        showHeatmap="state.showHeatmap"/>
+                </t>
+                <t t-else="">
+                    <Warehouse2DViewer 
+                        layoutId="layoutId"
+                        editable="state.editable"
+                        showHeatmap="state.showHeatmap"/>
+                </t>
+            </div>
+        </div>
+    </t>
+
+    <!-- Picking Route Field Widget -->
+    <t t-name="hdi_warehouse_3d.PickingRouteFieldWidget">
+        <div class="picking-route-field-widget">
+            <t t-if="state.loading">
+                <div class="text-center p-3">
+                    <i class="fa fa-spinner fa-spin fa-2x"/>
+                    <p class="mt-2">Loading route...</p>
+                </div>
+            </t>
+            <t t-elif="state.hasRoute">
+                <div class="route-info-card">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fa fa-route"/> Route Information
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="metric">
+                                        <div class="metric-label">Route Type</div>
+                                        <div class="metric-value">
+                                            <span class="badge bg-info">
+                                                <t t-esc="state.routeData.route_type"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric">
+                                        <div class="metric-label">Bins</div>
+                                        <div class="metric-value">
+                                            <strong><t t-esc="state.routeData.bin_count"/></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric">
+                                        <div class="metric-label">Distance</div>
+                                        <div class="metric-value">
+                                            <strong><t t-esc="state.routeData.route_distance"/>m</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <button class="btn btn-primary me-2" t-on-click="visualizeRoute">
+                                    <i class="fa fa-eye"/> Visualize Route
+                                </button>
+                                <button class="btn btn-secondary" t-on-click="optimizeRoute">
+                                    <i class="fa fa-refresh"/> Re-optimize
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"/> No route generated yet.
+                    <button class="btn btn-sm btn-primary ms-2" t-on-click="optimizeRoute">
+                        <i class="fa fa-magic"/> Generate Route
+                    </button>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <!-- Warehouse Heatmap Field Widget -->
+    <t t-name="hdi_warehouse_3d.WarehouseHeatmapFieldWidget">
+        <div class="warehouse-heatmap-field-widget">
+            <t t-if="state.loading">
+                <div class="text-center p-3">
+                    <i class="fa fa-spinner fa-spin fa-2x"/>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="heatmap-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-primary">
+                            <i class="fa fa-cubes"/>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value"><t t-esc="state.stats.totalPicks"/></div>
+                            <div class="stat-label">Total Picks</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-danger">
+                            <i class="fa fa-fire"/>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value"><t t-esc="state.stats.maxPicks"/></div>
+                            <div class="stat-label">Hottest Bin</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-success">
+                            <i class="fa fa-bar-chart"/>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value"><t t-esc="Math.round(state.stats.avgPicks)"/></div>
+                            <div class="stat-label">Average</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Legend -->
+                <div class="heatmap-legend mt-3">
+                    <h6>Pick Frequency</h6>
+                    <div class="legend-gradient">
+                        <div class="gradient-bar"/>
+                        <div class="gradient-labels">
+                            <span>Low</span>
+                            <span>Medium</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <!-- Camera Controls Template -->
+    <t t-name="hdi_warehouse_3d.CameraControls">
+        <div class="camera-controls">
+            <div class="control-group">
+                <h6><i class="fa fa-camera"/> Camera Presets</h6>
+                <div class="btn-group-vertical">
+                    <button t-foreach="Object.entries(presets)" t-as="preset" t-key="preset[0]"
+                            class="btn btn-sm btn-outline-primary"
+                            t-att-class="{'active': state.currentPreset === preset[0]}"
+                            t-on-click="() => this.applyPreset(preset[0])">
+                        <i t-attf-class="fa #{preset[1].icon}"/>
+                        <t t-esc="preset[1].name"/>
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group mt-3">
+                <h6><i class="fa fa-search"/> Zoom</h6>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-secondary" t-on-click="zoomIn">
+                        <i class="fa fa-plus"/>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" t-on-click="zoomOut">
+                        <i class="fa fa-minus"/>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" t-on-click="resetCamera">
+                        <i class="fa fa-refresh"/>
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group mt-3">
+                <h6><i class="fa fa-cog"/> Options</h6>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" 
+                           t-model="state.autoRotate"
+                           t-on-change="toggleAutoRotate"/>
+                    <label class="form-check-label">Auto Rotate</label>
+                </div>
+            </div>
+
+            <div class="control-group mt-3">
+                <button class="btn btn-sm btn-primary w-100" t-on-click="toggleFullscreen">
+                    <i class="fa fa-expand"/> Fullscreen
+                </button>
+                <button class="btn btn-sm btn-secondary w-100 mt-2" t-on-click="takeScreenshot">
+                    <i class="fa fa-camera"/> Screenshot
+                </button>
+            </div>
+        </div>
+    </t>
+
+    <!-- Bin Editor Template -->
+    <t t-name="hdi_warehouse_3d.BinEditor">
+        <div class="bin-editor">
+            <div class="editor-toolbar">
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary" 
+                            t-att-class="{'active': state.mode === 'select'}"
+                            t-on-click="() => this.setMode('select')">
+                        <i class="fa fa-mouse-pointer"/> Select
+                    </button>
+                    <button class="btn btn-sm btn-success" 
+                            t-att-class="{'active': state.mode === 'create'}"
+                            t-on-click="() => this.setMode('create')">
+                        <i class="fa fa-plus"/> Create
+                    </button>
+                    <button class="btn btn-sm btn-danger" 
+                            t-att-class="{'active': state.mode === 'delete'}"
+                            t-on-click="() => this.setMode('delete')">
+                        <i class="fa fa-trash"/> Delete
+                    </button>
+                </div>
+
+                <div class="btn-group ms-2">
+                    <button class="btn btn-sm btn-secondary" 
+                            t-att-class="{'active': state.showGrid}"
+                            t-on-click="toggleGrid">
+                        <i class="fa fa-th"/> Grid
+                    </button>
+                    <button class="btn btn-sm btn-secondary" 
+                            t-att-class="{'active': state.snapToGrid}"
+                            t-on-click="toggleSnapToGrid">
+                        <i class="fa fa-magnet"/> Snap
+                    </button>
+                </div>
+
+                <button class="btn btn-sm btn-light ms-auto" t-on-click="close">
+                    <i class="fa fa-times"/> Close
+                </button>
+            </div>
+
+            <div class="editor-canvas">
+                <svg t-ref="editorSvg" class="bin-editor-svg" 
+                     width="100%" height="100%"
+                     t-on-click="onSvgClick"/>
+            </div>
+
+            <t t-if="state.selectedBin">
+                <div class="editor-properties">
+                    <h6>Bin Properties</h6>
+                    <div class="property-row">
+                        <label>Name:</label>
+                        <span><t t-esc="state.selectedBin.name"/></span>
+                    </div>
+                    <div class="property-row">
+                        <label>Position:</label>
+                        <span>
+                            X: <t t-esc="state.selectedBin.position_x"/>,
+                            Z: <t t-esc="state.selectedBin.position_z"/>
+                        </span>
+                    </div>
+                    <div class="property-row">
+                        <label>Size:</label>
+                        <span>
+                            <t t-esc="state.selectedBin.width"/> × <t t-esc="state.selectedBin.depth"/>m
+                        </span>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <!-- Dashboard Template -->
+    <t t-name="hdi_warehouse_3d.Warehouse3DDashboard">
+        <div class="warehouse-3d-dashboard">
+            <div class="dashboard-header">
+                <h2><i class="fa fa-warehouse"/> Warehouse 3D Dashboard</h2>
+                <select class="form-select form-select-sm" style="width: 300px;"
+                        t-model="state.selectedLayout"
+                        t-on-change="(e) => this.onLayoutChange(parseInt(e.target.value))">
+                    <option t-foreach="state.layouts" t-as="layout" t-key="layout.id"
+                            t-att-value="layout.id">
+                        <t t-esc="layout.name"/>
+                    </option>
+                </select>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Metrics Row -->
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-icon bg-primary">
+                            <i class="fa fa-cubes"/>
+                        </div>
+                        <div class="metric-body">
+                            <div class="metric-value"><t t-esc="state.metrics.totalBins"/></div>
+                            <div class="metric-label">Total Bins</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon bg-success">
+                            <i class="fa fa-inbox"/>
+                        </div>
+                        <div class="metric-body">
+                            <div class="metric-value"><t t-esc="state.metrics.emptyBins"/></div>
+                            <div class="metric-label">Empty Bins</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon bg-warning">
+                            <i class="fa fa-archive"/>
+                        </div>
+                        <div class="metric-body">
+                            <div class="metric-value"><t t-esc="state.metrics.partialBins"/></div>
+                            <div class="metric-label">Partial Bins</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon bg-danger">
+                            <i class="fa fa-boxes"/>
+                        </div>
+                        <div class="metric-body">
+                            <div class="metric-value"><t t-esc="state.metrics.fullBins"/></div>
+                            <div class="metric-label">Full Bins</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon bg-info">
+                            <i class="fa fa-percent"/>
+                        </div>
+                        <div class="metric-body">
+                            <div class="metric-value" 
+                                 t-att-class="getUtilizationColor(state.metrics.utilization)">
+                                <t t-esc="state.metrics.utilization"/>%
+                            </div>
+                            <div class="metric-label">Utilization</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon bg-purple">
+                            <i class="fa fa-tachometer"/>
+                        </div>
+                        <div class="metric-body">
+                            <div class="metric-value"
+                                 t-att-class="getEfficiencyColor(state.metrics.efficiencyScore)">
+                                <t t-esc="state.metrics.efficiencyScore"/>
+                            </div>
+                            <div class="metric-label">Efficiency</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Viewer -->
+                <div class="dashboard-viewer">
+                    <t t-if="state.selectedLayout">
+                        <Warehouse3DViewer 
+                            layoutId="state.selectedLayout"
+                            viewMode="'3d'"
+                            showHeatmap="false"/>
+                    </t>
+                </div>
+
+                <!-- Actions Row -->
+                <div class="dashboard-actions">
+                    <button class="btn btn-primary" t-on-click="openLayoutForm">
+                        <i class="fa fa-edit"/> Edit Layout
+                    </button>
+                    <button class="btn btn-secondary" t-on-click="openBinList">
+                        <i class="fa fa-list"/> View Bins
+                    </button>
+                    <button class="btn btn-info" t-on-click="openMetricsReport">
+                        <i class="fa fa-chart-line"/> View Metrics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

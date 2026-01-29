@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+    <!-- Warehouse 3D Widget Template - OWL -->
+    <!-- To be implemented in PHASE 4-5 -->
+    
+    <t t-name="hdi_warehouse_3d.Warehouse3DWidget">
+        <div class="warehouse-3d-container">
+            <div class="warehouse-3d-viewer" t-ref="viewer"/>
+            <div class="warehouse-controls">
+                <button class="btn-zoom-in">+</button>
+                <button class="btn-zoom-out">-</button>
+                <button class="btn-reset">Reset</button>
+                <button class="btn-toggle-2d">2D</button>
+            </div>
+            <div class="warehouse-analytics">
+                <div class="metrics-panel"/>
+            </div>
+        </div>
+    </t>
+</templates>

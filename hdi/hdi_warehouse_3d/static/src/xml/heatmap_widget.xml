@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+    <!-- Heatmap Widget Template - OWL -->
+    <!-- To be implemented in PHASE 4-5 -->
+    
+    <t t-name="hdi_warehouse_3d.HeatmapWidget">
+        <div class="heatmap-container">
+            <div class="heatmap-viewer" t-ref="heatmap"/>
+            <div class="heatmap-legend">
+                <div class="legend-item">
+                    <span class="legend-color heatmap-cool"/>
+                    <span class="legend-label">Low Activity</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color heatmap-warm"/>
+                    <span class="legend-label">Medium Activity</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color heatmap-hot"/>
+                    <span class="legend-label">High Activity</span>
+                </div>
+            </div>
+            <div class="heatmap-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Picks:</span>
+                    <span class="stat-value" t-text="stats.total_picks"/>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Average:</span>
+                    <span class="stat-value" t-text="stats.avg_picks"/>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

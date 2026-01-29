@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ========== STOCK PICKING ROUTE VIEWS ========== -->
+    
+    <!-- Route Tree View -->
+    <record id="view_stock_picking_route_tree" model="ir.ui.view">
+        <field name="name">stock.picking.route.tree</field>
+        <field name="model">stock.picking.route</field>
+        <field name="arch" type="xml">
+            <tree string="Picking Routes">
+                <field name="picking_id"/>
+                <field name="route_type"/>
+                <field name="bin_count"/>
+                <field name="route_distance"/>
+                <field name="estimated_time" widget="float_time"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Route Form View -->
+    <record id="view_stock_picking_route_form" model="ir.ui.view">
+        <field name="name">stock.picking.route.form</field>
+        <field name="model">stock.picking.route</field>
+        <field name="arch" type="xml">
+            <form string="Picking Route">
+                <header>
+                    <button name="get_route_display" string="View Route Details" type="object" class="btn-primary" icon="fa-eye"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="picking_id"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="route_type" widget="badge"/>
+                            <field name="bin_count" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="route_distance" readonly="1"/>
+                            <field name="estimated_time" widget="float_time" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Optimized Sequence">
+                        <field name="optimized_sequence" widget="json" readonly="1"/>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <p><strong>Route Information:</strong></p>
+                        <ul>
+                            <li>Distance: <field name="route_distance"/> meters</li>
+                            <li>Estimated Time: <field name="estimated_time" widget="float_time"/> minutes</li>
+                            <li>Number of Bins: <field name="bin_count"/></li>
+                        </ul>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Route Action -->
+    <record id="action_stock_picking_route" model="ir.actions.act_window">
+        <field name="name">Picking Routes</field>
+        <field name="res_model">stock.picking.route</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+    
+    <!-- ========== WAREHOUSE HEATMAP VIEWS ========== -->
+    
+    <!-- Heatmap Tree View -->
+    <record id="view_warehouse_heatmap_tree" model="ir.ui.view">
+        <field name="name">warehouse.heatmap.tree</field>
+        <field name="model">warehouse.heatmap</field>
+        <field name="arch" type="xml">
+            <tree string="Warehouse Heatmaps">
+                <field name="layout_id"/>
+                <field name="date"/>
+                <field name="total_picks"/>
+                <field name="max_picks"/>
+                <field name="avg_picks" digits="[16,2]"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Heatmap Form View -->
+    <record id="view_warehouse_heatmap_form" model="ir.ui.view">
+        <field name="name">warehouse.heatmap.form</field>
+        <field name="model">warehouse.heatmap</field>
+        <field name="arch" type="xml">
+            <form string="Warehouse Heatmap">
+                <header>
+                    <button name="generate_heatmap" string="Generate Heatmap (30 days)" type="object" class="btn-primary" icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="layout_id"/>
+                        </h1>
+                        <h2>
+                            <field name="date"/>
+                        </h2>
+                    </div>
+                    
+                    <group>
+                        <group string="Statistics">
+                            <field name="total_picks" readonly="1"/>
+                            <field name="max_picks" readonly="1"/>
+                            <field name="avg_picks" readonly="1" digits="[16,2]"/>
+                        </group>
+                        <group>
+                            <div class="alert alert-success" role="alert">
+                                <h4><i class="fa fa-fire"/> Pick Frequency Analysis</h4>
+                                <p>Total picks in period: <strong><field name="total_picks" readonly="1"/></strong></p>
+                                <p>Hottest bin: <strong><field name="max_picks" readonly="1"/></strong> picks</p>
+                                <p>Average per bin: <strong><field name="avg_picks" readonly="1" digits="[16,2]"/></strong> picks</p>
+                            </div>
+                        </group>
+                    </group>
+                    
+                    <group string="Heatmap Data (JSON)">
+                        <field name="heatmap_data" widget="json" readonly="1" nolabel="1"/>
+                    </group>
+                    
+                    <separator string="Heatmap Visualization"/>
+                    <field name="id" widget="warehouse_heatmap_viewer" nolabel="1"/>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <p><i class="fa fa-info-circle"/> Heatmap shows pick frequency per bin. Higher values indicate frequently accessed bins.</p>
+                        <p>Use this data to optimize bin placement and reduce picking time.</p>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Heatmap Kanban View -->
+    <record id="view_warehouse_heatmap_kanban" model="ir.ui.view">
+        <field name="name">warehouse.heatmap.kanban</field>
+        <field name="model">warehouse.heatmap</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="layout_id"/>
+                <field name="date"/>
+                <field name="total_picks"/>
+                <field name="max_picks"/>
+                <field name="avg_picks"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="layout_id"/>
+                                        </strong>
+                                        <div class="o_kanban_record_subtitle">
+                                            <i class="fa fa-calendar"/> <field name="date"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="row">
+                                        <div class="col-4 text-center">
+                                            <h3><field name="total_picks"/></h3>
+                                            <small>Total Picks</small>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <h3><field name="max_picks"/></h3>
+                                            <small>Max Picks</small>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <h3><t t-esc="Math.round(record.avg_picks.raw_value)"/></h3>
+                                            <small>Avg Picks</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Heatmap Search View -->
+    <record id="view_warehouse_heatmap_search" model="ir.ui.view">
+        <field name="name">warehouse.heatmap.search</field>
+        <field name="model">warehouse.heatmap</field>
+        <field name="arch" type="xml">
+            <search string="Search Heatmaps">
+                <field name="layout_id"/>
+                <field name="date"/>
+                <filter string="This Month" name="filter_this_month" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Last 7 Days" name="filter_last_week" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Layout" name="group_layout" context="{'group_by': 'layout_id'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Heatmap Action -->
+    <record id="action_warehouse_heatmap" model="ir.actions.act_window">
+        <field name="name">Warehouse Heatmaps</field>
+        <field name="res_model">warehouse.heatmap</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_warehouse_heatmap_search"/>
+        <field name="context">{'search_default_filter_last_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Generate your first heatmap
+            </p>
+            <p>
+                Heatmaps visualize pick frequency across warehouse bins,
+                helping you optimize bin placement and reduce picking time.
+            </p>
+        </field>
+    </record>
+    
+    
+    <!-- ========== WAREHOUSE METRICS VIEWS ========== -->
+    
+    <!-- Metrics Tree View -->
+    <record id="view_warehouse_metrics_tree" model="ir.ui.view">
+        <field name="name">warehouse.metrics.tree</field>
+        <field name="model">warehouse.metrics</field>
+        <field name="arch" type="xml">
+            <tree string="Warehouse Metrics">
+                <field name="layout_id"/>
+                <field name="date"/>
+                <field name="total_picks"/>
+                <field name="avg_pick_time" widget="float_time"/>
+                <field name="bin_utilization_percentage" widget="progressbar"/>
+                <field name="efficiency_score" widget="progressbar"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Metrics Form View -->
+    <record id="view_warehouse_metrics_form" model="ir.ui.view">
+        <field name="name">warehouse.metrics.form</field>
+        <field name="model">warehouse.metrics</field>
+        <field name="arch" type="xml">
+            <form string="Warehouse Metrics">
+                <header>
+                    <button name="generate_metrics" string="Generate Metrics" type="object" class="btn-primary" icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="layout_id"/>
+                        </h1>
+                        <h2>
+                            <field name="date"/>
+                        </h2>
+                    </div>
+                    
+                    <!-- KPI Dashboard -->
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3><field name="total_picks" readonly="1"/></h3>
+                                    <p>Total Picks</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3><field name="avg_pick_time" widget="float_time" readonly="1"/></h3>
+                                    <p>Avg Pick Time</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h3><field name="bin_utilization_percentage" readonly="1"/>%</h3>
+                                    <p>Bin Utilization</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h3><field name="efficiency_score" readonly="1"/></h3>
+                                    <p>Efficiency Score</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <group>
+                        <group string="Picking Metrics">
+                            <field name="total_picks" readonly="1"/>
+                            <field name="avg_pick_time" widget="float_time" readonly="1"/>
+                            <field name="total_distance" readonly="1"/>
+                        </group>
+                        <group string="Inventory Metrics">
+                            <field name="empty_bins" readonly="1"/>
+                            <field name="partial_bins" readonly="1"/>
+                            <field name="full_bins" readonly="1"/>
+                            <field name="bin_utilization_percentage" widget="progressbar" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Efficiency Analysis">
+                        <field name="efficiency_score" widget="gauge" 
+                               options="{'max_field': 'max_field', 'style': 'width:160px; height: 120px;'}" readonly="1"/>
+                        <field name="bottleneck_zones" widget="json" readonly="1"/>
+                    </group>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <h4><i class="fa fa-line-chart"/> Performance Insights</h4>
+                        <p><strong>Efficiency Score:</strong> Calculated from utilization (40%), distribution (40%), and speed (20%).</p>
+                        <p><strong>Target:</strong> Keep efficiency score above 70 for optimal warehouse performance.</p>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Metrics Kanban View -->
+    <record id="view_warehouse_metrics_kanban" model="ir.ui.view">
+        <field name="name">warehouse.metrics.kanban</field>
+        <field name="model">warehouse.metrics</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="layout_id"/>
+                <field name="date"/>
+                <field name="efficiency_score"/>
+                <field name="bin_utilization_percentage"/>
+                <field name="total_picks"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="layout_id"/>
+                                        </strong>
+                                        <div class="o_kanban_record_subtitle">
+                                            <i class="fa fa-calendar"/> <field name="date"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body mt16">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="o_kanban_primary_left">
+                                                <span class="text-muted">Efficiency Score</span>
+                                                <div>
+                                                    <h2 t-attf-class="#{record.efficiency_score.raw_value &gt;= 70 ? 'text-success' : record.efficiency_score.raw_value &gt;= 50 ? 'text-warning' : 'text-danger'}">
+                                                        <field name="efficiency_score"/>/100
+                                                    </h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="o_kanban_primary_right">
+                                                <span class="text-muted">Utilization</span>
+                                                <div class="progress mt8" style="height: 20px;">
+                                                    <div class="progress-bar bg-info" role="progressbar" 
+                                                         t-attf-style="width: #{record.bin_utilization_percentage.raw_value}%">
+                                                        <t t-esc="Math.round(record.bin_utilization_percentage.raw_value)"/>%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt16">
+                                        <div class="col-12">
+                                            <i class="fa fa-cubes"/> <field name="total_picks"/> picks
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Metrics Search View -->
+    <record id="view_warehouse_metrics_search" model="ir.ui.view">
+        <field name="name">warehouse.metrics.search</field>
+        <field name="model">warehouse.metrics</field>
+        <field name="arch" type="xml">
+            <search string="Search Metrics">
+                <field name="layout_id"/>
+                <field name="date"/>
+                <filter string="High Efficiency" name="filter_high_efficiency" 
+                        domain="[('efficiency_score', '&gt;=', 70)]"/>
+                <filter string="Low Efficiency" name="filter_low_efficiency" 
+                        domain="[('efficiency_score', '&lt;', 50)]"/>
+                <separator/>
+                <filter string="This Month" name="filter_this_month" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Last 7 Days" name="filter_last_week" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Layout" name="group_layout" context="{'group_by': 'layout_id'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Metrics Action -->
+    <record id="action_warehouse_metrics" model="ir.actions.act_window">
+        <field name="name">Warehouse Metrics</field>
+        <field name="res_model">warehouse.metrics</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_warehouse_metrics_search"/>
+        <field name="context">{'search_default_filter_last_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Generate warehouse metrics
+            </p>
+            <p>
+                Track daily warehouse performance with KPIs including efficiency score,
+                utilization, and bottleneck detection.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

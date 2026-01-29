@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Server Action: Auto-optimize route when picking is confirmed -->
+        <record id="action_auto_optimize_route_on_confirm" model="ir.actions.server">
+            <field name="name">Auto-optimize Picking Route</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="binding_model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">
+if records.filtered(lambda p: p.use_optimized_route and p.state == 'assigned' and not p.route_id):
+    for picking in records:
+        picking.optimize_picking_route()
+            </field>
+        </record>
+        
+        <!-- Automated Action: Trigger route optimization when picking state = assigned -->
+        <record id="base_automation_optimize_route" model="base.automation">
+            <field name="name">Auto-optimize Route on Picking Ready</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="trigger">on_write</field>
+            <field name="filter_domain">[('state', '=', 'assigned'), ('use_optimized_route', '=', True), ('route_id', '=', False)]</field>
+            <field name="state">code</field>
+            <field name="code">
+for record in records:
+    record.optimize_picking_route()
+            </field>
+            <field name="active" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>

@@ -1,0 +1,19 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_warehouse_layout_user,warehouse.layout user,model_warehouse_layout,base.group_user,1,0,0,0
+access_warehouse_layout_manager,warehouse.layout manager,model_warehouse_layout,stock.group_stock_manager,1,1,1,1
+access_warehouse_zone_user,warehouse.zone user,model_warehouse_zone,base.group_user,1,0,0,0
+access_warehouse_zone_manager,warehouse.zone manager,model_warehouse_zone,stock.group_stock_manager,1,1,1,1
+access_warehouse_aisle_user,warehouse.aisle user,model_warehouse_aisle,base.group_user,1,0,0,0
+access_warehouse_aisle_manager,warehouse.aisle manager,model_warehouse_aisle,stock.group_stock_manager,1,1,1,1
+access_warehouse_rack_user,warehouse.rack user,model_warehouse_rack,base.group_user,1,0,0,0
+access_warehouse_rack_manager,warehouse.rack manager,model_warehouse_rack,stock.group_stock_manager,1,1,1,1
+access_warehouse_shelf_user,warehouse.shelf user,model_warehouse_shelf,base.group_user,1,0,0,0
+access_warehouse_shelf_manager,warehouse.shelf manager,model_warehouse_shelf,stock.group_stock_manager,1,1,1,1
+access_warehouse_bin_user,warehouse.bin user,model_warehouse_bin,base.group_user,1,0,0,0
+access_warehouse_bin_manager,warehouse.bin manager,model_warehouse_bin,stock.group_stock_manager,1,1,1,1
+access_stock_picking_route_user,stock.picking.route user,model_stock_picking_route,base.group_user,1,0,0,0
+access_stock_picking_route_manager,stock.picking.route manager,model_stock_picking_route,stock.group_stock_manager,1,1,1,1
+access_warehouse_heatmap_user,warehouse.heatmap user,model_warehouse_heatmap,base.group_user,1,0,0,0
+access_warehouse_heatmap_manager,warehouse.heatmap manager,model_warehouse_heatmap,stock.group_stock_manager,1,1,1,1
+access_warehouse_metrics_user,warehouse.metrics user,model_warehouse_metrics,base.group_user,1,0,0,0
+access_warehouse_metrics_manager,warehouse.metrics manager,model_warehouse_metrics,stock.group_stock_manager,1,1,1,1

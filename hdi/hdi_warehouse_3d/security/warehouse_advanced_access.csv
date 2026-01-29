@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_warehouse_crossdock_user,warehouse.crossdock.user,model_warehouse_crossdock,stock.group_stock_user,1,1,1,0
+access_warehouse_crossdock_manager,warehouse.crossdock.manager,model_warehouse_crossdock,stock.group_stock_manager,1,1,1,1
+access_warehouse_bin_movement_user,warehouse.bin.movement.user,model_warehouse_bin_movement,stock.group_stock_user,1,0,1,0
+access_warehouse_bin_movement_manager,warehouse.bin.movement.manager,model_warehouse_bin_movement,stock.group_stock_manager,1,1,1,1
+access_warehouse_pick_tote_user,warehouse.pick.tote.user,model_warehouse_pick_tote,stock.group_stock_user,1,1,1,0
+access_warehouse_pick_tote_manager,warehouse.pick.tote.manager,model_warehouse_pick_tote,stock.group_stock_manager,1,1,1,1
+access_warehouse_pick_tote_line_user,warehouse.pick.tote.line.user,model_warehouse_pick_tote_line,stock.group_stock_user,1,1,1,0
+access_warehouse_pick_tote_line_manager,warehouse.pick.tote.line.manager,model_warehouse_pick_tote_line,stock.group_stock_manager,1,1,1,1
+access_warehouse_pick_wave_user,warehouse.pick.wave.user,model_warehouse_pick_wave,stock.group_stock_user,1,1,1,0
+access_warehouse_pick_wave_manager,warehouse.pick.wave.manager,model_warehouse_pick_wave,stock.group_stock_manager,1,1,1,1
+access_warehouse_packing_station_user,warehouse.packing.station.user,model_warehouse_packing_station,stock.group_stock_user,1,0,0,0
+access_warehouse_packing_station_manager,warehouse.packing.station.manager,model_warehouse_packing_station,stock.group_stock_manager,1,1,1,1

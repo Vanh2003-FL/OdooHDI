@@ -1,0 +1,359 @@
+/* Warehouse 3D Viewer Styles */
+
+.warehouse-3d-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    background: #fafafa;
+
+    .viewer-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        background: #fff;
+        border-bottom: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .zoom-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            span {
+                min-width: 50px;
+                text-align: center;
+                font-weight: 500;
+            }
+        }
+    }
+
+    .viewer-container-wrapper {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .warehouse-3d-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        cursor: grab;
+
+        &:active {
+            cursor: grabbing;
+        }
+
+        canvas {
+            display: block;
+            outline: none;
+        }
+    }
+
+    .loading-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #666;
+
+        i {
+            margin-bottom: 20px;
+            color: #2196F3;
+        }
+
+        p {
+            font-size: 16px;
+            margin: 0;
+        }
+    }
+
+    .bin-details-panel {
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        width: 300px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10;
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: 8px 8px 0 0;
+
+            h4 {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 600;
+            }
+
+            .btn {
+                color: #fff;
+                opacity: 0.8;
+                
+                &:hover {
+                    opacity: 1;
+                }
+            }
+        }
+
+        .panel-body {
+            padding: 15px;
+
+            .detail-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 0;
+                border-bottom: 1px solid #f0f0f0;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .label {
+                    font-weight: 600;
+                    color: #666;
+                    font-size: 13px;
+                }
+
+                .value {
+                    color: #333;
+                    font-size: 14px;
+                    
+                    &.text-success {
+                        color: #4CAF50;
+                        font-weight: 600;
+                    }
+                    
+                    &.text-warning {
+                        color: #FFC107;
+                        font-weight: 600;
+                    }
+                    
+                    &.text-danger {
+                        color: #F44336;
+                        font-weight: 600;
+                    }
+                }
+
+                .progress {
+                    flex: 1;
+                    height: 20px;
+                    margin-left: 10px;
+                }
+            }
+        }
+    }
+}
+
+/* Warehouse 2D Viewer Styles */
+
+.warehouse-2d-viewer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: #fff;
+
+    .viewer-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .zoom-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+
+            span {
+                min-width: 50px;
+                text-align: center;
+                font-weight: 500;
+                color: #495057;
+            }
+
+            button {
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            }
+        }
+    }
+
+    .svg-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #fafafa;
+
+        .warehouse-svg {
+            cursor: default;
+
+            .bin {
+                transition: all 0.2s ease;
+
+                &:hover rect {
+                    opacity: 1;
+                    stroke-width: 0.15;
+                    filter: brightness(1.1);
+                }
+            }
+
+            .zone {
+                pointer-events: none;
+            }
+
+            .aisle {
+                pointer-events: none;
+            }
+
+            .grid {
+                pointer-events: none;
+            }
+        }
+    }
+
+    .bin-tooltip {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        z-index: 10;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        min-width: 200px;
+
+        strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 6px;
+            color: #64b5f6;
+        }
+
+        div {
+            margin: 4px 0;
+        }
+    }
+}
+
+/* Layout Viewer Widget (embedded in forms) */
+
+.layout-viewer-widget {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Responsive adjustments */
+
+@media (max-width: 768px) {
+    .warehouse-3d-viewer .bin-details-panel {
+        width: 100%;
+        max-width: 300px;
+        right: 10px;
+        top: 60px;
+    }
+
+    .warehouse-2d-viewer .viewer-toolbar {
+        flex-wrap: wrap;
+        
+        .zoom-controls {
+            margin-left: 0;
+            margin-top: 10px;
+        }
+    }
+}
+
+/* Loading animations */
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading-spinner i.fa-spin {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Heatmap legend */
+
+.heatmap-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 5;
+
+    h5 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+
+        .color-box {
+            width: 30px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+
+        .label {
+            font-size: 12px;
+            color: #666;
+        }
+    }
+}

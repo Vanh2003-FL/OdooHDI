@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- 3D Viewer Template -->
+    <t t-name="hdi_warehouse_3d.Warehouse3DViewerTemplate">
+        <div class="warehouse-3d-viewer">
+            <div class="viewer-toolbar">
+                <button class="btn btn-sm btn-primary" t-on-click="() => this.toggleViewMode()">
+                    <i class="fa fa-exchange"/> Toggle 2D/3D
+                </button>
+                <button class="btn btn-sm btn-secondary" t-on-click="() => this.toggleHeatmap()">
+                    <i class="fa fa-fire"/> 
+                    <t t-if="state.showHeatmap">Hide Heatmap</t>
+                    <t t-else="">Show Heatmap</t>
+                </button>
+                <button class="btn btn-sm btn-info" t-on-click="() => this.loadLayoutData()">
+                    <i class="fa fa-refresh"/> Refresh
+                </button>
+            </div>
+
+            <div class="viewer-container-wrapper">
+                <t t-if="state.loading">
+                    <div class="loading-spinner">
+                        <i class="fa fa-spinner fa-spin fa-3x"/>
+                        <p>Loading warehouse layout...</p>
+                    </div>
+                </t>
+                
+                <t t-elif="state.error">
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle"/> 
+                        <t t-esc="state.error"/>
+                    </div>
+                </t>
+                
+                <t t-else="">
+                    <t t-if="state.viewMode === '3d'">
+                        <div id="warehouse-3d-container" class="warehouse-3d-container"/>
+                    </t>
+                    <t t-else="">
+                        <Warehouse2DViewer 
+                            layoutId="props.layoutId"
+                            editable="false"
+                            showHeatmap="state.showHeatmap"/>
+                    </t>
+                </t>
+            </div>
+
+            <!-- Bin Details Panel -->
+            <t t-if="state.selectedBin">
+                <div class="bin-details-panel">
+                    <div class="panel-header">
+                        <h4><t t-esc="state.selectedBin.name"/></h4>
+                        <button class="btn btn-sm" t-on-click="() => this.state.selectedBin = null">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="detail-row">
+                            <span class="label">Status:</span>
+                            <span class="value" t-att-class="{
+                                'text-success': state.selectedBin.bin_status === 'empty',
+                                'text-warning': state.selectedBin.bin_status === 'partial',
+                                'text-danger': state.selectedBin.bin_status === 'full'
+                            }">
+                                <t t-esc="state.selectedBin.bin_status"/>
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Location:</span>
+                            <span class="value"><t t-esc="state.selectedBin.location_id[1]"/></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Position:</span>
+                            <span class="value">
+                                X: <t t-esc="state.selectedBin.position_x"/>, 
+                                Y: <t t-esc="state.selectedBin.position_y"/>, 
+                                Z: <t t-esc="state.selectedBin.position_z"/>
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Dimensions:</span>
+                            <span class="value">
+                                <t t-esc="state.selectedBin.width"/> × 
+                                <t t-esc="state.selectedBin.height"/> × 
+                                <t t-esc="state.selectedBin.depth"/> m
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Capacity:</span>
+                            <span class="value">
+                                <t t-esc="state.selectedBin.current_weight"/> / 
+                                <t t-esc="state.selectedBin.max_weight"/> kg
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Utilization:</span>
+                            <div class="progress" style="width: 100%;">
+                                <div class="progress-bar bg-info" 
+                                     t-att-style="'width: ' + (state.selectedBin.utilization_percentage || 0) + '%'">
+                                    <t t-esc="Math.round(state.selectedBin.utilization_percentage || 0)"/>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <!-- 2D Viewer Template -->
+    <t t-name="hdi_warehouse_3d.Warehouse2DViewerTemplate">
+        <div class="warehouse-2d-viewer">
+            <div class="viewer-toolbar">
+                <button class="btn btn-sm btn-primary" t-on-click="() => this.toggleHeatmap()">
+                    <i class="fa fa-fire"/>
+                    <t t-if="state.showHeatmap">Hide Heatmap</t>
+                    <t t-else="">Show Heatmap</t>
+                </button>
+                <button class="btn btn-sm btn-secondary" t-if="props.editable">
+                    <i class="fa fa-edit"/> Edit Mode
+                </button>
+                <button class="btn btn-sm btn-info" t-on-click="() => this.loadLayoutData()">
+                    <i class="fa fa-refresh"/> Refresh
+                </button>
+                <div class="zoom-controls">
+                    <button class="btn btn-sm" t-on-click="() => this.state.scale *= 1.2">
+                        <i class="fa fa-plus"/>
+                    </button>
+                    <span><t t-esc="Math.round(state.scale * 100)"/>%</span>
+                    <button class="btn btn-sm" t-on-click="() => this.state.scale *= 0.8">
+                        <i class="fa fa-minus"/>
+                    </button>
+                </div>
+            </div>
+
+            <div class="svg-container">
+                <t t-if="state.loading">
+                    <div class="loading-spinner">
+                        <i class="fa fa-spinner fa-spin fa-2x"/>
+                        <p>Loading 2D map...</p>
+                    </div>
+                </t>
+                <t t-else="">
+                    <svg t-ref="svgContainer" class="warehouse-svg" 
+                         width="100%" height="100%" 
+                         preserveAspectRatio="xMidYMid meet"/>
+                </t>
+            </div>
+
+            <!-- Bin Info Tooltip -->
+            <t t-if="state.selectedBin">
+                <div class="bin-tooltip">
+                    <strong><t t-esc="state.selectedBin.name"/></strong>
+                    <div>Status: <t t-esc="state.selectedBin.bin_status"/></div>
+                    <div>Utilization: <t t-esc="Math.round(state.selectedBin.utilization_percentage || 0)"/>%</div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <!-- Field Widget for Layout Viewer -->
+    <t t-name="hdi_warehouse_3d.LayoutViewerWidget">
+        <div class="layout-viewer-widget">
+            <Warehouse3DViewer 
+                layoutId="props.record.data.id"
+                viewMode="props.viewMode || '3d'"
+                showHeatmap="props.showHeatmap || false"/>
+        </div>
+    </t>
+
+</templates>

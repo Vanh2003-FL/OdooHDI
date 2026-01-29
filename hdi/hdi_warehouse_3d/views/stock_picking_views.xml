@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Extend Stock Picking Form with Route Optimization -->
+    <record id="view_picking_form_route" model="ir.ui.view">
+        <field name="name">stock.picking.form.route</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add buttons in header -->
+            <xpath expr="//button[@name='button_validate']" position="after">
+                <button name="optimize_picking_route" string="Optimize Route" type="object" 
+                        class="btn-primary" icon="fa-route"
+                        attrs="{'invisible': ['|', ('use_optimized_route', '=', False), ('state', 'not in', ['assigned', 'confirmed'])]}"/>
+                <button name="action_open_route_viewer" string="View Route" type="object" 
+                        class="btn-secondary" icon="fa-eye"
+                        attrs="{'invisible': [('route_id', '=', False)]}"/>
+            </xpath>
+            
+            <!-- Add smart button for route -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_route_viewer" type="object" 
+                        class="oe_stat_button" icon="fa-route"
+                        attrs="{'invisible': [('route_id', '=', False)]}">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="route_id" invisible="1"/>
+                            <field name="route_sequence" invisible="1"/>
+                            <t t-if="route_sequence"><t t-esc="len(route_sequence)"/> bins</t>
+                        </span>
+                        <span class="o_stat_text">Route</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <!-- Add Route Optimization fields after origin -->
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="use_optimized_route"/>
+                <field name="route_optimization_type" 
+                       attrs="{'invisible': [('use_optimized_route', '=', False)],
+                               'required': [('use_optimized_route', '=', True)]}"/>
+            </xpath>
+            
+            <!-- Add Route Information page -->
+            <xpath expr="//page[@name='note']" position="before">
+                <page string="Route Information" name="route_info" 
+                      attrs="{'invisible': [('route_id', '=', False)]}">
+                    <group>
+                        <group>
+                            <field name="route_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <label for="route_sequence"/>
+                            <div>
+                                <field name="route_sequence" widget="json" readonly="1"/>
+                            </div>
+                        </group>
+                    </group>
+                    <div class="alert alert-success" role="alert">
+                        <p><i class="fa fa-check-circle"/> Route optimized! Click "View Route" to see the visualization.</p>
+                    </div>
+                    
+                    <separator string="Route Visualization"/>
+                    <field name="id" widget="picking_route_viewer" nolabel="1"/>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- Extend Picking Tree View -->
+    <record id="view_picking_internal_search_route" model="ir.ui.view">
+        <field name="name">stock.picking.search.route</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="With Route" name="filter_with_route" domain="[('route_id', '!=', False)]"/>
+                <filter string="Route Optimized" name="filter_route_optimized" domain="[('use_optimized_route', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+    
+</odoo>
