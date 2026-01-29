@@ -20,7 +20,7 @@ export class InventorySidebar {
     async loadInventoryData() {
         // Load products with stock quantities
         try {
-            const quants = await this.orm.search_read(
+            const quants = await this.orm.searchRead(
                 'stock.quant',
                 [
                     ['warehouse_id', '=', this.state.warehouseId],

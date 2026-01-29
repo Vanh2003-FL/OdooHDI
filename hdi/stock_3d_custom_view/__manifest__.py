@@ -24,6 +24,7 @@
             'stock_3d_custom_view/static/src/css/3d_view.scss',
             # New warehouse layout editor
             'stock_3d_custom_view/static/src/js/warehouse_layout_editor.js',
+            'stock_3d_custom_view/static/src/js/inventory_sidebar.js',
             'stock_3d_custom_view/static/src/css/warehouse_layout_editor.scss',
             # Three.js and controls
             'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js',

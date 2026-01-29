@@ -12,7 +12,7 @@
                     <li class="breadcrumb-item">
                         <a href="#">Warehouses</a>
                     </li>
-                    <li class="breadcrumb-item active" t-text="warehouse_name"/>
+                    <li class="breadcrumb-item active" t-esc="state.warehouseName"/>
                 </ol>
                 <div class="warehouse-actions">
                     <button class="btn btn-sm btn-secondary" id="btn_toggle_2d_3d">
@@ -86,16 +86,16 @@
                 <img t-att-src="product_image_url" alt="Product Image"/>
             </div>
             <div class="item-details">
-                <h6 class="item-name" t-text="product_name"/>
+                <h6 class="item-name" t-esc="product_name"/>
                 <p class="item-sku">
-                    <strong>SKU:</strong> <span t-text="product_sku"/>
+                    <strong>SKU:</strong> <span t-esc="product_sku"/>
                 </p>
                 <p class="item-quantity">
                     <strong>Quantity:</strong> 
-                    <span class="badge badge-info" t-text="quantity"/>
+                    <span class="badge badge-info" t-esc="quantity"/>
                 </p>
                 <p class="item-location">
-                    <strong>Location:</strong> <span t-text="location_name"/>
+                    <strong>Location:</strong> <span t-esc="location_name"/>
                 </p>
             </div>
             <div class="item-actions">

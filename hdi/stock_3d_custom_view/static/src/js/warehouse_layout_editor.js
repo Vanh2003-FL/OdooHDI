@@ -6,14 +6,45 @@ import { _t } from "@web/core/l10n/translation";
 import { renderToElement } from "@web/core/utils/xml";
 
 export class WarehouseLayoutEditor extends Component {
+    static template = "stock_3d_custom_view.warehouse_layout_editor_main";
+
     setup() {
         this.orm = useService("orm");
         this.dialog = useService("dialog");
         this.notification = useService("notification");
         
+        // Get warehouse ID from action - try multiple locations
+        let warehouseId = null;
+        let companyId = null;
+        
+        // Priority order for finding warehouse_id:
+        // 1. props.action.context.active_id (Odoo converts warehouse_id to active_id)
+        // 2. props.warehouse_id (direct property)
+        // 3. props.action.warehouse_id (nested in action)
+        // 4. props.action.context.warehouse_id (nested in context)
+        if (this.props.action?.context?.active_id) {
+            warehouseId = this.props.action.context.active_id;
+        } else if (this.props.warehouse_id) {
+            warehouseId = this.props.warehouse_id;
+            companyId = this.props.company_id;
+        } else if (this.props.action?.warehouse_id) {
+            warehouseId = this.props.action.warehouse_id;
+            companyId = this.props.action.company_id;
+        } else if (this.props.action?.context?.warehouse_id) {
+            warehouseId = this.props.action.context.warehouse_id;
+            companyId = this.props.action.context.company_id;
+        }
+        
+        console.log('WarehouseLayoutEditor - warehouse_id found:', warehouseId);
+        
+        if (!warehouseId) {
+            console.error('warehouse_id not found in any location. Props:', this.props);
+            this.notification.add(_t('Error: Warehouse ID not found'), { type: 'danger' });
+        }
+        
         this.state = useState({
-            warehouseId: this.props.action.context.warehouse_id,
-            companyId: this.props.action.context.company_id,
+            warehouseId: warehouseId,
+            companyId: companyId,
             warehouseName: '',
             locations: [],
             products: [],
@@ -27,8 +58,10 @@ export class WarehouseLayoutEditor extends Component {
         this.canvas3DRef = useRef('canvas_3d_viewer');
         
         onWillStart(async () => {
-            await this.loadWarehouseData();
-            await this.loadInventoryData();
+            if (this.state.warehouseId) {
+                await this.loadWarehouseData();
+                await this.loadInventoryData();
+            }
         });
 
         onMounted(() => {
@@ -54,7 +87,7 @@ export class WarehouseLayoutEditor extends Component {
                 this.state.canvasHeight = wh.layout_height || 800;
             }
 
-            const locations = await this.orm.search_read(
+            const locations = await this.orm.searchRead(
                 'stock.location',
                 [['warehouse_id', '=', this.state.warehouseId], ['usage', '=', 'internal']],
                 ['id', 'name', 'unique_code', 'length', 'width', 'height', 'pos_x', 'pos_y', 'pos_z', 'max_capacity']
@@ -70,7 +103,7 @@ export class WarehouseLayoutEditor extends Component {
     async loadInventoryData() {
         // Load stock quantity and products
         try {
-            const products = await this.orm.search_read(
+            const products = await this.orm.searchRead(
                 'product.product',
                 [['type', '=', 'product']],
                 ['id', 'name', 'default_code', 'image_1920'],
@@ -430,19 +463,19 @@ export class WarehouseLayoutEditor extends Component {
         // Save entire layout to database
         try {
             await this.orm.write('stock.warehouse', [this.state.warehouseId], {
-                'is_2d_configured': true,
-                'layout_width': this.state.canvasWidth,
-                'layout_height': this.state.canvasHeight,
+                is_2d_configured: true,
+                layout_width: this.state.canvasWidth,
+                layout_height: this.state.canvasHeight,
             });
 
             for (const location of this.state.locations) {
                 await this.orm.write('stock.location', [location.id], {
-                    'pos_x': location.pos_x || 0,
-                    'pos_y': location.pos_y || 0,
-                    'pos_z': location.pos_z || 0,
-                    'length': location.length || 1,
-                    'width': location.width || 1,
-                    'height': location.height || 1,
+                    pos_x: location.pos_x || 0,
+                    pos_y: location.pos_y || 0,
+                    pos_z: location.pos_z || 0,
+                    length: location.length || 1,
+                    width: location.width || 1,
+                    height: location.height || 1,
                 });
             }
 
@@ -481,9 +514,9 @@ export class WarehouseLayoutEditor extends Component {
         // Auto-save location position
         try {
             await this.orm.write('stock.location', [location.id], {
-                'pos_x': location.pos_x || 0,
-                'pos_y': location.pos_y || 0,
-                'pos_z': location.pos_z || 0,
+                pos_x: location.pos_x || 0,
+                pos_y: location.pos_y || 0,
+                pos_z: location.pos_z || 0,
             });
         } catch (error) {
             console.error('Error saving location position:', error);
@@ -545,7 +578,7 @@ export class WarehouseLayoutEditor extends Component {
             try {
                 const locationIds = this.state.locations.map(loc => loc.id);
                 if (locationIds.length > 0) {
-                    this.orm.unlink('stock.location', locationIds);
+                    await this.orm.unlink('stock.location', locationIds);
                 }
                 this.state.locations = [];
                 this.state.selectedLocation = null;

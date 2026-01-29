@@ -53,6 +53,9 @@ class StockWarehouse(models.Model):
         return {
             'type': 'ir.actions.client',
             'tag': 'open_warehouse_layout_editor',
+            'warehouse_id': self.id,
+            'company_id': self.company_id.id,
+            'warehouse_name': self.name,
             'context': {
                 'warehouse_id': self.id,
                 'company_id': self.company_id.id,
