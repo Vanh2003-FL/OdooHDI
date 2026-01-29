@@ -101,14 +101,7 @@
                         </group>
                         <group>
                             <field name="total_weight" readonly="1"/>
-                            <div class="o_row">
-                                <span>Utilization: </span>
-                                <field name="total_weight" invisible="1"/>
-                                <field name="max_weight" invisible="1"/>
-                                <span t-if="total_weight and max_weight">
-                                    <t t-esc="round(total_weight / max_weight * 100, 1)"/>%
-                                </span>
-                            </div>
+                            <field name="utilization_percentage" widget="progressbar" readonly="1"/>
                         </group>
                     </group>
                     

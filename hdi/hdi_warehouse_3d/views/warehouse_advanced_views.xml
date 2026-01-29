@@ -297,7 +297,7 @@
     <record id="action_warehouse_bin_movement" model="ir.actions.act_window">
         <field name="name">Bin Movements</field>
         <field name="res_model">warehouse.bin.movement</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_week': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -565,7 +565,7 @@
     <record id="action_warehouse_pick_wave" model="ir.actions.act_window">
         <field name="name">Pick Waves</field>
         <field name="res_model">warehouse.pick.wave</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- Packing Station Views -->
@@ -605,7 +605,7 @@
     <record id="action_warehouse_packing_station" model="ir.actions.act_window">
         <field name="name">Packing Stations</field>
         <field name="res_model">warehouse.packing.station</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <!-- Menu Items -->

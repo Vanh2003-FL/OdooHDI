@@ -174,7 +174,7 @@
     <record id="action_warehouse_layout" model="ir.actions.act_window">
         <field name="name">Warehouse Layouts</field>
         <field name="res_model">warehouse.layout</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="search_view_id" ref="view_warehouse_layout_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -263,7 +263,7 @@
     <record id="action_warehouse_zone" model="ir.actions.act_window">
         <field name="name">Zones</field>
         <field name="res_model">warehouse.zone</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
     
     
@@ -333,7 +333,7 @@
     <record id="action_warehouse_aisle" model="ir.actions.act_window">
         <field name="name">Aisles</field>
         <field name="res_model">warehouse.aisle</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
     
     
@@ -412,7 +412,7 @@
     <record id="action_warehouse_rack" model="ir.actions.act_window">
         <field name="name">Racks</field>
         <field name="res_model">warehouse.rack</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
     
     
