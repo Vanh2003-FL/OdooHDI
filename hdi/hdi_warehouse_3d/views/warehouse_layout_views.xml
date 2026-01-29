@@ -130,7 +130,7 @@
                     <t t-name="kanban-box">
                         <div class="oe_kanban_global_click">
                             <div class="o_kanban_image">
-                                <i class="fa fa-cube fa-3x" style="color: #875A7B;"/>
+                                <i class="fa fa-cube fa-3x" style="color: #875A7B;" title="Warehouse Layout"/>
                             </div>
                             <div class="oe_kanban_details">
                                 <strong class="o_kanban_record_title">

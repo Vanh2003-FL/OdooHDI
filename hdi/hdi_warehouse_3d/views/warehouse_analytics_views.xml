@@ -111,7 +111,7 @@
                         </group>
                         <group>
                             <div class="alert alert-success" role="alert">
-                                <h4><i class="fa fa-fire"/> Pick Frequency Analysis</h4>
+                                <h4><i class="fa fa-fire" title="Pick Frequency Analysis"/> Pick Frequency Analysis</h4>
                                 <p>Total picks in period: <strong><field name="total_picks" readonly="1"/></strong></p>
                                 <p>Hottest bin: <strong><field name="max_picks" readonly="1"/></strong> picks</p>
                                 <p>Average per bin: <strong><field name="avg_picks" readonly="1" digits="[16,2]"/></strong> picks</p>
@@ -127,7 +127,7 @@
                     <field name="id" widget="warehouse_heatmap_viewer" nolabel="1"/>
                     
                     <div class="alert alert-info" role="alert">
-                        <p><i class="fa fa-info-circle"/> Heatmap shows pick frequency per bin. Higher values indicate frequently accessed bins.</p>
+                        <p><i class="fa fa-info-circle" title="Information"/> Heatmap shows pick frequency per bin. Higher values indicate frequently accessed bins.</p>
                         <p>Use this data to optimize bin placement and reduce picking time.</p>
                     </div>
                 </sheet>
@@ -156,7 +156,7 @@
                                             <field name="layout_id"/>
                                         </strong>
                                         <div class="o_kanban_record_subtitle">
-                                            <i class="fa fa-calendar"/> <field name="date"/>
+                                            <i class="fa fa-calendar" title="Date"/> <field name="date"/>
                                         </div>
                                     </div>
                                 </div>
@@ -317,7 +317,7 @@
                     </group>
                     
                     <div class="alert alert-info" role="alert">
-                        <h4><i class="fa fa-line-chart"/> Performance Insights</h4>
+                        <h4><i class="fa fa-line-chart" title="Performance Insights"/> Performance Insights</h4>
                         <p><strong>Efficiency Score:</strong> Calculated from utilization (40%), distribution (40%), and speed (20%).</p>
                         <p><strong>Target:</strong> Keep efficiency score above 70 for optimal warehouse performance.</p>
                     </div>
@@ -347,7 +347,7 @@
                                             <field name="layout_id"/>
                                         </strong>
                                         <div class="o_kanban_record_subtitle">
-                                            <i class="fa fa-calendar"/> <field name="date"/>
+                                            <i class="fa fa-calendar" title="Date"/> <field name="date"/>
                                         </div>
                                     </div>
                                 </div>
@@ -377,7 +377,7 @@
                                     </div>
                                     <div class="row mt16">
                                         <div class="col-12">
-                                            <i class="fa fa-cubes"/> <field name="total_picks"/> picks
+                                            <i class="fa fa-cubes" title="Total Picks"/> <field name="total_picks"/> picks
                                         </div>
                                     </div>
                                 </div>

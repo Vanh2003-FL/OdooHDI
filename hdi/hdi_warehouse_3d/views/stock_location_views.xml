@@ -1,55 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
-    <!-- Extend Stock Location Form with 3D Fields -->
-    <record id="view_location_form_3d" model="ir.ui.view">
-        <field name="name">stock.location.form.3d</field>
-        <field name="model">stock.location</field>
-        <field name="inherit_id" ref="stock.view_location_form"/>
-        <field name="arch" type="xml">
-            
-            <!-- Add 3D button in header -->
-            <xpath expr="//header" position="inside">
-                <button name="get_3d_info" string="View 3D Position" type="object" 
-                        class="btn-secondary" icon="fa-cube" groups="stock.group_stock_manager"/>
-            </xpath>
-            
-            <!-- Add Bin field after location_id -->
-            <xpath expr="//field[@name='location_id']" position="after">
-                <field name="bin_id" string="Linked Warehouse Bin" 
-                       options="{'no_create': True}"
-                       attrs="{'invisible': [('usage', '!=', 'internal')]}"/>
-            </xpath>
-            
-            <!-- Add new page for 3D Configuration -->
-            <xpath expr="//notebook" position="inside">
-                <page string="3D Configuration" name="config_3d" groups="stock.group_stock_manager">
-                    <group>
-                        <group string="3D Position (meters)">
-                            <field name="loc_x"/>
-                            <field name="loc_y"/>
-                            <field name="loc_z"/>
+        
+        <!-- Extend Stock Location Form with 3D Fields -->
+        <record id="view_location_form_3d" model="ir.ui.view">
+            <field name="name">stock.location.form.3d</field>
+            <field name="model">stock.location</field>
+            <field name="inherit_id" ref="stock.view_location_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add Bin field after location_id -->
+                <xpath expr="//field[@name='location_id']" position="after">
+                    <field name="bin_id" string="Linked Warehouse Bin" 
+                        options="{'no_create': True}"
+                        attrs="{'invisible': [('usage', '!=', 'internal')]}"/>
+                </xpath>
+                
+                <!-- Add new page for 3D Configuration -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="3D Configuration" name="config_3d" groups="stock.group_stock_manager">
+                        <group>
+                            <group string="3D Position (meters)">
+                                <field name="loc_x"/>
+                                <field name="loc_y"/>
+                                <field name="loc_z"/>
+                            </group>
+                            <group string="Dimensions (meters)">
+                                <field name="loc_width"/>
+                                <field name="loc_length"/>
+                                <field name="loc_height"/>
+                            </group>
                         </group>
-                        <group string="Dimensions (meters)">
-                            <field name="loc_width"/>
-                            <field name="loc_length"/>
-                            <field name="loc_height"/>
+                        <group>
+                            <group string="Visual Properties">
+                                <field name="loc_color" widget="color"/>
+                                <field name="loc_icon"/>
+                            </group>
+                            <group string="Capacity">
+                                <field name="max_weight"/>
+                                <field name="max_volume"/>
+                            </group>
                         </group>
-                    </group>
-                    <group>
-                        <group string="Visual Properties">
-                            <field name="loc_color" widget="color"/>
-                            <field name="loc_icon"/>
-                        </group>
-                        <group string="Capacity">
-                            <field name="max_weight"/>
-                            <field name="max_volume"/>
-                        </group>
-                    </group>
-                </page>
-            </xpath>
-            
-        </field>
-    </record>
-    
-</odoo>
+                    </page>
+                </xpath>
+                
+            </field>
+        </record>
+        
+    </odoo>

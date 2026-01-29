@@ -101,7 +101,7 @@
                         </group>
                         <group>
                             <field name="total_weight" readonly="1"/>
-                            <field name="utilization_percentage" widget="progressbar" readonly="1"/>
+                            <field name="max_weight" readonly="1"/>
                         </group>
                     </group>
                     
@@ -161,15 +161,15 @@
                                 <div class="o_kanban_record_body">
                                     <div class="row">
                                         <div class="col-6">
-                                            <i class="fa fa-cubes"/> <field name="total_quantity"/> units
+                                            <i class="fa fa-cubes" title="Total Quantity"/> <field name="total_quantity"/> units
                                         </div>
                                         <div class="col-6">
-                                            <i class="fa fa-balance-scale"/> <field name="total_weight"/> kg
+                                            <i class="fa fa-balance-scale" title="Total Weight"/> <field name="total_weight"/> kg
                                         </div>
                                     </div>
                                     <div class="row mt8">
                                         <div class="col-12">
-                                            <i class="fa fa-line-chart"/> <field name="pick_frequency"/> picks (30d)
+                                            <i class="fa fa-line-chart" title="Pick Frequency"/> <field name="pick_frequency"/> picks (30d)
                                         </div>
                                     </div>
                                     <div class="row mt8">
@@ -227,7 +227,7 @@
     <record id="action_warehouse_bin" model="ir.actions.act_window">
         <field name="name">Warehouse Bins</field>
         <field name="res_model">warehouse.bin</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="search_view_id" ref="view_warehouse_bin_search"/>
         <field name="context">{'search_default_filter_pick_bins': 1}</field>
         <field name="help" type="html">

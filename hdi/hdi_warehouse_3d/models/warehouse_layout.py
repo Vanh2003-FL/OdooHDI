@@ -297,7 +297,7 @@ class WarehouseBin(models.Model):
         [('empty', 'Trống'), ('partial', 'Một phần'), ('full', 'Đầy')],
         string='Trạng thái',
         compute='_compute_bin_status',
-        store=False
+        store=True
     )
     
     is_pick_bin = fields.Boolean(string='Là ngăn lấy hàng', default=True)
@@ -305,7 +305,7 @@ class WarehouseBin(models.Model):
         [('low', 'Thấp'), ('medium', 'Trung bình'), ('high', 'Cao')],
         string='Ưu tiên lấy hàng',
         compute='_compute_pick_priority',
-        store=False
+        store=True
     )
     
     # Stock Quantities (computed from core)
