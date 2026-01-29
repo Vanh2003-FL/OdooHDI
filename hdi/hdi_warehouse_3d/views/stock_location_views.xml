@@ -15,34 +15,6 @@
                         attrs="{'invisible': [('usage', '!=', 'internal')]}"/>
                 </xpath>
                 
-                <!-- Add new page for 3D Configuration -->
-                <xpath expr="//notebook" position="inside">
-                    <page string="3D Configuration" name="config_3d" groups="stock.group_stock_manager">
-                        <group>
-                            <group string="3D Position (meters)">
-                                <field name="loc_x"/>
-                                <field name="loc_y"/>
-                                <field name="loc_z"/>
-                            </group>
-                            <group string="Dimensions (meters)">
-                                <field name="loc_width"/>
-                                <field name="loc_length"/>
-                                <field name="loc_height"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group string="Visual Properties">
-                                <field name="loc_color" widget="color"/>
-                                <field name="loc_icon"/>
-                            </group>
-                            <group string="Capacity">
-                                <field name="max_weight"/>
-                                <field name="max_volume"/>
-                            </group>
-                        </group>
-                    </page>
-                </xpath>
-                
             </field>
         </record>
         
