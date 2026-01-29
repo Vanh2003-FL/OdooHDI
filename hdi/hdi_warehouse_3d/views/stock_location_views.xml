@@ -11,8 +11,7 @@
                 <!-- Add Bin field after location_id -->
                 <xpath expr="//field[@name='location_id']" position="after">
                     <field name="bin_id" string="Linked Warehouse Bin" 
-                        options="{'no_create': True}"
-                        attrs="{'invisible': [('usage', '!=', 'internal')]}"/>
+                        options="{'no_create': True}"/>
                 </xpath>
                 
             </field>
