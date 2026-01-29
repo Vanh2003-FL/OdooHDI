@@ -12,22 +12,20 @@
             <xpath expr="//button[@name='button_validate']" position="after">
                 <button name="optimize_picking_route" string="Optimize Route" type="object" 
                         class="btn-primary" icon="fa-route"
-                        attrs="{'invisible': ['|', ('use_optimized_route', '=', False), ('state', 'not in', ['assigned', 'confirmed'])]}"/>
+/>
                 <button name="action_open_route_viewer" string="View Route" type="object" 
                         class="btn-secondary" icon="fa-eye"
-                        attrs="{'invisible': [('route_id', '=', False)]}"/>
+/>
             </xpath>
             
             <!-- Add smart button for route -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_open_route_viewer" type="object" 
                         class="oe_stat_button" icon="fa-route"
-                        attrs="{'invisible': [('route_id', '=', False)]}">
+>
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
-                            <field name="route_id" invisible="1"/>
-                            <field name="route_sequence" invisible="1"/>
-                            <t t-if="route_sequence"><t t-esc="len(route_sequence)"/> bins</t>
+                            <field name="route_sequence" readonly="1"/>
                         </span>
                         <span class="o_stat_text">Route</span>
                     </div>
@@ -37,15 +35,13 @@
             <!-- Add Route Optimization fields after origin -->
             <xpath expr="//field[@name='origin']" position="after">
                 <field name="use_optimized_route"/>
-                <field name="route_optimization_type" 
-                       attrs="{'invisible': [('use_optimized_route', '=', False)],
-                               'required': [('use_optimized_route', '=', True)]}"/>
+                <field name="route_optimization_type"/>
             </xpath>
             
             <!-- Add Route Information page -->
             <xpath expr="//page[@name='note']" position="before">
                 <page string="Route Information" name="route_info" 
-                      attrs="{'invisible': [('route_id', '=', False)]}">
+>
                     <group>
                         <group>
                             <field name="route_id" readonly="1"/>
@@ -58,7 +54,7 @@
                         </group>
                     </group>
                     <div class="alert alert-success" role="alert">
-                        <p><i class="fa fa-check-circle"/> Route optimized! Click "View Route" to see the visualization.</p>
+                        <p><i class="fa fa-check-circle" title="Route Optimized"/> Route optimized! Click "View Route" to see the visualization.</p>
                     </div>
                     
                     <separator string="Route Visualization"/>

@@ -137,7 +137,7 @@
                 <field name="pick_frequency"/>
                 <field name="location_id"/>
                 <templates>
-                    <t t-name="kanban-box">
+                    <t t-name="card">
                         <div t-attf-class="oe_kanban_global_click 
                                           #{record.bin_status.raw_value == 'empty' ? 'oe_kanban_color_5' : 
                                             record.bin_status.raw_value == 'partial' ? 'oe_kanban_color_3' : 

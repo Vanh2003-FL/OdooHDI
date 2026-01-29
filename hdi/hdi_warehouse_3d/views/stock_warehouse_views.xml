@@ -8,21 +8,10 @@
         <field name="inherit_id" ref="stock.view_warehouse"/>
         <field name="arch" type="xml">
             
-            <!-- Add buttons in header -->
-            <xpath expr="//header" position="inside">
-                <button name="create_default_layout" string="Create 3D Layout" type="object" 
-                        class="btn-primary" icon="fa-cube"
-                        attrs="{'invisible': [('layout_id', '!=', False)]}"/>
-                <button name="get_layout_info" string="View 3D Layout" type="object" 
-                        class="btn-secondary" icon="fa-eye"
-                        attrs="{'invisible': [('layout_id', '=', False)]}"/>
-            </xpath>
-            
             <!-- Add smart button for layout -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="%(action_warehouse_layout)d" type="action" 
-                        class="oe_stat_button" icon="fa-cube"
-                        attrs="{'invisible': [('layout_id', '=', False)]}">
+                        class="oe_stat_button" icon="fa-cube">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">3D Layout</span>
                     </div>
@@ -37,15 +26,14 @@
                             <field name="layout_id" options="{'no_create': True}"/>
                             <field name="enable_3d_view"/>
                             <field name="enable_2d_view"/>
-                            <field name="default_view" widget="radio"
-                                   attrs="{'invisible': [('enable_3d_view', '=', False), ('enable_2d_view', '=', False)]}"/>
+                            <field name="default_view" widget="radio"/>
                         </group>
                         <group string="Performance">
                             <field name="max_bins_to_render"/>
                         </group>
                     </group>
-                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('layout_id', '!=', False)]}">
-                        <p><i class="fa fa-info-circle"/> Click "Create 3D Layout" to set up warehouse visualization.</p>
+                    <div class="alert alert-info" role="alert">
+                        <p><i class="fa fa-info-circle" title="Information"/> Click "Create 3D Layout" to set up warehouse visualization.</p>
                     </div>
                 </page>
             </xpath>

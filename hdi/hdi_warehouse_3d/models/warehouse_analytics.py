@@ -148,7 +148,7 @@ class WarehouseMetrics(models.Model):
     efficiency_score = fields.Float(
         string='Điểm hiệu suất (0-100)',
         compute='_compute_efficiency_score',
-        store=False
+        store=True
     )
     
     bottleneck_zones = fields.Json(
