@@ -19,7 +19,9 @@
         'web.assets_backend': [
             'stock_3d_custom_view/static/src/js/form_3d_view.js',
             'stock_3d_custom_view/static/src/js/listview_3d.js',
+            'stock_3d_custom_view/static/src/js/stock_3d_edit_mode.js',
             'stock_3d_custom_view/static/src/css/3d_view.scss',
+            'stock_3d_custom_view/static/src/css/edit_mode_3d.scss',
             'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js',
             'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
             "https://cdn.jsdelivr.net/npm/three@0.122.0/examples/js/controls/OrbitControls.min.js",

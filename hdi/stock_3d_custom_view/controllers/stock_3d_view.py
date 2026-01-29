@@ -168,3 +168,54 @@ class Stock3DView(http.Controller):
                     {loc.unique_code: [loc.pos_x, loc.pos_y, loc.pos_z,
                                        length, width, height, loc.id]})
         return location_dict
+    @http.route('/3Dstock/save-3d-layout', type='json', auth='user')
+    def save_3d_layout(self, warehouse_id, changes):
+        """
+        Save location changes from 3D Edit Mode.
+        ------------------------------------------------
+        @param warehouse_id: warehouse ID
+        @param changes: list of location changes
+            - Each item: {id, code, pos_x, pos_y, pos_z, length, width, height, capacity, is_new}
+        @return: success message or error
+        """
+        try:
+            LocationModel = request.env['stock.location']
+            
+            for change in changes:
+                if change['is_new']:
+                    # Create new location
+                    LocationModel.create({
+                        'name': change['code'],
+                        'unique_code': change['code'],
+                        'pos_x': change['pos_x'],
+                        'pos_y': change['pos_y'],
+                        'pos_z': change['pos_z'],
+                        'length': change['length'],
+                        'width': change['width'],
+                        'height': change['height'],
+                        'max_capacity': change['capacity'],
+                        'usage': 'internal',
+                        'active': True,
+                    })
+                else:
+                    # Update existing location
+                    location = LocationModel.browse(change['id'])
+                    location.write({
+                        'pos_x': change['pos_x'],
+                        'pos_y': change['pos_y'],
+                        'pos_z': change['pos_z'],
+                        'length': change['length'],
+                        'width': change['width'],
+                        'height': change['height'],
+                        'max_capacity': change['capacity'],
+                    })
+            
+            return {
+                'success': True,
+                'message': f'Saved {len(changes)} location(s)'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }

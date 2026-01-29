@@ -9,6 +9,7 @@ import {_t} from "@web/core/l10n/translation";
 import { ensureJQuery } from '@web/core/ensure_jquery';
 import { rpc } from "@web/core/network/rpc";
 import {CustomDialog} from "./listview_3d"
+import Stock3DEditMode from "./stock_3d_edit_mode"
 
 export class Stock3DFormView extends Component {
 	setup() {
@@ -44,6 +45,47 @@ export class Stock3DFormView extends Component {
 			localStorage.setItem("location_id", self.props.action.context.loc_id);
 			localStorage.setItem("company_id", self.props.action.context.company_id);
 		}
+
+		// Initialize Edit Mode
+		let editModeController = null;
+
+		// Create Edit Mode Toggle Button
+		const editModeToggle = document.createElement("button");
+		editModeToggle.innerHTML = "✏️ Edit Mode";
+		editModeToggle.style.cssText = `
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			padding: 12px 20px;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			border-radius: 50px;
+			cursor: pointer;
+			font-weight: bold;
+			font-size: 14px;
+			box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+			z-index: 99;
+			transition: all 0.3s ease;
+		`;
+		editModeToggle.onmouseover = () => {
+			editModeToggle.style.transform = 'scale(1.05)';
+			editModeToggle.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.6)';
+		};
+		editModeToggle.onmouseout = () => {
+			editModeToggle.style.transform = 'scale(1)';
+			editModeToggle.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+		};
+		editModeToggle.onclick = () => {
+			if (editModeController) {
+				editModeController.toggleEditMode();
+				editModeToggle.innerHTML = editModeController.isEditMode ? 
+					"🎯 View Mode" : "✏️ Edit Mode";
+				editModeToggle.style.background = editModeController.isEditMode ?
+					'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' :
+					'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+			}
+		};
 
 		var colorDiv = document.createElement("div");
 		colorDiv.classList.add("rectangle");
@@ -113,7 +155,13 @@ export class Stock3DFormView extends Component {
 			var o_content = $('.o_content')
 			o_content.append(renderer.domElement);
 			o_content.append(colorDiv);
+			document.body.appendChild(editModeToggle);  // Add Edit Mode button
+			
 			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			
+			// Initialize Edit Mode Controller
+			editModeController = new Stock3DEditMode(scene, data, camera, renderer);
+			
 			const baseGeometry = new THREE.BoxGeometry(800, 0, 800);
 			const baseMaterial = new THREE.MeshBasicMaterial({
 				color: 0xffffff,
