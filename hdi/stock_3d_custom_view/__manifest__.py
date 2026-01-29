@@ -14,18 +14,26 @@
     'depends': ['stock', 'web'],
     'data': [
         'views/stock_location_views.xml',
+        'views/stock_warehouse_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
+            # Existing 3D form view
             'stock_3d_custom_view/static/src/js/form_3d_view.js',
             'stock_3d_custom_view/static/src/js/listview_3d.js',
             'stock_3d_custom_view/static/src/css/3d_view.scss',
+            # New warehouse layout editor
+            'stock_3d_custom_view/static/src/js/warehouse_layout_editor.js',
+            'stock_3d_custom_view/static/src/css/warehouse_layout_editor.scss',
+            # Three.js and controls
             'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js',
             'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
             "https://cdn.jsdelivr.net/npm/three@0.122.0/examples/js/controls/OrbitControls.min.js",
+            # Templates
             'stock_3d_custom_view/static/src/xml/stock_location_3d_templates.xml',
             'stock_3d_custom_view/static/src/xml/stock_location_breadcrumb_templates.xml',
             'stock_3d_custom_view/static/src/xml/stock_location_modal_templates.xml',
+            'stock_3d_custom_view/static/src/xml/warehouse_layout_editor_templates.xml',
         ],
     },
     'images': [
