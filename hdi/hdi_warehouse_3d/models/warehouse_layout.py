@@ -404,7 +404,7 @@ class WarehouseBin(models.Model):
                 bin.pick_frequency = self.env['stock.move'].search_count([
                     ('location_dest_id', '=', bin.location_id.id),
                     ('state', '=', 'done'),
-                    ('date_expected', '>=', cutoff_date)
+                    ('date', '>=', cutoff_date)
                 ])
             else:
                 bin.pick_frequency = 0

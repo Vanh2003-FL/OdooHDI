@@ -3,7 +3,9 @@
 import { Component, useState, onMounted, onWillUnmount, useRef } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { registry } from "@web/core/registry";
+import { rpc } from "@web/core/network/rpc";
 import { RouteAnimator } from "./route_animator";
+import { Warehouse2DViewer } from "./warehouse_2d_viewer";
 
 /**
  * Warehouse 3D Viewer using Three.js
@@ -18,6 +20,7 @@ import { RouteAnimator } from "./route_animator";
  */
 export class Warehouse3DViewer extends Component {
     static template = "hdi_warehouse_3d.Warehouse3DViewerTemplate";
+    static components = { Warehouse2DViewer };
     static props = {
         layoutId: { type: Number },
         viewMode: { type: String, optional: true }, // '3d' or '2d'
@@ -26,7 +29,6 @@ export class Warehouse3DViewer extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc");
         this.notification = useService("notification");
         this.containerRef = useRef("viewer3d");
         
@@ -66,16 +68,16 @@ export class Warehouse3DViewer extends Component {
     async loadLayoutData() {
         try {
             this.state.loading = true;
-            const data = await this.rpc(`/warehouse_3d/layout/${this.props.layoutId}`, {});
+            const data = await rpc("/warehouse_3d/layout/" + this.props.layoutId);
             this.state.layoutData = data;
             
             if (this.props.pickingId && this.state.viewMode === '3d') {
-                const routeData = await this.rpc(`/warehouse_3d/route/${this.props.pickingId}`, {});
+                const routeData = await rpc("/warehouse_3d/route/" + this.props.pickingId);
                 this.state.routeData = routeData;
             }
             
             if (this.state.showHeatmap) {
-                const heatmapData = await this.rpc(`/warehouse_3d/heatmap/${this.props.layoutId}`, {});
+                const heatmapData = await rpc("/warehouse_3d/heatmap/" + this.props.layoutId);
                 this.state.heatmapData = heatmapData;
             }
             

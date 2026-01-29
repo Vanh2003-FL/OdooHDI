@@ -83,6 +83,48 @@
         parent="menu_warehouse_routing" 
         action="action_stock_picking_route" 
         sequence="10"/>
+
+    <!-- Advanced Operations Submenu -->
+    <menuitem 
+        id="menu_warehouse_advanced" 
+        name="Advanced Operations" 
+        parent="menu_warehouse_3d_root" 
+        sequence="40"/>
+    
+    <menuitem 
+        id="menu_warehouse_crossdock" 
+        name="Cross-Dock" 
+        parent="menu_warehouse_advanced" 
+        action="action_warehouse_crossdock" 
+        sequence="1"/>
+    
+    <menuitem 
+        id="menu_warehouse_pick_tote" 
+        name="Pick-to-Tote" 
+        parent="menu_warehouse_advanced" 
+        action="action_warehouse_pick_tote" 
+        sequence="2"/>
+    
+    <menuitem 
+        id="menu_warehouse_pick_wave" 
+        name="Pick Waves" 
+        parent="menu_warehouse_advanced" 
+        action="action_warehouse_pick_wave" 
+        sequence="3"/>
+    
+    <menuitem 
+        id="menu_warehouse_packing_station" 
+        name="Packing Stations" 
+        parent="menu_warehouse_advanced" 
+        action="action_warehouse_packing_station" 
+        sequence="4"/>
+    
+    <menuitem 
+        id="menu_warehouse_bin_movement" 
+        name="Bin Movements" 
+        parent="menu_warehouse_analytics" 
+        action="action_warehouse_bin_movement" 
+        sequence="30"/>
     
     <!-- Configuration Submenu -->
     <menuitem 

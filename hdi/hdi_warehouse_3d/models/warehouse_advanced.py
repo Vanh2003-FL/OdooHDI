@@ -75,7 +75,7 @@ class WarehouseCrossDock(models.Model):
                                        help='Số giờ tối đa sản phẩm có thể ở khu dàn xếp')
     staging_deadline = fields.Datetime(string='Hạn chốt dàn xếp', compute='_compute_staging_deadline',
                                        store=True)
-    is_overdue = fields.Boolean(string='Quá hạn', compute='_compute_is_overdue')
+    is_overdue = fields.Boolean(string='Quá hạn', compute='_compute_is_overdue', store=True)
     
     # Priority
     priority = fields.Selection([

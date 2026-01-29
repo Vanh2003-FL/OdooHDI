@@ -24,11 +24,11 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" type="object" name="action_view_source_picking" icon="fa-truck"
+                        <button class="oe_stat_button" icon="fa-truck"
                                 invisible="not source_picking_id">
                             <field string="Hàng vào" name="source_picking_id" widget="statinfo"/>
                         </button>
-                        <button class="oe_stat_button" type="object" name="action_view_dest_picking" icon="fa-truck"
+                        <button class="oe_stat_button" icon="fa-truck"
                                 invisible="not dest_picking_id">
                             <field string="Hàng ra" name="dest_picking_id" widget="statinfo"/>
                         </button>
@@ -140,7 +140,7 @@
                 <field name="is_overdue"/>
                 <field name="priority"/>
                 <templates>
-                    <t t-name="kanban-box">
+                    <t t-name="card">
                         <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.is_overdue.raw_value ? 'oe_kanban_color_2' : ''}">
                             <div class="oe_kanban_content">
                                 <div class="o_kanban_record_top">
@@ -328,10 +328,10 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" type="object" name="action_view_pickings" icon="fa-shopping-cart">
+                        <button class="oe_stat_button" icon="fa-shopping-cart">
                             <field string="Orders" name="picking_count" widget="statinfo"/>
                         </button>
-                        <button class="oe_stat_button" type="object" name="action_view_lines" icon="fa-list">
+                        <button class="oe_stat_button" icon="fa-list">
                             <field string="Lines" name="line_count" widget="statinfo"/>
                         </button>
                     </div>
@@ -445,7 +445,7 @@
                 <field name="picker_id"/>
                 <field name="picking_count"/>
                 <templates>
-                    <t t-name="kanban-box">
+                    <t t-name="card">
                         <div class="oe_kanban_card oe_kanban_global_click">
                             <div class="oe_kanban_content">
                                 <div class="o_kanban_record_top">
@@ -520,7 +520,7 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" type="object" name="action_view_totes" icon="fa-cube">
+                        <button class="oe_stat_button" icon="fa-cube">
                             <field string="Totes" name="tote_count" widget="statinfo"/>
                         </button>
                     </div>
@@ -607,24 +607,5 @@
         <field name="res_model">warehouse.packing.station</field>
         <field name="view_mode">list,form</field>
     </record>
-
-    <!-- Menu Items -->
-    <menuitem id="menu_warehouse_advanced" name="Advanced Operations" 
-              parent="menu_warehouse_3d_root" sequence="40"/>
-    
-    <menuitem id="menu_warehouse_crossdock" name="Cross-Dock" 
-              parent="menu_warehouse_advanced" action="action_warehouse_crossdock" sequence="1"/>
-    
-    <menuitem id="menu_warehouse_pick_tote" name="Pick-to-Tote" 
-              parent="menu_warehouse_advanced" action="action_warehouse_pick_tote" sequence="2"/>
-    
-    <menuitem id="menu_warehouse_pick_wave" name="Pick Waves" 
-              parent="menu_warehouse_advanced" action="action_warehouse_pick_wave" sequence="3"/>
-    
-    <menuitem id="menu_warehouse_packing_station" name="Packing Stations" 
-              parent="menu_warehouse_advanced" action="action_warehouse_packing_station" sequence="4"/>
-    
-    <menuitem id="menu_warehouse_bin_movement" name="Bin Movements" 
-              parent="menu_warehouse_analytics" action="action_warehouse_bin_movement" sequence="30"/>
 
 </odoo>
