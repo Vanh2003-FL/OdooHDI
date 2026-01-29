@@ -10,10 +10,7 @@
             <field name="code">model._cron_generate_daily_heatmap()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
-            <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
             <field name="active" eval="True"/>
-            <field name="priority">5</field>
         </record>
         
         <!-- Cron Job: Generate Daily Metrics for all layouts -->
@@ -24,10 +21,7 @@
             <field name="code">model._cron_generate_daily_metrics()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
-            <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
             <field name="active" eval="True"/>
-            <field name="priority">5</field>
         </record>
         
         <!-- Cron Job: Clean Old Heatmap Data (keep last 90 days) -->
@@ -38,10 +32,7 @@
             <field name="code">model._cron_cleanup_old_data(days=90)</field>
             <field name="interval_number">7</field>
             <field name="interval_type">days</field>
-            <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
             <field name="active" eval="True"/>
-            <field name="priority">10</field>
         </record>
         
         <!-- Cron Job: Clean Old Metrics Data (keep last 90 days) -->
@@ -52,10 +43,7 @@
             <field name="code">model._cron_cleanup_old_data(days=90)</field>
             <field name="interval_number">7</field>
             <field name="interval_type">days</field>
-            <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
             <field name="active" eval="True"/>
-            <field name="priority">10</field>
         </record>
         
     </data>

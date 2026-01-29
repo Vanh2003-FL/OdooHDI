@@ -8,7 +8,7 @@
         <field name="name">warehouse.layout.tree</field>
         <field name="model">warehouse.layout</field>
         <field name="arch" type="xml">
-            <tree string="Warehouse Layouts">
+            <list string="Warehouse Layouts">
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="layout_type"/>
@@ -16,7 +16,7 @@
                 <field name="width"/>
                 <field name="height"/>
                 <field name="updated_date"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -78,7 +78,7 @@
                         
                         <page string="Zones" name="zones">
                             <field name="zone_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
                                     <field name="zone_type"/>
@@ -86,13 +86,13 @@
                                     <field name="pos_y"/>
                                     <field name="pos_z"/>
                                     <field name="zone_color" widget="color"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
                         <page string="Aisles" name="aisles">
                             <field name="aisle_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
                                     <field name="zone_id"/>
@@ -100,7 +100,7 @@
                                     <field name="pos_x"/>
                                     <field name="pos_y"/>
                                     <field name="length"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
@@ -194,7 +194,7 @@
         <field name="name">warehouse.zone.tree</field>
         <field name="model">warehouse.zone</field>
         <field name="arch" type="xml">
-            <tree string="Zones">
+            <list string="Zones">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="layout_id"/>
@@ -202,7 +202,7 @@
                 <field name="length"/>
                 <field name="width"/>
                 <field name="zone_color" widget="color"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -224,7 +224,7 @@
                             <field name="zone_color" widget="color"/>
                         </group>
                     </group>
-                    <group string="Position & Dimensions">
+                    <group string="Position &amp; Dimensions">
                         <group>
                             <label for="pos_x" string="Position"/>
                             <div class="o_row">
@@ -247,11 +247,11 @@
                     </group>
                     <group>
                         <field name="aisle_ids">
-                            <tree>
+                            <list>
                                 <field name="name"/>
                                 <field name="direction"/>
                                 <field name="length"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                 </sheet>
@@ -274,14 +274,14 @@
         <field name="name">warehouse.aisle.tree</field>
         <field name="model">warehouse.aisle</field>
         <field name="arch" type="xml">
-            <tree string="Aisles">
+            <list string="Aisles">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="layout_id"/>
                 <field name="zone_id"/>
                 <field name="direction"/>
                 <field name="length"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -317,11 +317,11 @@
                     </group>
                     <group string="Racks in Aisle">
                         <field name="rack_ids" nolabel="1">
-                            <tree>
+                            <list>
                                 <field name="name"/>
                                 <field name="shelf_count"/>
                                 <field name="bin_per_shelf"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                 </sheet>
@@ -344,14 +344,14 @@
         <field name="name">warehouse.rack.tree</field>
         <field name="model">warehouse.rack</field>
         <field name="arch" type="xml">
-            <tree string="Racks">
+            <list string="Racks">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="aisle_id"/>
                 <field name="shelf_count"/>
                 <field name="bin_per_shelf"/>
                 <field name="max_weight_per_shelf"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -374,7 +374,7 @@
                             <field name="max_weight_per_shelf"/>
                         </group>
                     </group>
-                    <group string="Position & Dimensions">
+                    <group string="Position &amp; Dimensions">
                         <group>
                             <label for="pos_x" string="Position"/>
                             <div class="o_row">
@@ -394,13 +394,13 @@
                     </group>
                     <group string="Shelves">
                         <field name="shelf_ids" nolabel="1">
-                            <tree>
+                            <list>
                                 <field name="shelf_level"/>
                                 <field name="pos_z"/>
                                 <field name="max_weight"/>
                                 <field name="occupied_weight"/>
                                 <field name="utilization_percentage" widget="progressbar"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                 </sheet>
@@ -423,14 +423,14 @@
         <field name="name">warehouse.shelf.tree</field>
         <field name="model">warehouse.shelf</field>
         <field name="arch" type="xml">
-            <tree string="Shelves">
+            <list string="Shelves">
                 <field name="rack_id"/>
                 <field name="shelf_level"/>
                 <field name="pos_z"/>
                 <field name="max_weight"/>
                 <field name="occupied_weight"/>
                 <field name="utilization_percentage" widget="progressbar"/>
-            </tree>
+            </list>
         </field>
     </record>
     

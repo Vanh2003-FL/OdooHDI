@@ -25,8 +25,7 @@
         'data/ir_cron.xml',
         'data/crossdock_cron.xml',
         'data/server_action.xml',
-        'views/dashboard_action.xml',
-        'views/menu.xml',
+        # Load all view/action definitions FIRST
         'views/warehouse_layout_views.xml',
         'views/warehouse_bin_views.xml',
         'views/stock_location_views.xml',
@@ -34,6 +33,9 @@
         'views/stock_picking_views.xml',
         'views/warehouse_analytics_views.xml',
         'views/warehouse_advanced_views.xml',
+        'views/dashboard_action.xml',
+        # Then load menu items that reference those actions
+        'views/menu.xml',
         'data/warehouse_demo.xml',
     ],
     'assets': {

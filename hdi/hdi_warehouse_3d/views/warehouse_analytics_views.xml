@@ -8,13 +8,13 @@
         <field name="name">stock.picking.route.tree</field>
         <field name="model">stock.picking.route</field>
         <field name="arch" type="xml">
-            <tree string="Picking Routes">
+            <list string="Picking Routes">
                 <field name="picking_id"/>
                 <field name="route_type"/>
                 <field name="bin_count"/>
                 <field name="route_distance"/>
                 <field name="estimated_time" widget="float_time"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -74,13 +74,13 @@
         <field name="name">warehouse.heatmap.tree</field>
         <field name="model">warehouse.heatmap</field>
         <field name="arch" type="xml">
-            <tree string="Warehouse Heatmaps">
+            <list string="Warehouse Heatmaps">
                 <field name="layout_id"/>
                 <field name="date"/>
                 <field name="total_picks"/>
                 <field name="max_picks"/>
                 <field name="avg_picks" digits="[16,2]"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -230,14 +230,14 @@
         <field name="name">warehouse.metrics.tree</field>
         <field name="model">warehouse.metrics</field>
         <field name="arch" type="xml">
-            <tree string="Warehouse Metrics">
+            <list string="Warehouse Metrics">
                 <field name="layout_id"/>
                 <field name="date"/>
                 <field name="total_picks"/>
                 <field name="avg_pick_time" widget="float_time"/>
                 <field name="bin_utilization_percentage" widget="progressbar"/>
                 <field name="efficiency_score" widget="progressbar"/>
-            </tree>
+            </list>
         </field>
     </record>
     

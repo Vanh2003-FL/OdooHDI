@@ -107,7 +107,7 @@
         <field name="name">warehouse.crossdock.tree</field>
         <field name="model">warehouse.crossdock</field>
         <field name="arch" type="xml">
-            <tree string="Cross-Dock Operations" decoration-danger="is_overdue == True"
+            <list string="Cross-Dock Operations" decoration-danger="is_overdue == True"
                   decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
                 <field name="name"/>
                 <field name="warehouse_id"/>
@@ -124,7 +124,7 @@
                        decoration-info="state == 'draft'"
                        decoration-warning="state in ['confirmed', 'receiving', 'staged', 'shipping']"
                        decoration-success="state == 'done'"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -256,7 +256,7 @@
         <field name="name">warehouse.bin.movement.tree</field>
         <field name="model">warehouse.bin.movement</field>
         <field name="arch" type="xml">
-            <tree string="Bin Movements" create="false" edit="false">
+            <list string="Bin Movements" create="false" edit="false">
                 <field name="movement_date"/>
                 <field name="product_id"/>
                 <field name="quantity"/>
@@ -266,7 +266,7 @@
                 <field name="distance"/>
                 <field name="user_id"/>
                 <field name="picking_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -360,7 +360,7 @@
                     <notebook>
                         <page string="Tote Lines" name="lines">
                             <field name="line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="product_id" options="{'no_create': True}"/>
                                     <field name="picking_id" options="{'no_create': True}"/>
@@ -369,18 +369,18 @@
                                     <field name="picked_qty"/>
                                     <field name="remaining_qty"/>
                                     <field name="is_picked" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
                         <page string="Orders" name="orders">
                             <field name="picking_ids">
-                                <tree>
+                                <list>
                                     <field name="name"/>
                                     <field name="partner_id"/>
                                     <field name="scheduled_date"/>
                                     <field name="state" widget="badge"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
@@ -417,7 +417,7 @@
         <field name="name">warehouse.pick.tote.tree</field>
         <field name="model">warehouse.pick.tote</field>
         <field name="arch" type="xml">
-            <tree string="Pick-to-Tote" decoration-success="state == 'done'"
+            <list string="Pick-to-Tote" decoration-success="state == 'done'"
                   decoration-muted="state == 'cancelled'">
                 <field name="name"/>
                 <field name="tote_barcode"/>
@@ -431,7 +431,7 @@
                        decoration-info="state in ['draft', 'assigned']"
                        decoration-warning="state in ['picking', 'picked', 'sorting']"
                        decoration-success="state == 'done'"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -530,13 +530,13 @@
                         <field name="scheduled_date"/>
                     </group>
                     <field name="tote_ids">
-                        <tree>
+                        <list>
                             <field name="name"/>
                             <field name="tote_barcode"/>
                             <field name="picker_id"/>
                             <field name="picking_count"/>
                             <field name="state" widget="badge"/>
-                        </tree>
+                        </list>
                     </field>
                 </sheet>
                 <div class="oe_chatter">
@@ -552,13 +552,13 @@
         <field name="name">warehouse.pick.wave.tree</field>
         <field name="model">warehouse.pick.wave</field>
         <field name="arch" type="xml">
-            <tree string="Pick Waves">
+            <list string="Pick Waves">
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="tote_count"/>
                 <field name="scheduled_date"/>
                 <field name="state" widget="badge"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -592,13 +592,13 @@
         <field name="name">warehouse.packing.station.tree</field>
         <field name="model">warehouse.packing.station</field>
         <field name="arch" type="xml">
-            <tree string="Packing Stations">
+            <list string="Packing Stations">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="warehouse_id"/>
                 <field name="location_id"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 

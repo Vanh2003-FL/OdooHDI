@@ -16,7 +16,8 @@ access_stock_picking_route_manager,stock.picking.route manager,model_stock_picki
 access_warehouse_heatmap_user,warehouse.heatmap user,model_warehouse_heatmap,base.group_user,1,0,0,0
 access_warehouse_heatmap_manager,warehouse.heatmap manager,model_warehouse_heatmap,stock.group_stock_manager,1,1,1,1
 access_warehouse_metrics_user,warehouse.metrics user,model_warehouse_metrics,base.group_user,1,0,0,0
-access_warehouse_metrics_manager,warehouse.metrics manager,model_warehouse_metrics,stock.group_stock_manager,1,1,1,1access_warehouse_crossdock_user,warehouse.crossdock user,model_warehouse_crossdock,stock.group_stock_user,1,1,1,0
+access_warehouse_metrics_manager,warehouse.metrics manager,model_warehouse_metrics,stock.group_stock_manager,1,1,1,1
+access_warehouse_crossdock_user,warehouse.crossdock user,model_warehouse_crossdock,stock.group_stock_user,1,1,1,0
 access_warehouse_crossdock_manager,warehouse.crossdock manager,model_warehouse_crossdock,stock.group_stock_manager,1,1,1,1
 access_warehouse_bin_movement_user,warehouse.bin.movement user,model_warehouse_bin_movement,stock.group_stock_user,1,0,1,0
 access_warehouse_bin_movement_manager,warehouse.bin.movement manager,model_warehouse_bin_movement,stock.group_stock_manager,1,1,1,1

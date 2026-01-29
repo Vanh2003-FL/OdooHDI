@@ -8,7 +8,7 @@
         <field name="name">warehouse.bin.tree</field>
         <field name="model">warehouse.bin</field>
         <field name="arch" type="xml">
-            <tree string="Warehouse Bins" decoration-success="bin_status=='empty'" 
+            <list string="Warehouse Bins" decoration-success="bin_status=='empty'" 
                   decoration-warning="bin_status=='partial'" decoration-danger="bin_status=='full'">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
@@ -22,7 +22,7 @@
                 <field name="total_weight"/>
                 <field name="pick_frequency"/>
                 <field name="pick_priority" widget="badge"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -115,13 +115,13 @@
                     <notebook>
                         <page string="Current Stock" name="stock">
                             <field name="quant_ids" readonly="1">
-                                <tree>
+                                <list>
                                     <field name="product_id"/>
                                     <field name="lot_id"/>
                                     <field name="quantity"/>
                                     <field name="reserved_quantity"/>
                                     <field name="available_quantity"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>

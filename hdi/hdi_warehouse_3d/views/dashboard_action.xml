@@ -8,8 +8,8 @@
 
     <!-- Menu item for Dashboard -->
     <menuitem id="menu_warehouse_3d_dashboard"
-              name="Dashboard"
-              parent="menu_warehouse_3d_root"
+              name="Bảng điều khiển"
+              parent="hdi_warehouse_3d.menu_warehouse_3d_root"
               action="action_warehouse_3d_dashboard"
               sequence="1"/>
 
