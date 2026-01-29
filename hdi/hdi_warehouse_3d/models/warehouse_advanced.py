@@ -291,15 +291,16 @@ class BinMovement(models.Model):
     # Notes
     note = fields.Text(string='Notes')
     
-    @api.depends('source_bin_id.position_x', 'source_bin_id.position_y', 'source_bin_id.position_z',
-                 'dest_bin_id.position_x', 'dest_bin_id.position_y', 'dest_bin_id.position_z')
+    @api.depends('source_bin_id.pos_x', 'source_bin_id.pos_y', 'source_bin_id.shelf_id.pos_z',
+                 'dest_bin_id.pos_x', 'dest_bin_id.pos_y', 'dest_bin_id.shelf_id.pos_z')
     def _compute_distance(self):
         """Calculate 3D distance between bins"""
         for record in self:
             if record.source_bin_id and record.dest_bin_id:
-                dx = record.dest_bin_id.position_x - record.source_bin_id.position_x
-                dy = record.dest_bin_id.position_y - record.source_bin_id.position_y
-                dz = record.dest_bin_id.position_z - record.source_bin_id.position_z
+                dx = record.dest_bin_id.pos_x - record.source_bin_id.pos_x
+                dy = record.dest_bin_id.pos_y - record.source_bin_id.pos_y
+                # Use shelf's z position since bins don't have pos_z
+                dz = (record.dest_bin_id.shelf_id.pos_z or 0) - (record.source_bin_id.shelf_id.pos_z or 0)
                 record.distance = (dx**2 + dy**2 + dz**2) ** 0.5
             else:
                 record.distance = 0.0

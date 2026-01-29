@@ -21,7 +21,6 @@
     ],
     'data': [
         'security/ir.model.access.csv',
-        'security/warehouse_advanced_access.csv',
         'data/ir_sequence.xml',
         'data/ir_cron.xml',
         'data/crossdock_cron.xml',
@@ -58,10 +57,6 @@
             'hdi_warehouse_3d/static/src/scss/field_widgets.scss',
         ],
     },
-    'external_dependencies': {
-        'python': ['numpy'],  # For routing algorithms
-    },
     'installable': True,
     'auto_install': False,
-    'images': ['static/description/icon.png'],
 }
