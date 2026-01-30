@@ -2,25 +2,7 @@
 <odoo>
     <data noupdate="1">
         <!-- Sample Warehouse Configuration Data -->
-        <!-- You can uncomment and customize this for initial setup -->
-        
-        <!--
-        <record id="demo_warehouse" model="stock.warehouse">
-            <field name="name">Main Warehouse</field>
-            <field name="code">WH</field>
-        </record>
-        
-        <record id="demo_zone_a" model="warehouse.zone">
-            <field name="name">Zone A</field>
-            <field name="code">A</field>
-            <field name="warehouse_id" ref="demo_warehouse"/>
-            <field name="location_id" ref="stock.stock_location_stock"/>
-            <field name="color">#3498db</field>
-            <field name="position_x">0</field>
-            <field name="position_y">0</field>
-            <field name="width">20</field>
-            <field name="height">10</field>
-        </record>
-        -->
+        <!-- Sử dụng warehouse WH có sẵn từ stock addon -->
+        <!-- Không tạo warehouse mới -->
     </data>
 </odoo>
