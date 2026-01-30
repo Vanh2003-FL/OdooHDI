@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend Stock Location View -->
+    <record id="view_stock_location_form_inherit" model="ir.ui.view">
+        <field name="name">stock.location.form.inherit</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="bin_id" invisible="not is_bin_location"/>
+                <field name="is_bin_location" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="zone_id" invisible="not is_bin_location"/>
+                <field name="aisle_id" invisible="not is_bin_location"/>
+                <field name="rack_id" invisible="not is_bin_location"/>
+                <field name="level_id" invisible="not is_bin_location"/>
+            </xpath>
+            <div name="button_box" position="inside">
+                <button name="action_view_bin_map" 
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-map"
+                        invisible="not is_bin_location">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">View on Map</span>
+                    </div>
+                </button>
+            </div>
+        </field>
+    </record>
+    
+    <!-- Extend Stock Quant View -->
+    <record id="view_stock_quant_tree_inherit" model="ir.ui.view">
+        <field name="name">stock.quant.tree.inherit</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.stock_quant_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="location_id" position="after">
+                <field name="bin_id" optional="show"/>
+                <field name="zone_id" optional="hide"/>
+            </field>
+        </field>
+    </record>
+</odoo>

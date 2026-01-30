@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend Stock Quant Form View -->
+    <record id="view_stock_quant_form_inherit" model="ir.ui.view">
+        <field name="name">stock.quant.form.inherit</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.view_stock_quant_form"/>
+        <field name="arch" type="xml">
+            <field name="location_id" position="after">
+                <field name="bin_id"/>
+                <field name="zone_id"/>
+                <field name="bin_state" invisible="not bin_id"/>
+                <field name="bin_blocked" invisible="not bin_id"/>
+            </field>
+            <div name="button_box" position="inside">
+                <button name="action_view_bin_details" 
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-inbox"
+                        invisible="not bin_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Bin Details</span>
+                    </div>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Level Tree View -->
+    <record id="view_warehouse_level_tree" model="ir.ui.view">
+        <field name="name">warehouse.level.tree</field>
+        <field name="model">warehouse.level</field>
+        <field name="arch" type="xml">
+            <tree string="Warehouse Levels">
+                <field name="level_number"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="rack_id"/>
+                <field name="aisle_id"/>
+                <field name="bin_count"/>
+                <field name="capacity_utilization" widget="progressbar"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Level Form View -->
+    <record id="view_warehouse_level_form" model="ir.ui.view">
+        <field name="name">warehouse.level.form</field>
+        <field name="model">warehouse.level</field>
+        <field name="arch" type="xml">
+            <form string="Warehouse Level">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_warehouse_bin)d" 
+                                type="action"
+                                class="oe_stat_button"
+                                icon="fa-inbox"
+                                context="{'default_level_id': active_id, 'search_default_level_id': active_id}">
+                            <field name="bin_count" widget="statinfo" string="Bins"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="level_number"/>
+                            <field name="rack_id"/>
+                        </group>
+                        <group>
+                            <field name="aisle_id"/>
+                            <field name="zone_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Physical Properties">
+                        <group>
+                            <field name="height_from_ground"/>
+                            <field name="shelf_height"/>
+                        </group>
+                        <group>
+                            <field name="max_weight_per_bin"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Bins" name="bins">
+                            <field name="bin_ids">
+                                <tree>
+                                    <field name="bin_number"/>
+                                    <field name="code"/>
+                                    <field name="complete_name"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'available'" decoration-danger="state == 'blocked'"/>
+                                    <field name="current_sku"/>
+                                    <field name="total_quantity"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Level Action -->
+    <record id="action_warehouse_level" model="ir.actions.act_window">
+        <field name="name">Warehouse Levels</field>
+        <field name="res_model">warehouse.level</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

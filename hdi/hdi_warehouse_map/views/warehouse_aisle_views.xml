@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Aisle Tree View -->
+    <record id="view_warehouse_aisle_tree" model="ir.ui.view">
+        <field name="name">warehouse.aisle.tree</field>
+        <field name="model">warehouse.aisle</field>
+        <field name="arch" type="xml">
+            <tree string="Warehouse Aisles">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="zone_id"/>
+                <field name="warehouse_id"/>
+                <field name="rack_count"/>
+                <field name="capacity_utilization" widget="progressbar"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Aisle Form View -->
+    <record id="view_warehouse_aisle_form" model="ir.ui.view">
+        <field name="name">warehouse.aisle.form</field>
+        <field name="model">warehouse.aisle</field>
+        <field name="arch" type="xml">
+            <form string="Warehouse Aisle">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_warehouse_rack)d" 
+                                type="action"
+                                class="oe_stat_button"
+                                icon="fa-cubes"
+                                context="{'default_aisle_id': active_id, 'search_default_aisle_id': active_id}">
+                            <field name="rack_count" widget="statinfo" string="Racks"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="zone_id"/>
+                            <field name="warehouse_id"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Racks" name="racks">
+                            <field name="rack_ids">
+                                <tree>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="level_count"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Position" name="position">
+                            <group>
+                                <group>
+                                    <field name="position_x"/>
+                                    <field name="position_y"/>
+                                </group>
+                                <group>
+                                    <field name="width"/>
+                                    <field name="length"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Aisle Action -->
+    <record id="action_warehouse_aisle" model="ir.actions.act_window">
+        <field name="name">Warehouse Aisles</field>
+        <field name="res_model">warehouse.aisle</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

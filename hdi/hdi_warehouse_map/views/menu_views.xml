@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Root -->
+    <menuitem id="menu_warehouse_map_root"
+              name="Warehouse Map"
+              sequence="100"
+              web_icon="hdi_warehouse_map,static/description/icon.png"/>
+    
+    <!-- Menu Configuration -->
+    <menuitem id="menu_warehouse_map_config"
+              name="Configuration"
+              parent="menu_warehouse_map_root"
+              sequence="100"/>
+    
+    <!-- Menu Zones -->
+    <menuitem id="menu_warehouse_zone"
+              name="Zones"
+              parent="menu_warehouse_map_config"
+              action="action_warehouse_zone"
+              sequence="10"/>
+    
+    <!-- Menu Aisles -->
+    <menuitem id="menu_warehouse_aisle"
+              name="Aisles"
+              parent="menu_warehouse_map_config"
+              action="action_warehouse_aisle"
+              sequence="20"/>
+    
+    <!-- Menu Racks -->
+    <menuitem id="menu_warehouse_rack"
+              name="Racks"
+              parent="menu_warehouse_map_config"
+              action="action_warehouse_rack"
+              sequence="30"/>
+    
+    <!-- Menu Levels -->
+    <menuitem id="menu_warehouse_level"
+              name="Levels"
+              parent="menu_warehouse_map_config"
+              action="action_warehouse_level"
+              sequence="40"/>
+    
+    <!-- Menu Bins -->
+    <menuitem id="menu_warehouse_bin"
+              name="Bins"
+              parent="menu_warehouse_map_root"
+              action="action_warehouse_bin"
+              sequence="10"/>
+    
+    <!-- Menu Warehouse Map 2D/3D -->
+    <menuitem id="menu_warehouse_map_view"
+              name="Warehouse Map"
+              parent="menu_warehouse_map_root"
+              action="action_warehouse_map_view"
+              sequence="5"/>
+    
+    <!-- Menu Bin History -->
+    <menuitem id="menu_bin_history"
+              name="Bin History"
+              parent="menu_warehouse_map_root"
+              action="action_bin_history"
+              sequence="50"/>
+    
+    <!-- Menu Lot History -->
+    <menuitem id="menu_lot_history"
+              name="Lot History"
+              parent="menu_warehouse_map_root"
+              action="action_lot_history"
+              sequence="60"/>
+    
+    <!-- Menu Operations -->
+    <menuitem id="menu_warehouse_map_operations"
+              name="Operations"
+              parent="menu_warehouse_map_root"
+              sequence="20"/>
+    
+    <!-- Menu Blocked Bins -->
+    <menuitem id="menu_blocked_bins"
+              name="Blocked Bins"
+              parent="menu_warehouse_map_operations"
+              action="action_blocked_bins"
+              sequence="10"/>
+    
+    <!-- Menu Blocked Lots -->
+    <menuitem id="menu_blocked_lots"
+              name="Blocked Lots"
+              parent="menu_warehouse_map_operations"
+              action="action_blocked_lots"
+              sequence="20"/>
+</odoo>
