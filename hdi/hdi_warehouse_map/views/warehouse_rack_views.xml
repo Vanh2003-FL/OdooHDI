@@ -26,11 +26,10 @@
             <form string="Warehouse Rack">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_warehouse_level)d" 
-                                type="action"
+                        <button name="level_ids" 
+                                type="object"
                                 class="oe_stat_button"
-                                icon="fa-bars"
-                                context="{'default_rack_id': active_id, 'search_default_rack_id': active_id}">
+                                icon="fa-bars">
                             <field name="level_count" widget="statinfo" string="Levels"/>
                         </button>
                     </div>

@@ -26,11 +26,10 @@
             <form string="Warehouse Level">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_warehouse_bin)d" 
-                                type="action"
+                        <button name="bin_ids" 
+                                type="object"
                                 class="oe_stat_button"
-                                icon="fa-inbox"
-                                context="{'default_level_id': active_id, 'search_default_level_id': active_id}">
+                                icon="fa-inbox">
                             <field name="bin_count" widget="statinfo" string="Bins"/>
                         </button>
                     </div>

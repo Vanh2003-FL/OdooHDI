@@ -26,11 +26,10 @@
             <form string="Warehouse Zone">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_warehouse_aisle)d" 
-                                type="action"
+                        <button name="aisle_ids" 
+                                type="object"
                                 class="oe_stat_button"
-                                icon="fa-road"
-                                context="{'default_zone_id': active_id, 'search_default_zone_id': active_id}">
+                                icon="fa-road">
                             <field name="aisle_count" widget="statinfo" string="Aisles"/>
                         </button>
                     </div>
@@ -81,13 +80,13 @@
                         </page>
                         <page string="Aisles" name="aisles">
                             <field name="aisle_ids">
-                                <tree>
+                                <list>
                                     <field name="sequence" widget="handle"/>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="rack_count"/>
                                     <field name="capacity_utilization" widget="progressbar"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Description" name="description">
