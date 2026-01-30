@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- History Tree View -->
+    <!-- History List View -->
     <record id="view_bin_history_tree" model="ir.ui.view">
-        <field name="name">bin.history.tree</field>
+        <field name="name">bin.history.list</field>
         <field name="model">bin.history</field>
         <field name="arch" type="xml">
-            <tree string="Bin Movement History" create="0" edit="0">
+            <list string="Bin Movement History" create="0" edit="0">
                 <field name="date"/>
                 <field name="bin_id"/>
                 <field name="operation_type" 
@@ -17,7 +17,7 @@
                 <field name="uom_id"/>
                 <field name="reference"/>
                 <field name="user_id"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -92,7 +92,7 @@
     <record id="action_bin_history" model="ir.actions.act_window">
         <field name="name">Bin Movement History</field>
         <field name="res_model">bin.history</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_this_week': 1}</field>
     </record>
 </odoo>

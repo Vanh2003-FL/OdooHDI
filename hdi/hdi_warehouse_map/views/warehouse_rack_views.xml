@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Rack Tree View -->
+    <!-- Rack List View -->
     <record id="view_warehouse_rack_tree" model="ir.ui.view">
-        <field name="name">warehouse.rack.tree</field>
+        <field name="name">warehouse.rack.list</field>
         <field name="model">warehouse.rack</field>
         <field name="arch" type="xml">
-            <tree string="Warehouse Racks">
+            <list string="Warehouse Racks">
                 <field name="sequence" widget="handle"/>
                 <field name="code"/>
                 <field name="name"/>
@@ -14,7 +14,7 @@
                 <field name="level_count"/>
                 <field name="capacity_utilization" widget="progressbar"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -77,6 +77,6 @@
     <record id="action_warehouse_rack" model="ir.actions.act_window">
         <field name="name">Warehouse Racks</field>
         <field name="res_model">warehouse.rack</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

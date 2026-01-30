@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Zone Tree View -->
+    <!-- Zone List View -->
     <record id="view_warehouse_zone_tree" model="ir.ui.view">
-        <field name="name">warehouse.zone.tree</field>
+        <field name="name">warehouse.zone.list</field>
         <field name="model">warehouse.zone</field>
         <field name="arch" type="xml">
-            <tree string="Warehouse Zones">
+            <list string="Warehouse Zones">
                 <field name="sequence" widget="handle"/>
                 <field name="code"/>
                 <field name="name"/>
@@ -14,7 +14,7 @@
                 <field name="aisle_count"/>
                 <field name="capacity_utilization" widget="progressbar"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -140,7 +140,7 @@
     <record id="action_warehouse_zone" model="ir.actions.act_window">
         <field name="name">Warehouse Zones</field>
         <field name="res_model">warehouse.zone</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new Warehouse Zone
