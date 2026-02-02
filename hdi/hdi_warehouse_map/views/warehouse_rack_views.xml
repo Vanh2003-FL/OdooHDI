@@ -26,10 +26,7 @@
             <form string="Warehouse Rack">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="level_ids" 
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-bars">
+                        <button class="oe_stat_button" icon="fa-bars" disabled="1">
                             <field name="level_count" widget="statinfo" string="Levels"/>
                         </button>
                     </div>

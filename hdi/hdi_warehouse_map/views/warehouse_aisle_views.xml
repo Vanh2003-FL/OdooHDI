@@ -26,10 +26,7 @@
             <form string="Warehouse Aisle">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="rack_ids" 
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-cubes">
+                        <button class="oe_stat_button" icon="fa-cubes" disabled="1">
                             <field name="rack_count" widget="statinfo" string="Racks"/>
                         </button>
                     </div>

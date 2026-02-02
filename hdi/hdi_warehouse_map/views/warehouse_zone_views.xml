@@ -26,10 +26,7 @@
             <form string="Warehouse Zone">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="aisle_ids" 
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-road">
+                        <button class="oe_stat_button" icon="fa-road" disabled="1">
                             <field name="aisle_count" widget="statinfo" string="Aisles"/>
                         </button>
                     </div>
