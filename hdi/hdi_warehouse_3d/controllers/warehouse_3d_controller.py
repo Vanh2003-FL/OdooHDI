@@ -91,8 +91,16 @@ class Warehouse3DController(http.Controller):
             return {'success': False, 'error': str(e)}
 
     @http.route('/warehouse_3d/create_shelf', type='json', auth='user')
-    def create_shelf(self, name, code, area_id, shelf_type, position_x, position_y, width, depth, **kwargs):
-        """Create new shelf with required fields per SKUSavvy spec"""
+    def create_shelf(self, name, code, area_id, shelf_type, position_x, position_y, width, depth, 
+                     level_count, bins_per_level, **kwargs):
+        """Create new shelf with auto-bin generation per SKUSavvy spec
+        
+        3️⃣ BIN Structure fields:
+        - level_count: Number of shelf levels (tầng)
+        - bins_per_level: Number of bins per level (ô/tầng)
+        
+        BINs are auto-generated based on this grid configuration
+        """
         try:
             shelf = request.env['warehouse.shelf'].create({
                 'name': name,
@@ -103,9 +111,21 @@ class Warehouse3DController(http.Controller):
                 'position_y': float(position_y),
                 'width': float(width),  # Length (m)
                 'depth': float(depth),  # Depth (m)
+                'level_count': int(level_count),  # Number of levels
+                'bins_per_level': int(bins_per_level),  # Number of bins per level
                 'rotation': float(kwargs.get('rotation', 0.0)),  # Optional
             })
-            return {'success': True, 'shelf_id': shelf.id, 'message': f'Created shelf {shelf.name}'}
+            # Bins are auto-created by create() method override
+            bins = request.env['stock.location'].search([
+                ('location_id', '=', shelf.id),
+                ('location_type', '=', 'bin')
+            ])
+            return {
+                'success': True,
+                'shelf_id': shelf.id,
+                'bin_count': len(bins),
+                'message': f'Created shelf {shelf.name} with {len(bins)} bins'
+            }
         except Exception as e:
             return {'success': False, 'error': str(e)}
 

@@ -78,28 +78,48 @@ class StockLocation(models.Model):
 
     @api.constrains('location_type', 'pos_x', 'pos_y', 'location_id')
     def _check_bin_position_within_shelf(self):
-        """🟦 SKUSavvy Rule: BIN position must be within parent SHELF boundaries"""
+        """🟦 CRITICAL SKUSavvy Rule: BIN MUST ALWAYS belong to SHELF
+        
+        Hierarchy enforcement:
+        - AREA: no parent (independent)
+        - SHELF: parent = AREA (optional)
+        - BIN: parent = SHELF (MANDATORY)
+        """
         for location in self:
             if location.location_type != 'bin':
                 continue
                 
-            # BIN must have parent SHELF
+            # ✅ RULE 1: BIN must have parent (location_id cannot be empty)
             if not location.location_id:
                 raise ValidationError(
-                    "🚫 BIN must have a parent SHELF!\n\n"
-                    "Cannot create standalone bin. Bin must be placed inside a SHELF.\n"
-                    "Each bin belongs to exactly one shelf in the warehouse hierarchy."
+                    "🚫 BIN MUST HAVE A PARENT SHELF!\n\n"
+                    "This is a critical rule in SKUSavvy warehouse system:\n"
+                    "  • AREA: Independent location (zone marker)\n"
+                    "  • SHELF: Can have AREA as reference (optional)\n"
+                    "  • BIN: MUST belong to exactly ONE SHELF (MANDATORY)\n\n"
+                    "You cannot create a standalone BIN.\n"
+                    "Bins must be auto-generated from SHELF configuration.\n\n"
+                    "✅ Solution:\n"
+                    "  1. Create SHELF first\n"
+                    "  2. Specify: Levels (tầng) & Bins per Level (ô/tầng)\n"
+                    "  3. BINs auto-generate automatically"
                 )
             
+            # ✅ RULE 2: Parent must be SHELF (not AREA or other)
             parent = location.location_id
             if parent.location_type != 'shelf':
                 raise ValidationError(
-                    f"🚫 BIN parent must be a SHELF, not {parent.location_type.upper()}!\n\n"
-                    "Hierarchy: WAREHOUSE → AREA → SHELF → BIN\n"
-                    f"'{parent.name}' is {parent.location_type}, cannot contain bins."
+                    f"🚫 BIN PARENT MUST BE A SHELF, NOT {parent.location_type.upper()}!\n\n"
+                    "SKUSavvy Hierarchy Rules:\n"
+                    "  WAREHOUSE\n"
+                    "    └── AREA (zone markers)\n"
+                    "          └── SHELF (physical racks)\n"
+                    "                └── BIN ← MUST be here\n\n"
+                    f"'{parent.name}' is an {parent.location_type}, not a SHELF.\n"
+                    f"BINs cannot be placed inside {parent.location_type}s."
                 )
             
-            # Check if BIN position is within SHELF boundaries
+            # ✅ RULE 3: Check if BIN position is within SHELF boundaries
             # SHELF bounds: [pos_x, pos_x + width] × [pos_y, pos_y + height]
             shelf = parent
             bin_pos_x = location.pos_x
@@ -200,8 +220,26 @@ class StockLocation(models.Model):
         return location
 
     def write(self, vals):
-        """Prevent moving/resizing BINs that have inventory (locked)"""
-        # For locked BINs: only allow block/unblock
+        """🔴 CRITICAL: Prevent modifications that would break BIN→SHELF relationship"""
+        
+        # ✅ RULE 1: Cannot change BIN parent (location_id) - ever!
+        if 'location_id' in vals:
+            bins = self.filtered(lambda l: l.location_type == 'bin')
+            if bins:
+                raise ValidationError(
+                    f"🚫 CANNOT CHANGE BIN PARENT SHELF!\n\n"
+                    f"BINs: {', '.join(bins.mapped('name'))}\n\n"
+                    f"In SKUSavvy hierarchy, BINs belong to exactly ONE SHELF.\n"
+                    f"This relationship is PERMANENT and cannot be changed.\n\n"
+                    f"❌ You cannot move a BIN to a different SHELF\n"
+                    f"❌ You cannot disconnect a BIN from its SHELF\n\n"
+                    f"Options:\n"
+                    f"  • Delete the BIN (if empty) + recreate in new SHELF\n"
+                    f"  • Delete old SHELF (deletes all child BINs automatically)\n"
+                    f"  • Create new SHELF with desired configuration"
+                )
+        
+        # ✅ RULE 2: For locked BINs, only allow block/unblock status changes
         if self.filtered('is_locked'):
             allowed_fields = {'is_blocked', 'block_reason'}
             modifying_fields = set(vals.keys()) - allowed_fields
@@ -213,12 +251,35 @@ class StockLocation(models.Model):
                         f"❌ Cannot modify LOCKED BINs!\n\n"
                         f"BINs: {', '.join(locked_bins.mapped('name'))}\n\n"
                         f"These bins have inventory and are LOCKED.\n"
-                        f"✅ Allowed: Block/Unblock\n"
-                        f"❌ Not Allowed: Move, Resize, Delete, Config\n\n"
+                        f"✅ Allowed: Block/Unblock status\n"
+                        f"❌ Not Allowed: Move, Resize, Delete, Parent, Config\n\n"
                         f"To restructure: Remove all stock.quant first"
                     )
         
         return super(StockLocation, self).write(vals)
+
+    def unlink(self):
+        """🔴 CRITICAL: Prevent deleting BINs that have inventory
+        
+        BINs are integral to SHELF structure and should only be deleted
+        when the SHELF is deleted (cascade) or when they are empty.
+        """
+        bins_with_inventory = self.filtered(lambda l: l.location_type == 'bin' and l.is_locked)
+        
+        if bins_with_inventory:
+            bin_names = ', '.join(bins_with_inventory.mapped('name'))
+            raise ValidationError(
+                f"🚫 CANNOT DELETE BINs WITH INVENTORY!\n\n"
+                f"BINs: {bin_names}\n\n"
+                f"These bins have inventory (stock.quant).\n\n"
+                f"✅ You can:\n"
+                f"  1. Move all inventory OUT of these bins first\n"
+                f"  2. Then delete the bins\n\n"
+                f"Or, delete the entire SHELF\n"
+                f"  (all child BINs will be deleted automatically)"
+            )
+        
+        return super(StockLocation, self).unlink()
 
     def action_block_bin(self):
         """Block BIN from receiving inventory"""

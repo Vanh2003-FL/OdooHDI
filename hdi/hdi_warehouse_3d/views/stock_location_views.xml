@@ -23,59 +23,84 @@
         <field name="name">stock.location.form.bins</field>
         <field name="model">stock.location</field>
         <field name="arch" type="xml">
-            <form string="Warehouse Bin">
+            <form string="Create Bin">
                 <sheet>
+                    <!-- Alert for manual bin creation -->
                     <div class="alert alert-info" role="alert" invisible="id">
-                        <strong>💡 Creating a Bin Manually</strong><br/>
-                        For best practice, create bins automatically by creating a <strong>Shelf</strong> first.<br/>
-                        When you set level_count and bins_per_level on a shelf, all bins auto-generate.<br/>
-                        <strong>⚠️ Important:</strong> BIN position must be within its parent SHELF boundaries!
+                        <strong>💡 Best Practice: Auto-Generate BINs</strong><br/>
+                        Create a <strong>Shelf</strong> first and set level_count &amp; bins_per_level.<br/>
+                        BINs will auto-generate automatically with correct parent assignment.
                     </div>
                     
+                    <!-- Alert for locked bins -->
                     <div class="alert alert-danger" role="alert" invisible="not is_locked">
-                        <strong>🔒 LOCKED BIN</strong><br/>
-                        This bin has inventory. Cannot be moved/resized/deleted.<br/>
-                        <strong>✅ Allowed:</strong> Block/Unblock | <strong>❌ Not Allowed:</strong> Move, Resize, Delete
+                        <strong>🔒 LOCKED BIN (Has Inventory)</strong><br/>
+                        Cannot move/resize/delete. ✅ Allowed: Block/Unblock only.
                     </div>
                     
-                    <group>
+                    <!-- PRIMARY SECTION: BIN Assignment -->
+                    <group string="🟦 BIN Assignment to SHELF" colspan="4">
+                        <field name="location_type" widget="selection" invisible="1" default="bin"/>
+                        
+                        <!-- Required: Shelf Selection -->
                         <group>
-                            <field name="name" required="1"/>
-                            <field name="location_id" required="1" domain="[('location_type', '=', 'shelf')]" 
-                                   help="Select the SHELF where this BIN will be placed"/>
-                            <field name="barcode"/>
-                            <field name="location_type" widget="selection" invisible="1"/>
+                            <field name="location_id" required="1" 
+                                   domain="[('location_type', '=', 'shelf')]" 
+                                   options="{'no_create': True}"
+                                   help="MANDATORY: Select the parent SHELF for this BIN. BIN must always belong to exactly one SHELF."
+                                   style="width: 100%;"/>
                         </group>
+                        
+                        <!-- Required: BIN Name -->
                         <group>
-                            <field name="bin_level" required="1" help="Level number (1=bottom, 2, 3, 4...)"/>
-                            <field name="bin_row" required="1" help="Row position within shelf"/>
-                            <field name="bin_col" required="1" help="Column position within shelf"/>
-                            <field name="bin_state" widget="badge"/>
-                        </group>
-                    </group>
-                    
-                    <group string="Position &amp; Dimensions">
-                        <group>
-                            <field name="pos_x"/>
-                            <field name="pos_y"/>
-                        </group>
-                        <group>
-                            <field name="bin_width"/>
-                            <field name="bin_depth"/>
-                            <field name="bin_height"/>
+                            <field name="name" required="1" placeholder="e.g., SA1-L1-C1"
+                                   help="BIN identifier (auto-suggested as {SHELF_CODE}-L{level}-C{col})"/>
                         </group>
                     </group>
                     
-                    <group string="Capacity &amp; Status">
+                    <!-- SECONDARY SECTION: Grid Position -->
+                    <group string="Grid Position in SHELF" colspan="4">
+                        <group>
+                            <field name="bin_level" required="1" help="Vertical level (1=bottom)"/>
+                            <field name="bin_row" required="1" help="Row position in shelf grid"/>
+                            <field name="bin_col" required="1" help="Column position in shelf grid"/>
+                        </group>
+                        <group>
+                            <field name="bin_state" widget="badge" readonly="1"/>
+                            <field name="is_locked" widget="badge" readonly="1" invisible="not is_locked"/>
+                        </group>
+                    </group>
+                    
+                    <!-- TERTIARY SECTION: Dimensions & Capacity -->
+                    <group string="Physical Dimensions" colspan="4">
+                        <group>
+                            <field name="bin_width" readonly="1" help="Auto-calculated from SHELF width"/>
+                            <field name="bin_depth" readonly="1" help="Auto-calculated from SHELF depth"/>
+                            <field name="bin_height" readonly="1" help="Auto-calculated from SHELF depth"/>
+                        </group>
+                        <group>
+                            <field name="pos_x" help="X position in warehouse coordinates"/>
+                            <field name="pos_y" help="Y position in warehouse coordinates"/>
+                        </group>
+                    </group>
+                    
+                    <!-- QUATERNARY SECTION: Capacity & Status -->
+                    <group string="Capacity &amp; Inventory Status" colspan="4">
                         <group>
                             <field name="max_capacity"/>
                             <field name="max_weight"/>
-                            <field name="is_locked" widget="badge" invisible="not is_locked"/>
                         </group>
                         <group>
                             <field name="is_blocked" widget="boolean_toggle"/>
-                            <field name="block_reason" invisible="not is_blocked"/>
+                            <field name="block_reason" invisible="not is_blocked" nolabel="1" colspan="2"/>
                             <field name="display_color_code" widget="color"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Advanced: Barcode (Optional) -->
+                    <group string="Additional Info" colspan="4" id="advanced_section">
+                        <group>
+                            <field name="barcode" help="Optional: Barcode for scanning"/>
                         </group>
                     </group>
                 </sheet>

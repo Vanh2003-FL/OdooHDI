@@ -49,16 +49,23 @@
                         </group>
                     </group>
 
-                    <!-- ROTATION (Optional) -->
-                    <group string="Configuration">
+                    <!-- 3️⃣ CẤU TRÚC BIN (BẮTBUỘC - để generate BINs) -->
+                    <group string="BIN Structure (Generate BINs from this)">
                         <group>
+                            <field name="level_count" required="1" help="Number of shelf levels (tầng)"/>
+                            <field name="bins_per_level" required="1" help="Number of bins per level (ô/tầng)"/>
+                        </group>
+                        <group>
+                            <field name="level_height" readonly="1" help="Auto-calculated: depth / level_count"/>
                             <field name="rotation" help="Rotation angle: 0 or 90 degrees"/>
-                            <field name="active" widget="boolean_toggle"/>
                         </group>
-                        <group>
-                            <field name="sequence"/>
-                            <field name="warehouse_id" readonly="1" invisible="not warehouse_id"/>
-                        </group>
+                    </group>
+
+                    <!-- STATUS -->
+                    <group string="Status">
+                        <field name="sequence"/>
+                        <field name="active" widget="boolean_toggle"/>
+                        <field name="warehouse_id" readonly="1" invisible="not warehouse_id"/>
                     </group>
 
                     <!-- NOTES -->
@@ -74,11 +81,6 @@
                                 <field name="max_weight" readonly="1"/>
                             </group>
                             <group>
-                                <field name="level_count" readonly="1"/>
-                                <field name="level_height" readonly="1"/>
-                            </group>
-                            <group>
-                                <field name="bins_per_level" readonly="1"/>
                                 <field name="orientation" readonly="1"/>
                             </group>
                         </group>
@@ -99,7 +101,7 @@
                 Create a new Shelf
             </p>
             <p>
-                <strong>✅ Shelf = Physical container for bins</strong><br/>
+                <strong>✅ Shelf = Physical container for bins (generates BINs automatically)</strong><br/>
                 <br/>
                 <strong>🔹 Required Fields (1️⃣):</strong>
                 <ul>
@@ -116,13 +118,21 @@
                     <li><strong>Depth (m):</strong> Depth of shelf</li>
                 </ul>
                 <br/>
+                <strong>🔹 BIN Structure (3️⃣) - Generates BINs automatically:</strong>
+                <ul>
+                    <li><strong>Levels:</strong> Number of shelf levels (tầng) - e.g., 4</li>
+                    <li><strong>Bins per Level:</strong> Number of bins per level (ô/tầng) - e.g., 2</li>
+                </ul>
+                📌 BINs created: Levels × Bins per Level = Total BINs<br/>
+                📌 Each BIN inherits dimensions from SHELF:<br/>
+                &nbsp;&nbsp;- Bin Width = Shelf Length / Bins per Level<br/>
+                &nbsp;&nbsp;- Bin Height = Shelf Depth / Levels<br/>
+                &nbsp;&nbsp;- Bin Depth = Shelf Depth / Levels<br/>
+                <br/>
                 <strong>🔹 Configuration (Optional):</strong>
                 <ul>
                     <li><strong>Rotation:</strong> 0 or 90 degrees</li>
                 </ul>
-                <br/>
-                <strong>📌 Note:</strong> BINs are created separately as stock.location with location_type='bin'<br/>
-                Each BIN must belong to exactly one SHELF (via location_id field).
             </p>
         </field>
     </record>
