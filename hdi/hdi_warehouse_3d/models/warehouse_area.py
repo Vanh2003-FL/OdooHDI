@@ -11,16 +11,21 @@ class WarehouseArea(models.Model):
     sequence = fields.Integer(string='Sequence', default=10)
     warehouse_id = fields.Many2one('stock.warehouse', string='Warehouse', required=True)
     
-    # Area type (SKUSavvy zones)
+    # Area type (SKUSavvy: Areas are for marking zones, NOT for containing shelves)
+    # Examples: cashier desk, checkout counter, office, receiving dock
     area_type = fields.Selection([
-        ('inbound', 'Inbound'),
-        ('storage', 'Storage'),
-        ('outbound', 'Outbound'),
-        ('staging', 'Staging'),
+        ('cashier', 'Cashier Desk'),
+        ('checkout', 'Checkout Counter'),
+        ('office', 'Office Area'),
+        ('inbound', 'Receiving Dock'),
+        ('outbound', 'Shipping Dock'),
+        ('staging', 'Staging Zone'),
         ('quality', 'Quality Check'),
-    ], string='Area Type', required=True, default='storage')
+        ('storage', 'Storage Zone (reference only)'),
+    ], string='Area Type', required=True, default='storage',
+       help='Area marks zones for operations. Shelves are placed independently.')
     
-    # Layout properties
+    # Layout properties (boundary marking on 2D canvas)
     position_x = fields.Float(string='Position X')
     position_y = fields.Float(string='Position Y')
     width = fields.Float(string='Width (m)')
@@ -28,13 +33,14 @@ class WarehouseArea(models.Model):
     boundary = fields.Text(string='Boundary Polygon', help='JSON array of [x,y] coordinates defining area boundary')
     color = fields.Char(string='Display Color', default='#E8E8FF')
     
-    # Temperature control
+    # Temperature control (for storage zones)
     temperature_controlled = fields.Boolean(string='Temperature Controlled')
     temperature_min = fields.Float(string='Min Temperature (°C)')
     temperature_max = fields.Float(string='Max Temperature (°C)')
     
-    # Relations
-    shelf_ids = fields.One2many('warehouse.shelf', 'area_id', string='Shelves')
+    # Relations (informational only - shelves are NOT contained by area)
+    shelf_ids = fields.One2many('warehouse.shelf', 'area_id', string='Shelves (Reference)',
+                               help='Shelves that reference this area (informational only)')
     shelf_count = fields.Integer(string='Shelf Count', compute='_compute_shelf_count')
     
     active = fields.Boolean(default=True)

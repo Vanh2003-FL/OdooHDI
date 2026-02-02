@@ -209,17 +209,21 @@ export class Warehouse2DDesigner extends Component {
         const w = (bin.width || 0.5) * this.state.gridSize;
         const h = (bin.depth || 0.5) * this.state.gridSize;
         
+        // SKUsavvy: Bins are LOCKED in 2D mode - lighter color to indicate
         // Color by state (SKUsavvy style)
-        let fillColor = '#D4D4FF'; // empty
-        if (bin.state === 'occupied') fillColor = '#6C63FF';
-        if (bin.state === 'blocked') fillColor = '#FF6B6B';
+        let fillColor = '#E8E8FF'; // empty - very light to show "locked"
+        if (bin.state === 'occupied') fillColor = '#B0B0FF';
+        if (bin.state === 'blocked') fillColor = '#FFB0B0';
         
         this.ctx.fillStyle = bin.color || fillColor;
         this.ctx.fillRect(x, y, w, h);
         
-        this.ctx.strokeStyle = '#333';
-        this.ctx.lineWidth = 1;
+        // Dashed border to indicate "locked" status
+        this.ctx.strokeStyle = '#999';
+        this.ctx.lineWidth = 0.5;
+        this.ctx.setLineDash([2, 2]);
         this.ctx.strokeRect(x, y, w, h);
+        this.ctx.setLineDash([]);
     }
 
     highlightSelected(item) {
@@ -277,6 +281,16 @@ export class Warehouse2DDesigner extends Component {
         
         // Select item at mouse position
         const item = this.getItemAt(x, y);
+        
+        // SKUsavvy Rule: Only AREA and SHELF can be moved in 2D mode
+        // BIN is locked - cannot move individually
+        if (item && item.type === 'bin') {
+            console.warn('🚫 BIN cannot be moved individually in 2D mode');
+            console.log('📌 SKUsavvy Rule: Bins are locked to shelf structure');
+            alert('⚠️ Cannot move bins individually!\n\nTo move bins, move the entire SHELF.\nBins are locked to shelf structure (SKUsavvy principle).');
+            return;
+        }
+        
         this.state.selectedItem = item;
         
         if (item) {
@@ -284,6 +298,12 @@ export class Warehouse2DDesigner extends Component {
             
             // If in move mode and item selected, prepare for drag
             if (this.state.mode === 'move') {
+                // Only allow moving AREA and SHELF
+                if (item.type !== 'area' && item.type !== 'shelf') {
+                    console.warn(`⚠️ Cannot move ${item.type} in 2D mode`);
+                    return;
+                }
+                
                 this.state.isDragging = true;
                 
                 // Calculate offset from item's top-left to mouse position

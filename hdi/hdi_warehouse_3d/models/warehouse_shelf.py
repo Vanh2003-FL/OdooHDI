@@ -11,8 +11,9 @@ class WarehouseShelf(models.Model):
     sequence = fields.Integer(string='Sequence', default=10)
     
     # Relationships (SKUsavvy: area_id is optional - shelves can be placed freely)
+    # Area = zoning for cashier/checkout/office, NOT for containing shelves
     area_id = fields.Many2one('warehouse.area', string='Area', required=False, ondelete='set null',
-                             help='Optional: Visual grouping only. Shelves are independent entities.')
+                             help='Optional: For visual reference only. Areas mark zones like cashier, checkout, office. Shelves are independent.')
     warehouse_id = fields.Many2one('stock.warehouse', string='Warehouse', required=True)
     
     # Physical dimensions
@@ -63,6 +64,11 @@ class WarehouseShelf(models.Model):
         """Auto-create stock.location bins for each level using grid division"""
         Location = self.env['stock.location']
         
+        # Delete existing bins for this shelf to avoid duplicates
+        existing_bins = Location.search([('shelf_id', '=', self.id)])
+        if existing_bins:
+            existing_bins.unlink()
+        
         # Get warehouse location (try area first, fallback to warehouse)
         if self.area_id and self.area_id.warehouse_id:
             warehouse_location = self.area_id.warehouse_id.lot_stock_id
@@ -84,6 +90,12 @@ class WarehouseShelf(models.Model):
                 bin_code = f"{self.code}-L{level:02d}-B{bin_num:02d}"
                 bin_name = f"{self.name} Level {level} Bin {bin_num}"
                 
+                # Check if bin with this barcode already exists
+                existing_bin = Location.search([('barcode', '=', bin_code)], limit=1)
+                if existing_bin:
+                    # Skip if already exists (from previous install)
+                    continue
+                
                 # Calculate position based on orientation
                 if self.orientation == 'horizontal':
                     bin_x = self.position_x + (bin_num - 1) * bin_width
@@ -92,23 +104,27 @@ class WarehouseShelf(models.Model):
                     bin_x = self.position_x
                     bin_y = self.position_y + (bin_num - 1) * bin_width
                 
-                Location.create({
-                    'name': bin_name,
-                    'location_id': warehouse_location.id,
-                    'usage': 'internal',
-                    'barcode': bin_code,
-                    'shelf_id': self.id,
-                    'area_id': self.area_id.id if self.area_id else False,
-                    'level_number': level,
-                    'bin_number': bin_num,
-                    'coordinate_x': bin_x,
-                    'coordinate_y': bin_y,
-                    'coordinate_z': (level - 1) * self.level_height,
-                    'bin_width': bin_width,
-                    'bin_depth': self.depth,
-                    'bin_height': self.level_height,
-                })
+                try:
+                    Location.create({
+                        'name': bin_name,
+                        'location_id': warehouse_location.id,
+                        'usage': 'internal',
+                        'barcode': bin_code,
+                        'shelf_id': self.id,
+                        'area_id': self.area_id.id if self.area_id else False,
+                        'level_number': level,
+                        'bin_number': bin_num,
+                        'coordinate_x': bin_x,
+                        'coordinate_y': bin_y,
+                        'coordinate_z': (level - 1) * self.level_height,
+                        'bin_width': bin_width,
+                        'bin_depth': self.depth,
+                        'bin_height': self.level_height,
+                    })
+                except Exception as e:
+                    # Skip if constraint error (barcode already exists)
+                    continue
 
     _sql_constraints = [
-        ('code_unique', 'UNIQUE(code, area_id)', 'Shelf code must be unique per area!')
+        ('code_unique', 'UNIQUE(code, warehouse_id)', 'Shelf code must be unique per warehouse!')
     ]

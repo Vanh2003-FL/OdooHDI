@@ -20,6 +20,7 @@
         <record id="demo_shelf_1" model="warehouse.shelf">
             <field name="name">Shelf A-1</field>
             <field name="code">SHELF-A1</field>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
             <field name="area_id" ref="demo_area_a"/>
             <field name="level_count">4</field>
             <field name="level_height">0.6</field>

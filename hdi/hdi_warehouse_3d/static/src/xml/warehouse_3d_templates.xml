@@ -7,39 +7,57 @@
             <div class="designer_toolbar">
                 <button class="btn btn-sm" 
                         t-att-class="state.mode === 'select' ? 'btn-primary' : 'btn-light'"
-                        t-on-click="() => this.state.mode = 'select'">
+                        t-on-click="() => this.state.mode = 'select'"
+                        title="Select items (Area or Shelf only)">
                     Select
                 </button>
                 <button class="btn btn-sm"
                         t-att-class="state.mode === 'move' ? 'btn-primary' : 'btn-light'"
-                        t-on-click="() => this.state.mode = 'move'">
+                        t-on-click="() => this.state.mode = 'move'"
+                        title="Move AREA or SHELF (Bins are locked)">
                     Move
                 </button>
                 <button class="btn btn-sm"
                         t-att-class="state.mode === 'resize' ? 'btn-primary' : 'btn-light'"
-                        t-on-click="() => this.state.mode = 'resize'">
+                        t-on-click="() => this.state.mode = 'resize'"
+                        title="Resize Area or Shelf">
                     Resize
                 </button>
                 <div style="width: 1px; height: 24px; background: #ddd; margin: 0 8px;"></div>
-                <button class="btn btn-sm btn-success" t-on-click="() => this.createShelf()">
+                <button class="btn btn-sm btn-success" t-on-click="() => this.createShelf()"
+                        title="Create new shelf with auto-generated bins">
                     + Create Shelf
                 </button>
-                <button class="btn btn-sm btn-light" t-on-click="() => this.divideBins()">
+                <button class="btn btn-sm btn-light" t-on-click="() => this.divideBins()"
+                        title="Change bins per level (recreates bins)">
                     Divide Bins
                 </button>
-                <button class="btn btn-sm btn-light" t-on-click="() => this.rotateShelf()">
+                <button class="btn btn-sm btn-light" t-on-click="() => this.rotateShelf()"
+                        title="Rotate shelf 90 degrees">
                     Rotate Shelf
                 </button>
-                <button class="btn btn-sm btn-light" t-on-click="() => this.toggleGrid()">
+                <button class="btn btn-sm btn-light" t-on-click="() => this.toggleGrid()"
+                        title="Toggle grid display">
                     Grid
                 </button>
             </div>
             
             <!-- Top Right Controls (SKUsavvy: SAVE button) -->
             <div class="designer_controls_top_right">
-                <button class="btn btn-primary" t-on-click="() => this.saveLayout()">
+                <button class="btn btn-primary" t-on-click="() => this.saveLayout()"
+                        title="Save layout structure (NO inventory data)">
                     💾 SAVE LAYOUT
                 </button>
+            </div>
+            
+            <!-- SKUsavvy Rules Badge -->
+            <div style="position: absolute; top: 20px; left: 20px; background: rgba(255,243,205,0.95); 
+                        padding: 10px 15px; border-radius: 8px; font-size: 12px; max-width: 250px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100;">
+                <strong>📌 SKUsavvy 2D Rules:</strong><br/>
+                ✅ Move: <strong>AREA</strong> + <strong>SHELF</strong><br/>
+                🚫 Locked: <strong>BINs</strong> (auto-positioned)<br/>
+                💡 To move bins → move shelf
             </div>
             
             <!-- Zoom Controls Bottom Right (SKUsavvy style) -->
