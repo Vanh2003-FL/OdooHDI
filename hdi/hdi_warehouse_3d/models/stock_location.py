@@ -5,27 +5,50 @@ from odoo.exceptions import ValidationError
 class StockLocation(models.Model):
     _inherit = 'stock.location'
 
-    # Link to 3D warehouse structure
-    shelf_id = fields.Many2one('warehouse.shelf', string='Shelf', ondelete='set null')
-    area_id = fields.Many2one('warehouse.area', related='shelf_id.area_id', store=True, string='Area')
+    # 🟦 SKUSavvy Hierarchy: AREA → SHELF → BIN
+    # Type of location in warehouse hierarchy
+    location_type = fields.Selection([
+        ('area', 'Area (Zone)'),
+        ('shelf', 'Shelf (Rack)'),
+        ('bin', 'Bin (Slot/Cell)'),
+    ], string='Location Type', default='bin', index=True, required=True,
+       help='AREA=zone marker, SHELF=container with grid, BIN=location where goods stored')
     
-    # 3D coordinates
-    coordinate_x = fields.Float(string='X Coordinate', help='X position in warehouse grid')
-    coordinate_y = fields.Float(string='Y Coordinate', help='Y position in warehouse grid')
-    coordinate_z = fields.Float(string='Z Coordinate (Height)', help='Height from ground')
+    # Parent relationship (enforces hierarchy)
+    parent_warehouse_id = fields.Many2one(
+        'stock.warehouse', 
+        string='Warehouse',
+        help='Warehouse this location belongs to'
+    )
     
-    # Bin properties
-    level_number = fields.Integer(string='Level Number', help='Shelf level (1=bottom)')
-    bin_number = fields.Integer(string='Bin Number', help='Bin position on level')
+    # 2D Layout Properties (for both AREA and SHELF)
+    pos_x = fields.Float(string='X Position', default=0)
+    pos_y = fields.Float(string='Y Position', default=0)
+    width = fields.Float(string='Width (m)', default=1.0)
+    height = fields.Float(string='Height (m)', default=1.0)
+    rotation = fields.Float(string='Rotation (degrees)', default=0.0)
+    color = fields.Char(string='Display Color', default='#E8E8FF')
+    
+    # Grid Configuration (for SHELF only)
+    # Defines how shelf is divided into bins
+    rows = fields.Integer(string='Rows (Y divisions)', default=2, help='Number of bins vertically')
+    cols = fields.Integer(string='Columns (X divisions)', default=2, help='Number of bins horizontally')
+    levels = fields.Integer(string='Levels (Z divisions)', default=4, help='Number of shelf levels')
+    
+    # Grid Cell Properties (for BIN only)
+    # Position in the parent shelf's grid
+    bin_row = fields.Integer(string='Bin Row', help='Row position in parent shelf grid')
+    bin_col = fields.Integer(string='Bin Column', help='Column position in parent shelf grid')
+    bin_level = fields.Integer(string='Bin Level', help='Level in parent shelf (1=bottom)')
     
     # Physical dimensions
-    bin_width = fields.Float(string='Width (m)', default=1.0)
-    bin_depth = fields.Float(string='Depth (m)', default=0.8)
-    bin_height = fields.Float(string='Height (m)', default=0.5)
+    bin_width = fields.Float(string='Bin Width (m)', default=1.0)
+    bin_depth = fields.Float(string='Bin Depth (m)', default=0.8)
+    bin_height = fields.Float(string='Bin Height (m)', default=0.5)
     max_capacity = fields.Float(string='Max Capacity', default=50)
     max_weight = fields.Float(string='Max Weight (kg)', default=100)
     
-    # Visual properties
+    # Visual & State Properties
     display_color = fields.Char(string='Display Color', compute='_compute_display_color')
     bin_state = fields.Selection([
         ('empty', 'Empty'),
@@ -34,28 +57,44 @@ class StockLocation(models.Model):
         ('blocked', 'Blocked')
     ], string='Bin State', compute='_compute_bin_state')
     
-    # Blocking & Lock Status
+    # Blocking & Lock Status (BIN only)
     is_blocked = fields.Boolean(string='Blocked', default=False)
     block_reason = fields.Text(string='Block Reason')
     is_locked = fields.Boolean(string='Locked (has inventory)', compute='_compute_is_locked', store=True,
                                help='Bin is locked if it has stock.quant (inventory) assigned')
 
+    # ============================================================================
+    # HIERARCHY ENFORCEMENT
+    # ============================================================================
+    
+    @api.constrains('location_type', 'usage')
+    def _check_location_type_usage(self):
+        """Enforce mapping: AREA/SHELF=view, BIN=internal"""
+        for location in self:
+            if location.location_type in ('area', 'shelf') and location.usage != 'view':
+                raise ValidationError(f"{location.location_type.upper()} must have usage='view'")
+            if location.location_type == 'bin' and location.usage != 'internal':
+                raise ValidationError("BIN must have usage='internal' (to hold inventory)")
+
+    # ============================================================================
+    # COMPUTED FIELDS
+    # ============================================================================
+
     @api.depends('quant_ids', 'quant_ids.quantity')
     def _compute_is_locked(self):
-        """A bin is locked if it has any inventory (stock.quant)"""
+        """A BIN is locked if it has inventory (stock.quant)"""
         for location in self:
-            # Bin is locked if:
-            # 1. It has a shelf (is a real bin, not a warehouse location)
-            # 2. It has any quant records with quantity > 0
-            has_inventory = location.shelf_id and location.quant_ids and any(
+            # Only BINs (usage=internal) can be locked
+            has_inventory = location.usage == 'internal' and location.quant_ids and any(
                 q.quantity > 0 for q in location.quant_ids
             )
             location.is_locked = has_inventory
 
     @api.depends('quant_ids', 'quant_ids.quantity', 'is_blocked')
     def _compute_bin_state(self):
+        """Compute BIN state: empty/available/full/blocked"""
         for location in self:
-            if location.usage != 'internal' or not location.shelf_id:
+            if location.location_type != 'bin':
                 location.bin_state = False
                 continue
                 
@@ -70,88 +109,88 @@ class StockLocation(models.Model):
 
     @api.depends('bin_state')
     def _compute_display_color(self):
+        """Map BIN state to display color"""
         color_map = {
-            'empty': '#E8E8FF',      # Light purple - draft, editable
+            'empty': '#E8E8FF',      # Light purple - DRAFT, no inventory
             'available': '#B3B3FF',  # Medium purple - has inventory, LOCKED
             'full': '#6666FF',       # Dark purple - full, LOCKED
-            'blocked': '#87CEEB',    # Sky blue - blocked
+            'blocked': '#FF9999',    # Light red - blocked
         }
         for location in self:
-            location.display_color = color_map.get(location.bin_state, '#CCCCCC')
+            if location.location_type == 'area':
+                location.display_color = location.color or '#E8E8FF'
+            elif location.location_type == 'shelf':
+                location.display_color = location.color or '#D4D4FF'
+            else:  # BIN
+                location.display_color = color_map.get(location.bin_state, '#CCCCCC')
+
+    # ============================================================================
+    # CREATE / WRITE OVERRIDES
+    # ============================================================================
 
     @api.model
     def create(self, vals):
-        """Override create to set default values for manually created bins"""
-        # If creating a bin (has shelf_id) but no coordinates set, use default position
-        if vals.get('shelf_id') and not vals.get('coordinate_x'):
-            shelf = self.env['warehouse.shelf'].browse(vals['shelf_id'])
-            if shelf:
-                # Place at shelf position as default
-                vals.setdefault('coordinate_x', shelf.position_x)
-                vals.setdefault('coordinate_y', shelf.position_y)
-                vals.setdefault('coordinate_z', 0)
-                
-                # Set default dimensions from shelf
-                vals.setdefault('bin_width', shelf.width / 2)
-                vals.setdefault('bin_depth', shelf.depth)
-                vals.setdefault('bin_height', shelf.level_height)
+        """Create new location (AREA/SHELF/BIN)"""
+        # Set usage based on location_type
+        location_type = vals.get('location_type', 'bin')
+        if location_type in ('area', 'shelf'):
+            vals['usage'] = 'view'
+        else:  # bin
+            vals['usage'] = 'internal'
         
-        # Auto-generate barcode if not provided
-        if vals.get('shelf_id') and not vals.get('barcode'):
-            shelf = self.env['warehouse.shelf'].browse(vals['shelf_id'])
-            level = vals.get('level_number', 1)
-            bin_num = vals.get('bin_number', 1)
-            if shelf:
-                vals['barcode'] = f"{shelf.code}-L{level:02d}-B{bin_num:02d}"
+        location = super(StockLocation, self).create(vals)
         
-        return super(StockLocation, self).create(vals)
+        # For BINs: auto-generate code if not provided
+        if location.location_type == 'bin' and not location.name:
+            location.name = f"{location.parent_id.name or 'SHELF'}-R{location.bin_row or 1}-C{location.bin_col or 1}-L{location.bin_level or 1}"
+        
+        return location
 
     def write(self, vals):
-        """Prevent moving/resizing bins that have inventory (locked bins)"""
-        # Check if trying to modify locked bins
+        """Prevent moving/resizing BINs that have inventory (locked)"""
+        # For locked BINs: only allow block/unblock
         if self.filtered('is_locked'):
-            # Allow only block/unblock operations on locked bins
             allowed_fields = {'is_blocked', 'block_reason'}
             modifying_fields = set(vals.keys()) - allowed_fields
             
             if modifying_fields:
-                locked_bins = self.filtered('is_locked')
-                raise ValidationError(
-                    f"❌ Cannot modify locked bins! "
-                    f"\n\nBins: {', '.join(locked_bins.mapped('name'))}\n\n"
-                    f"📌 These bins have inventory (stock.quant) and are LOCKED.\n"
-                    f"You can only:\n"
-                    f"  ✅ Block / Unblock bins\n"
-                    f"  ❌ Cannot move, resize, or delete\n\n"
-                    f"To restructure these bins:\n"
-                    f"  1. Move inventory out (via picking/transfer)\n"
-                    f"  2. Remove all stock.quant records\n"
-                    f"  3. Then you can edit the bin layout"
-                )
+                locked_bins = self.filtered(lambda l: l.location_type == 'bin' and l.is_locked)
+                if locked_bins:
+                    raise ValidationError(
+                        f"❌ Cannot modify LOCKED BINs!\n\n"
+                        f"BINs: {', '.join(locked_bins.mapped('name'))}\n\n"
+                        f"These bins have inventory and are LOCKED.\n"
+                        f"✅ Allowed: Block/Unblock\n"
+                        f"❌ Not Allowed: Move, Resize, Delete, Config\n\n"
+                        f"To restructure: Remove all stock.quant first"
+                    )
         
         return super(StockLocation, self).write(vals)
 
     def action_block_bin(self):
-        """Block this bin from receiving inventory"""
-        self.write({'is_blocked': True})
+        """Block BIN from receiving inventory"""
+        self.filtered(lambda l: l.location_type == 'bin').write({'is_blocked': True})
 
     def action_unblock_bin(self):
-        """Unblock this bin"""
-        self.write({'is_blocked': False, 'block_reason': False})
+        """Unblock BIN"""
+        self.filtered(lambda l: l.location_type == 'bin').write({'is_blocked': False, 'block_reason': False})
 
     def get_bin_details(self):
-        """Return bin details for 3D visualization"""
+        """Return BIN details for 3D visualization"""
         self.ensure_one()
+        if self.location_type != 'bin':
+            raise ValidationError("Only BINs have details")
+        
         return {
             'id': self.id,
             'name': self.name,
-            'barcode': self.barcode,
+            'code': self.name,
             'state': self.bin_state,
             'color': self.display_color,
-            'coordinates': {
-                'x': self.coordinate_x,
-                'y': self.coordinate_y,
-                'z': self.coordinate_z,
+            'grid': {
+                'row': self.bin_row,
+                'col': self.bin_col,
+                'level': self.bin_level,
             },
             'dimensions': {
                 'width': self.bin_width,
@@ -159,15 +198,11 @@ class StockLocation(models.Model):
                 'height': self.bin_height,
             },
             'inventory': [{
-                'product_id': quant.product_id.id,
-                'product_name': quant.product_id.name,
-                'product_code': quant.product_id.default_code,
-                'lot_id': quant.lot_id.id if quant.lot_id else False,
-                'lot_name': quant.lot_id.name if quant.lot_id else '',
-                'quantity': quant.quantity,
-                'reserved_quantity': quant.reserved_quantity,
-                'available_quantity': quant.available_quantity,
-            } for quant in self.quant_ids],
+                'product_id': q.product_id.id,
+                'product_name': q.product_id.name,
+                'lot_id': q.lot_id.id if q.lot_id else False,
+                'quantity': q.quantity,
+            } for q in self.quant_ids if q.quantity > 0],
             'is_blocked': self.is_blocked,
-            'block_reason': self.block_reason,
+            'is_locked': self.is_locked,
         }

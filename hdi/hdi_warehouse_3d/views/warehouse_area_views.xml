@@ -10,7 +10,6 @@
                 <field name="code"/>
                 <field name="name"/>
                 <field name="warehouse_id"/>
-                <field name="shelf_count"/>
                 <field name="temperature_controlled" widget="boolean_toggle"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
@@ -55,7 +54,6 @@
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="level_count"/>
-                                    <field name="bin_count"/>
                                 </list>
                             </field>
                         </page>

@@ -39,18 +39,11 @@ class WarehouseShelf(models.Model):
     bins_per_level = fields.Integer(string='Bins per Level', default=2, required=True,
                                     help='Number of bins per level (horizontal divisions)')
     
-    # Relations
-    bin_ids = fields.One2many('stock.location', 'shelf_id', string='Bins', 
-                              domain=[('usage', '=', 'internal')])
-    bin_count = fields.Integer(string='Bin Count', compute='_compute_bin_count')
+    # 🔴 DEPRECATED: bin_ids removed - now using stock.location with location_type='bin'
+    # Kept for backward compatibility, but not used in new SKUSavvy implementation
     
     active = fields.Boolean(default=True)
     notes = fields.Text(string='Notes')
-
-    @api.depends('bin_ids')
-    def _compute_bin_count(self):
-        for shelf in self:
-            shelf.bin_count = len(shelf.bin_ids)
 
     @api.model
     def create(self, vals):
@@ -86,69 +79,9 @@ class WarehouseShelf(models.Model):
         }
 
     def _create_bins(self):
-        """Auto-create stock.location bins for each level using grid division"""
-        Location = self.env['stock.location']
-        
-        # Delete existing bins for this shelf to avoid duplicates
-        existing_bins = Location.search([('shelf_id', '=', self.id)])
-        if existing_bins:
-            existing_bins.unlink()
-        
-        # Get warehouse location (try area first, fallback to warehouse)
-        if self.area_id and self.area_id.warehouse_id:
-            warehouse_location = self.area_id.warehouse_id.lot_stock_id
-        elif self.warehouse_id:
-            warehouse_location = self.warehouse_id.lot_stock_id
-        else:
-            # Fallback to first available warehouse
-            warehouse = self.env['stock.warehouse'].search([], limit=1)
-            warehouse_location = warehouse.lot_stock_id if warehouse else False
-            
-        if not warehouse_location:
-            return
-        
-        # Calculate bin dimensions based on shelf division
-        bin_width = self.width / self.bins_per_level
-        
-        for level in range(1, self.level_count + 1):
-            for bin_num in range(1, self.bins_per_level + 1):
-                bin_code = f"{self.code}-L{level:02d}-B{bin_num:02d}"
-                bin_name = f"{self.name} Level {level} Bin {bin_num}"
-                
-                # Check if bin with this barcode already exists
-                existing_bin = Location.search([('barcode', '=', bin_code)], limit=1)
-                if existing_bin:
-                    # Skip if already exists (from previous install)
-                    continue
-                
-                # Calculate position based on orientation
-                if self.orientation == 'horizontal':
-                    bin_x = self.position_x + (bin_num - 1) * bin_width
-                    bin_y = self.position_y
-                else:  # vertical
-                    bin_x = self.position_x
-                    bin_y = self.position_y + (bin_num - 1) * bin_width
-                
-                try:
-                    Location.create({
-                        'name': bin_name,
-                        'location_id': warehouse_location.id,
-                        'usage': 'internal',
-                        'barcode': bin_code,
-                        'shelf_id': self.id,
-                        'area_id': self.area_id.id if self.area_id else False,
-                        'level_number': level,
-                        'bin_number': bin_num,
-                        'coordinate_x': bin_x,
-                        'coordinate_y': bin_y,
-                        'coordinate_z': (level - 1) * self.level_height,
-                        'bin_width': bin_width,
-                        'bin_depth': self.depth,
-                        'bin_height': self.level_height,
-                    })
-                except Exception as e:
-                    # Skip if constraint error (barcode already exists)
-                    continue
+        """🔴 DEPRECATED - Create bins via stock.location directly with location_type='bin'"""
+        # Kept for backward compatibility only
+        pass
 
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code, warehouse_id)', 'Shelf code must be unique per warehouse!')

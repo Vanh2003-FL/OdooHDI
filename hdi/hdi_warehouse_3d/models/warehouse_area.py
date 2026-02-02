@@ -41,15 +41,9 @@ class WarehouseArea(models.Model):
     # Relations (informational only - shelves are NOT contained by area)
     shelf_ids = fields.One2many('warehouse.shelf', 'area_id', string='Shelves (Reference)',
                                help='Shelves that reference this area (informational only)')
-    shelf_count = fields.Integer(string='Shelf Count', compute='_compute_shelf_count')
     
     active = fields.Boolean(default=True)
     description = fields.Text(string='Description')
-
-    @api.depends('shelf_ids')
-    def _compute_shelf_count(self):
-        for area in self:
-            area.shelf_count = len(area.shelf_ids)
 
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code, warehouse_id)', 'Area code must be unique per warehouse!')
