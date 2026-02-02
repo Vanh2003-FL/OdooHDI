@@ -14,7 +14,7 @@ class Warehouse3DController(http.Controller):
         if area_id:
             domain.append(('parent_warehouse_id', '=', int(area_id)))
         if shelf_id:
-            domain.append(('parent_id', '=', int(shelf_id)))
+            domain.append(('location_id', '=', int(shelf_id)))
         
         bins = Location.search(domain)
         

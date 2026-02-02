@@ -76,7 +76,7 @@ class StockLocation(models.Model):
             if location.location_type == 'bin' and location.usage != 'internal':
                 raise ValidationError("BIN must have usage='internal' (to hold inventory)")
 
-    @api.constrains('location_type', 'pos_x', 'pos_y', 'parent_id')
+    @api.constrains('location_type', 'pos_x', 'pos_y', 'location_id')
     def _check_bin_position_within_shelf(self):
         """🟦 SKUSavvy Rule: BIN position must be within parent SHELF boundaries"""
         for location in self:
@@ -84,14 +84,14 @@ class StockLocation(models.Model):
                 continue
                 
             # BIN must have parent SHELF
-            if not location.parent_id:
+            if not location.location_id:
                 raise ValidationError(
                     "🚫 BIN must have a parent SHELF!\n\n"
                     "Cannot create standalone bin. Bin must be placed inside a SHELF.\n"
                     "Each bin belongs to exactly one shelf in the warehouse hierarchy."
                 )
             
-            parent = location.parent_id
+            parent = location.location_id
             if parent.location_type != 'shelf':
                 raise ValidationError(
                     f"🚫 BIN parent must be a SHELF, not {parent.location_type.upper()}!\n\n"
@@ -195,7 +195,7 @@ class StockLocation(models.Model):
         
         # For BINs: auto-generate code if not provided
         if location.location_type == 'bin' and not location.name:
-            location.name = f"{location.parent_id.name or 'SHELF'}-R{location.bin_row or 1}-C{location.bin_col or 1}-L{location.bin_level or 1}"
+            location.name = f"{location.location_id.name or 'SHELF'}-R{location.bin_row or 1}-C{location.bin_col or 1}-L{location.bin_level or 1}"
         
         return location
 

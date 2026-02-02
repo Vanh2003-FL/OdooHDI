@@ -41,7 +41,7 @@
                     <group>
                         <group>
                             <field name="name" required="1"/>
-                            <field name="parent_id" required="1" domain="[('location_type', '=', 'shelf')]" 
+                            <field name="location_id" required="1" domain="[('location_type', '=', 'shelf')]" 
                                    help="Select the SHELF where this BIN will be placed"/>
                             <field name="barcode"/>
                             <field name="location_type" widget="selection" invisible="1"/>
