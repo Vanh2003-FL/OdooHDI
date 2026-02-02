@@ -23,10 +23,19 @@ class WarehouseShelf(models.Model):
     # Layout position
     position_x = fields.Float(string='Position X')
     position_y = fields.Float(string='Position Y')
+    orientation = fields.Selection([
+        ('horizontal', 'Horizontal'),
+        ('vertical', 'Vertical'),
+    ], string='Orientation', default='horizontal', required=True,
+       help='Shelf orientation for 2D layout design')
+    rotation = fields.Float(string='Rotation (degrees)', default=0.0,
+                           help='Rotation angle for shelf placement')
     
-    # Bin levels
+    # Bin levels and grid
     level_count = fields.Integer(string='Number of Levels', default=4, required=True)
     level_height = fields.Float(string='Level Height (m)', default=0.5)
+    bins_per_level = fields.Integer(string='Bins per Level', default=2, required=True,
+                                    help='Number of bins per level (horizontal divisions)')
     
     # Relations
     bin_ids = fields.One2many('stock.location', 'shelf_id', string='Bins', 
@@ -50,16 +59,27 @@ class WarehouseShelf(models.Model):
         return shelf
 
     def _create_bins(self):
-        """Auto-create stock.location bins for each level"""
+        """Auto-create stock.location bins for each level using grid division"""
         Location = self.env['stock.location']
         
         # Get warehouse location
         warehouse_location = self.area_id.warehouse_id.lot_stock_id
         
+        # Calculate bin dimensions based on shelf division
+        bin_width = self.width / self.bins_per_level
+        
         for level in range(1, self.level_count + 1):
-            for bin_num in range(1, 3):  # 2 bins per level by default
-                bin_code = f"{self.code}-L{level}-B{bin_num}"
+            for bin_num in range(1, self.bins_per_level + 1):
+                bin_code = f"{self.code}-L{level:02d}-B{bin_num:02d}"
                 bin_name = f"{self.name} Level {level} Bin {bin_num}"
+                
+                # Calculate position based on orientation
+                if self.orientation == 'horizontal':
+                    bin_x = self.position_x + (bin_num - 1) * bin_width
+                    bin_y = self.position_y
+                else:  # vertical
+                    bin_x = self.position_x
+                    bin_y = self.position_y + (bin_num - 1) * bin_width
                 
                 Location.create({
                     'name': bin_name,
@@ -67,11 +87,15 @@ class WarehouseShelf(models.Model):
                     'usage': 'internal',
                     'barcode': bin_code,
                     'shelf_id': self.id,
+                    'area_id': self.area_id.id,
                     'level_number': level,
                     'bin_number': bin_num,
-                    'coordinate_x': self.position_x + (bin_num - 1) * 1.0,
-                    'coordinate_y': self.position_y,
+                    'coordinate_x': bin_x,
+                    'coordinate_y': bin_y,
                     'coordinate_z': (level - 1) * self.level_height,
+                    'bin_width': bin_width,
+                    'bin_depth': self.depth,
+                    'bin_height': self.level_height,
                 })
 
     _sql_constraints = [

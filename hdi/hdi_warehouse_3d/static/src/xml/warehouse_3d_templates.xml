@@ -1,16 +1,256 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates>
-    <t t-name="hdi_warehouse_3d.warehouse_3d_viewer">
-        <div class="warehouse_3d_container">
-            <div class="warehouse_3d_controls">
-                <button class="btn btn-primary" t-on-click="() => this.switchView('2d')">2D View</button>
-                <button class="btn btn-primary" t-on-click="() => this.switchView('3d')">3D View</button>
-                <select class="form-select" t-model="this.selectedArea">
-                    <option value="">All Areas</option>
-                </select>
+    <!-- 2D LAYOUT DESIGNER Template (Admin only - Design mode) -->
+    <t t-name="hdi_warehouse_3d.warehouse_2d_designer">
+        <div class="warehouse_designer_container">
+            <div class="designer_toolbar">
+                <h3>🏗️ 2D Layout Designer</h3>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-secondary" t-on-click="() => this.state.mode = 'select'">
+                        🔍 Select
+                    </button>
+                    <button class="btn btn-sm btn-primary" t-on-click="() => this.state.mode = 'move'">
+                        ↔️ Move
+                    </button>
+                    <button class="btn btn-sm btn-info" t-on-click="() => this.state.mode = 'resize'">
+                        ↔️↕️ Resize
+                    </button>
+                </div>
+                <div class="btn-group ms-3">
+                    <button class="btn btn-sm btn-success" t-on-click="() => this.createShelf()">
+                        ➕ Create Shelf
+                    </button>
+                    <button class="btn btn-sm btn-warning" t-on-click="() => this.divideBins()">
+                        ⊞ Divide Bins
+                    </button>
+                    <button class="btn btn-sm btn-info" t-on-click="() => this.rotateShelf()">
+                        🔄 Rotate Shelf
+                    </button>
+                </div>
+                <div class="btn-group ms-3">
+                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.zoomIn()">
+                        🔍+ Zoom In
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.zoomOut()">
+                        🔍- Zoom Out
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.toggleGrid()">
+                        ⊞ Grid
+                    </button>
+                </div>
+                <div class="ms-auto d-flex gap-2">
+                    <button class="btn btn-sm btn-primary" t-on-click="() => this.saveLayout()">
+                        💾 SAVE LAYOUT
+                    </button>
+                    <span class="badge bg-warning">⚠️ Design Mode - Inventory = 0 or 1M → Same View</span>
+                </div>
             </div>
-            <div class="warehouse_3d_canvas"></div>
-            <div class="bin_detail_panel"></div>
+            
+            <div class="designer_workspace">
+                <canvas id="designer_canvas"></canvas>
+            </div>
+            
+            <div class="designer_properties" t-if="state.selectedItem">
+                <h5>Properties</h5>
+                <p><strong>Type:</strong> <span t-esc="state.selectedItem.type"/></p>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" class="form-control" t-model="state.selectedItem.name"/>
+                </div>
+                <div class="form-group" t-if="state.selectedItem.type === 'area'">
+                    <label>Area Type:</label>
+                    <select class="form-select" t-model="state.selectedItem.area_type">
+                        <option value="inbound">Inbound</option>
+                        <option value="storage">Storage</option>
+                        <option value="outbound">Outbound</option>
+                        <option value="staging">Staging</option>
+                        <option value="quality">Quality Check</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <label>Position X:</label>
+                        <input type="number" class="form-control" t-model="state.selectedItem.position_x"/>
+                    </div>
+                    <div class="col-6">
+                        <label>Position Y:</label>
+                        <input type="number" class="form-control" t-model="state.selectedItem.position_y"/>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <label>Width:</label>
+                        <input type="number" class="form-control" t-model="state.selectedItem.width"/>
+                    </div>
+                    <div class="col-6">
+                        <label>Height:</label>
+                        <input type="number" class="form-control" t-model="state.selectedItem.height"/>
+                    </div>
+                </div>
+                <div class="form-group mt-2" t-if="state.selectedItem.type === 'shelf'">
+                    <label>Orientation:</label>
+                    <select class="form-select" t-model="state.selectedItem.orientation">
+                        <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
+                    </select>
+                </div>
+                <div class="form-group mt-2" t-if="state.selectedItem.type === 'shelf'">
+                    <label>Bins per Level:</label>
+                    <input type="number" class="form-control" t-model="state.selectedItem.bins_per_level"/>
+                </div>
+                <button class="btn btn-primary btn-sm mt-3 w-100" t-on-click="() => this.saveItemPosition(state.selectedItem)">
+                    💾 Save Changes
+                </button>
+            </div>
+            
+            <div class="designer_help">
+                <strong>✅ Khi nào dùng Edit 2D?</strong><br/>
+                • Setup kho ban đầu | Mở rộng kho | Thêm kệ/bin | Chia lại lối đi<br/>
+                <strong>📌 Key Rule:</strong> Tồn kho = 0 hay 1M sản phẩm → Edit 2D vẫn giống nhau (NO inventory dependency)<br/>
+                <strong>💾 SAVE → What happens?</strong><br/>
+                • Persist: Area → Shelf → Bin (map 1-1 với stock.location)<br/>
+                • NOT touched: stock.quant inventory data<br/>
+                <strong>✅ Allowed:</strong> Thiết kế layout, kéo thả, xoay, chia bin theo grid, set dimensions<br/>
+                <strong>❌ NOT Allowed:</strong> Gán hàng vào bin (use 3D Viewer)
+            </div>
+        </div>
+    </t>
+
+    <!-- 3D WAREHOUSE VIEWER Template (Operations - View &amp; Work) -->
+    <t t-name="hdi_warehouse_3d.warehouse_3d_viewer">
+        <div class="warehouse_viewer_container">
+            <div class="viewer_toolbar">
+                <h3>📦 3D Warehouse Viewer</h3>
+                <div class="btn-group">
+                    <button class="btn btn-sm" 
+                            t-att-class="state.viewMode === '2d' ? 'btn-primary' : 'btn-outline-primary'"
+                            t-on-click="() => this.switchView('2d')">
+                        📐 2D View
+                    </button>
+                    <button class="btn btn-sm"
+                            t-att-class="state.viewMode === '3d' ? 'btn-primary' : 'btn-outline-primary'"
+                            t-on-click="() => this.switchView('3d')">
+                        🎮 3D View
+                    </button>
+                </div>
+                
+                <div class="ms-3">
+                    <select class="form-select form-select-sm" t-model="state.filterArea" t-on-change="() => this.loadWarehouseData()">
+                        <option value="">All Areas</option>
+                        <!-- Areas will be populated dynamically -->
+                    </select>
+                </div>
+                
+                <div class="btn-group ms-3">
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            t-att-class="state.showEmpty ? 'active' : ''"
+                            t-on-click="() => this.toggleEmptyBins()">
+                        Show Empty
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            t-att-class="state.showBlocked ? 'active' : ''"
+                            t-on-click="() => this.toggleBlockedBins()">
+                        Show Blocked
+                    </button>
+                </div>
+                
+                <div class="ms-auto">
+                    <span class="badge bg-info">👁️ View Mode - Operations Enabled</span>
+                </div>
+            </div>
+            
+            <div class="viewer_workspace">
+                <canvas id="viewer_canvas"></canvas>
+            </div>
+            
+            <div id="bin_detail_panel" class="bin_detail_panel"></div>
+            
+            <div class="viewer_legend">
+                <h6>Legend:</h6>
+                <div class="legend_item">
+                    <span class="legend_color bin_empty"></span> Empty
+                </div>
+                <div class="legend_item">
+                    <span class="legend_color bin_available"></span> Available
+                </div>
+                <div class="legend_item">
+                    <span class="legend_color bin_full"></span> Full
+                </div>
+                <div class="legend_item">
+                    <span class="legend_color bin_blocked"></span> Blocked
+                </div>
+            </div>
+            
+            <div class="viewer_help">
+                <strong>✅ 3D dùng khi nào?</strong> Nhập kho | Xuất kho | Kiểm tra tồn | Audit<br/>
+                <strong>📊 3D luôn dựa trên dữ liệu thực (stock.quant)</strong><br/>
+                <strong>✅ Allowed:</strong> Click bin, Gán hàng (putaway), Di chuyển hàng, Block/Unblock bin<br/>
+                <strong>❌ NOT Allowed:</strong> Kéo kệ, Thêm bin, Đổi kích thước → Use 2D Designer<br/>
+                <strong>📌 Key:</strong> Edit 3D = Thao tác stock.quant, KHÔNG có bảng tồn riêng, 3D chỉ là renderer
+            </div>
+        </div>
+    </t>
+
+    <!-- UNIFIED WAREHOUSE VIEW with 2D/3D Toggle -->
+    <t t-name="hdi_warehouse_3d.warehouse_unified_view">
+        <div class="warehouse_unified_container">
+            <!-- Toggle Switch Header -->
+            <div class="unified_header">
+                <div class="mode_toggle_container">
+                    <div class="mode_toggle">
+                        <button 
+                            class="toggle_btn"
+                            t-att-class="state.mode === '2d' ? 'active' : ''"
+                            t-on-click="() => this.switchTo2D()">
+                            2D
+                        </button>
+                        <button 
+                            class="toggle_btn"
+                            t-att-class="state.mode === '3d' ? 'active' : ''"
+                            t-on-click="() => this.switchTo3D()">
+                            3D
+                        </button>
+                        <div class="toggle_slider" t-att-class="state.mode === '3d' ? 'right' : 'left'"></div>
+                    </div>
+                </div>
+                
+                <div class="mode_description">
+                    <span t-if="state.mode === '2d'" class="badge bg-warning">
+                        🏗️ Design Mode: Edit layout structure
+                    </span>
+                    <span t-if="state.mode === '3d'" class="badge bg-info">
+                        📦 Operations Mode: Work with inventory
+                    </span>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="unified_content">
+                <!-- 2D Designer View -->
+                <div t-if="state.mode === '2d'" class="mode_content">
+                    <t t-if="!state.isManager">
+                        <div class="alert alert-warning text-center">
+                            <h4>⚠️ Access Restricted</h4>
+                            <p>2D Designer mode requires Stock Manager permissions.</p>
+                            <p>Contact your administrator to grant access.</p>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <!-- Embed 2D Designer Component -->
+                        <div class="embedded_2d_designer">
+                            <Warehouse2DDesigner t-props="state"/>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- 3D Viewer View -->
+                <div t-if="state.mode === '3d'" class="mode_content">
+                    <!-- Embed 3D Viewer Component -->
+                    <div class="embedded_3d_viewer">
+                        <Warehouse3DViewer t-props="state"/>
+                    </div>
+                </div>
+            </div>
         </div>
     </t>
 </templates>

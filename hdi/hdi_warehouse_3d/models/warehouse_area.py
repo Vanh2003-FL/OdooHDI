@@ -11,11 +11,21 @@ class WarehouseArea(models.Model):
     sequence = fields.Integer(string='Sequence', default=10)
     warehouse_id = fields.Many2one('stock.warehouse', string='Warehouse', required=True)
     
+    # Area type (SKUSavvy zones)
+    area_type = fields.Selection([
+        ('inbound', 'Inbound'),
+        ('storage', 'Storage'),
+        ('outbound', 'Outbound'),
+        ('staging', 'Staging'),
+        ('quality', 'Quality Check'),
+    ], string='Area Type', required=True, default='storage')
+    
     # Layout properties
     position_x = fields.Float(string='Position X')
     position_y = fields.Float(string='Position Y')
     width = fields.Float(string='Width (m)')
     height = fields.Float(string='Height (m)')
+    boundary = fields.Text(string='Boundary Polygon', help='JSON array of [x,y] coordinates defining area boundary')
     color = fields.Char(string='Display Color', default='#E8E8FF')
     
     # Temperature control

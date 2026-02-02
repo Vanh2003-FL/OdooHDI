@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- 2D Layout Designer Action (Admin only - Design mode) -->
+    <record id="action_warehouse_2d_designer" model="ir.actions.client">
+        <field name="name">2D Layout Designer</field>
+        <field name="tag">warehouse_2d_designer</field>
+    </record>
+
+    <!-- 3D Warehouse Viewer Action (Operations - View &amp; Work) -->
+    <record id="action_warehouse_3d_viewer" model="ir.actions.client">
+        <field name="name">3D Warehouse View</field>
+        <field name="tag">warehouse_3d_viewer</field>
+    </record>
+
+    <!-- Unified Warehouse View with 2D/3D Toggle -->
+    <record id="action_warehouse_unified_view" model="ir.actions.client">
+        <field name="name">Warehouse View</field>
+        <field name="tag">warehouse_unified_view</field>
+    </record>
+
     <!-- Menu Structure -->
     <menuitem id="menu_warehouse_3d_root"
               name="LAYOUT"
@@ -11,6 +29,29 @@
               parent="menu_warehouse_3d_root"
               sequence="10"/>
 
+    <!-- Unified View with 2D/3D Toggle -->
+    <menuitem id="menu_warehouse_unified_view"
+              name="Warehouse View"
+              parent="menu_warehouse_3d_view"
+              action="action_warehouse_unified_view"
+              sequence="1"/>
+
+    <!-- 2D Designer Menu (Admin) - Keep for direct access -->
+    <menuitem id="menu_w- Keep for direct access -->
+    <menuitem id="menu_warehouse_3d_viewer"
+              name="3D Viewer (Legacy)rehouse_3d_view"
+              action="action_warehouse_2d_designer"
+              groups="stock.group_stock_manager"
+              sequence="5"/>
+
+    <!-- 3D Viewer Menu (Operations) -->
+    <menuitem id="menu_warehouse_3d_viewer"
+              name="3D Viewer"
+              parent="menu_warehouse_3d_view"
+              action="action_warehouse_3d_viewer"
+              sequence="6"/>
+
+    <!-- Data Management Menus -->
     <menuitem id="menu_warehouse_shelves"
               name="Shelves"
               parent="menu_warehouse_3d_view"
