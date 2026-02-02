@@ -10,9 +10,10 @@ class WarehouseShelf(models.Model):
     code = fields.Char(string='Code', required=True)
     sequence = fields.Integer(string='Sequence', default=10)
     
-    # Relationships
-    area_id = fields.Many2one('warehouse.area', string='Area', required=True, ondelete='cascade')
-    warehouse_id = fields.Many2one('stock.warehouse', related='area_id.warehouse_id', store=True)
+    # Relationships (SKUsavvy: area_id is optional - shelves can be placed freely)
+    area_id = fields.Many2one('warehouse.area', string='Area', required=False, ondelete='set null',
+                             help='Optional: Visual grouping only. Shelves are independent entities.')
+    warehouse_id = fields.Many2one('stock.warehouse', string='Warehouse', required=True)
     
     # Physical dimensions
     width = fields.Float(string='Width (m)', default=1.2)
@@ -62,8 +63,18 @@ class WarehouseShelf(models.Model):
         """Auto-create stock.location bins for each level using grid division"""
         Location = self.env['stock.location']
         
-        # Get warehouse location
-        warehouse_location = self.area_id.warehouse_id.lot_stock_id
+        # Get warehouse location (try area first, fallback to warehouse)
+        if self.area_id and self.area_id.warehouse_id:
+            warehouse_location = self.area_id.warehouse_id.lot_stock_id
+        elif self.warehouse_id:
+            warehouse_location = self.warehouse_id.lot_stock_id
+        else:
+            # Fallback to first available warehouse
+            warehouse = self.env['stock.warehouse'].search([], limit=1)
+            warehouse_location = warehouse.lot_stock_id if warehouse else False
+            
+        if not warehouse_location:
+            return
         
         # Calculate bin dimensions based on shelf division
         bin_width = self.width / self.bins_per_level
@@ -87,7 +98,7 @@ class WarehouseShelf(models.Model):
                     'usage': 'internal',
                     'barcode': bin_code,
                     'shelf_id': self.id,
-                    'area_id': self.area_id.id,
+                    'area_id': self.area_id.id if self.area_id else False,
                     'level_number': level,
                     'bin_number': bin_num,
                     'coordinate_x': bin_x,

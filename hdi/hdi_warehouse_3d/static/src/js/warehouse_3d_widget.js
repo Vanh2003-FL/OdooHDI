@@ -151,19 +151,18 @@ export class Warehouse2DDesigner extends Component {
         
         console.log(`📐 Area "${area.name}" at pixel (${x}, ${y}) size ${w}x${h}`);
         
-        // SKUsavvy style: transparent area background
-        this.ctx.fillStyle = 'rgba(232, 232, 255, 0.15)';
-        this.ctx.fillRect(x, y, w, h);
+        // SKUsavvy style: Area is just an OUTLINE, not a filled zone
+        // NO fill - just border to mark the zone
         
-        // Thin border
-        this.ctx.strokeStyle = '#CCCCDD';
-        this.ctx.lineWidth = 1;
+        // Thin border only
+        this.ctx.strokeStyle = '#C0C0C0';
+        this.ctx.lineWidth = 2;
         this.ctx.strokeRect(x, y, w, h);
         
-        // Area label
-        this.ctx.fillStyle = '#666';
-        this.ctx.font = '12px Arial';
-        this.ctx.fillText(area.name, x + 5, y + 15);
+        // Area label at top-left corner
+        this.ctx.fillStyle = '#999';
+        this.ctx.font = '11px Arial';
+        this.ctx.fillText(area.name, x + 5, y - 5);
     }
 
     drawShelf(shelf) {
@@ -175,18 +174,27 @@ export class Warehouse2DDesigner extends Component {
         
         console.log(`📦 Shelf "${shelf.code}" at pixel (${x}, ${y}) size ${Math.round(w)}x${Math.round(h)}`);
         
-        // SKUsavvy style: solid purple for shelves
-        this.ctx.fillStyle = '#9494FF';
+        // SKUsavvy style: Different shades for different shelves
+        const shelfColors = ['#9494FF', '#7C7CFF', '#B3B3FF', '#9494FF', '#C4C4FF', '#8B9DC3'];
+        const colorIndex = (shelf.id || 0) % shelfColors.length;
+        
+        this.ctx.fillStyle = shelfColors[colorIndex];
         this.ctx.fillRect(x, y, w, h);
         
         this.ctx.strokeStyle = '#6C63FF';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(x, y, w, h);
         
-        // Shelf label (vertical if needed)
+        // Shelf label (vertical text for SKUsavvy style)
+        this.ctx.save();
+        this.ctx.translate(x + w/2, y + h/2);
+        this.ctx.rotate(-Math.PI / 2); // Rotate 90 degrees
         this.ctx.fillStyle = '#FFF';
-        this.ctx.font = 'bold 11px Arial';
-        this.ctx.fillText(shelf.code, x + 3, y + 12);
+        this.ctx.font = 'bold 12px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(shelf.code, 0, 0);
+        this.ctx.restore();
     }
 
     drawBin(bin) {
