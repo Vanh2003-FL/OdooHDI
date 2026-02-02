@@ -211,21 +211,43 @@ export class Warehouse2DDesigner extends Component {
         const w = (bin.width || 0.5) * this.state.gridSize;
         const h = (bin.depth || 0.5) * this.state.gridSize;
         
+        // Check if bin is locked (has inventory)
+        const isLocked = bin.is_locked || (bin.state && bin.state !== 'empty');
+        
         // SKUsavvy: Bins are LOCKED in 2D mode - lighter color to indicate
         // Color by state (SKUsavvy style)
-        let fillColor = '#E8E8FF'; // empty - very light to show "locked"
-        if (bin.state === 'occupied') fillColor = '#B0B0FF';
-        if (bin.state === 'blocked') fillColor = '#FFB0B0';
+        let fillColor = '#E8E8FF'; // empty - very light, DRAFT (editable)
+        if (bin.state === 'available') fillColor = '#B3B3FF'; // Medium purple - HAS INVENTORY (LOCKED)
+        if (bin.state === 'full') fillColor = '#6666FF'; // Dark purple - FULL (LOCKED)
+        if (bin.state === 'blocked') fillColor = '#FFB0B0'; // Light red - BLOCKED
         
         this.ctx.fillStyle = bin.color || fillColor;
         this.ctx.fillRect(x, y, w, h);
         
-        // Dashed border to indicate "locked" status
-        this.ctx.strokeStyle = '#999';
-        this.ctx.lineWidth = 0.5;
-        this.ctx.setLineDash([2, 2]);
-        this.ctx.strokeRect(x, y, w, h);
-        this.ctx.setLineDash([]);
+        // Border style based on lock status
+        if (isLocked) {
+            // LOCKED BIN: Solid red border + red X pattern
+            this.ctx.strokeStyle = '#FF0000';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x, y, w, h);
+            
+            // Draw X pattern to indicate locked
+            this.ctx.strokeStyle = '#FF6666';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+            this.ctx.lineTo(x + w, y + h);
+            this.ctx.moveTo(x + w, y);
+            this.ctx.lineTo(x, y + h);
+            this.ctx.stroke();
+        } else {
+            // DRAFT BIN: Dashed border to indicate editable
+            this.ctx.strokeStyle = '#999';
+            this.ctx.lineWidth = 0.5;
+            this.ctx.setLineDash([2, 2]);
+            this.ctx.strokeRect(x, y, w, h);
+            this.ctx.setLineDash([]);
+        }
     }
 
     highlightSelected(item) {
@@ -289,12 +311,34 @@ export class Warehouse2DDesigner extends Component {
         // Select item at mouse position
         const item = this.getItemAt(x, y);
         
-        // SKUsavvy Rule: Only AREA and SHELF can be moved in 2D mode
-        // BIN is locked - cannot move individually
+        // SKUsavvy Rule: Bins cannot be edited in 2D mode
         if (item && item.type === 'bin') {
-            console.warn('🚫 BIN cannot be moved individually in 2D mode');
-            console.log('📌 SKUsavvy Rule: Bins are locked to shelf structure');
-            alert('⚠️ Cannot move bins individually!\n\nTo move bins, move the entire SHELF.\nBins are locked to shelf structure (SKUsavvy principle).');
+            // Check if bin is locked (has inventory)
+            if (item.data.is_locked) {
+                alert('🔒 LOCKED BIN - Cannot modify!\n\n' +
+                      'This bin has inventory (stock.quant).\n\n' +
+                      '✅ You can:\n' +
+                      '  • Block / Unblock bin (operations)\n\n' +
+                      '❌ Cannot:\n' +
+                      '  • Move bin\n' +
+                      '  • Resize bin\n' +
+                      '  • Change level\n\n' +
+                      '💡 To restructure:\n' +
+                      '  1. Move all inventory out\n' +
+                      '  2. Then edit bin layout');
+            } else {
+                // Empty bin (draft) - cannot move in 2D, must use shelf operations
+                alert('⚠️ Cannot move bins individually in 2D!\n\n' +
+                      'Bins are auto-positioned by SHELF.\n\n' +
+                      '✅ To modify bins:\n' +
+                      '  • Edit SHELF (move, resize, rotate)\n' +
+                      '  • Bins follow shelf changes\n\n' +
+                      '❌ Individual bin operations:\n' +
+                      '  • Cannot move single bin\n' +
+                      '  • Cannot resize single bin\n' +
+                      '  • Cannot change level\n\n' +
+                      '📝 Use Divide Bins to change bin count');
+            }
             return;
         }
         
