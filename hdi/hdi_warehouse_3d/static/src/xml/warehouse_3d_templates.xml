@@ -1,117 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates>
-    <!-- 2D LAYOUT DESIGNER Template (Admin only - Design mode) -->
+    <!-- 2D LAYOUT DESIGNER Template - SKUsavvy Style -->
     <t t-name="hdi_warehouse_3d.warehouse_2d_designer">
         <div class="warehouse_designer_container">
+            <!-- Compact Toolbar in Center Top (SKUsavvy style) -->
             <div class="designer_toolbar">
-                <h3>🏗️ 2D Layout Designer</h3>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-secondary" t-on-click="() => this.state.mode = 'select'">
-                        🔍 Select
-                    </button>
-                    <button class="btn btn-sm btn-primary" t-on-click="() => this.state.mode = 'move'">
-                        ↔️ Move
-                    </button>
-                    <button class="btn btn-sm btn-info" t-on-click="() => this.state.mode = 'resize'">
-                        ↔️↕️ Resize
-                    </button>
-                </div>
-                <div class="btn-group ms-3">
-                    <button class="btn btn-sm btn-success" t-on-click="() => this.createShelf()">
-                        ➕ Create Shelf
-                    </button>
-                    <button class="btn btn-sm btn-warning" t-on-click="() => this.divideBins()">
-                        ⊞ Divide Bins
-                    </button>
-                    <button class="btn btn-sm btn-info" t-on-click="() => this.rotateShelf()">
-                        🔄 Rotate Shelf
-                    </button>
-                </div>
-                <div class="btn-group ms-3">
-                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.zoomIn()">
-                        🔍+ Zoom In
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.zoomOut()">
-                        🔍- Zoom Out
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.toggleGrid()">
-                        ⊞ Grid
-                    </button>
-                </div>
-                <div class="ms-auto d-flex gap-2">
-                    <button class="btn btn-sm btn-primary" t-on-click="() => this.saveLayout()">
-                        💾 SAVE LAYOUT
-                    </button>
-                    <span class="badge bg-warning">⚠️ Design Mode - Inventory = 0 or 1M → Same View</span>
-                </div>
+                <button class="btn btn-sm" 
+                        t-att-class="state.mode === 'select' ? 'btn-primary' : 'btn-light'"
+                        t-on-click="() => this.state.mode = 'select'">
+                    Select
+                </button>
+                <button class="btn btn-sm"
+                        t-att-class="state.mode === 'move' ? 'btn-primary' : 'btn-light'"
+                        t-on-click="() => this.state.mode = 'move'">
+                    Move
+                </button>
+                <button class="btn btn-sm"
+                        t-att-class="state.mode === 'resize' ? 'btn-primary' : 'btn-light'"
+                        t-on-click="() => this.state.mode = 'resize'">
+                    Resize
+                </button>
+                <div style="width: 1px; height: 24px; background: #ddd; margin: 0 8px;"></div>
+                <button class="btn btn-sm btn-success" t-on-click="() => this.createShelf()">
+                    + Create Shelf
+                </button>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.divideBins()">
+                    Divide Bins
+                </button>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.rotateShelf()">
+                    Rotate Shelf
+                </button>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.toggleGrid()">
+                    Grid
+                </button>
             </div>
             
+            <!-- Top Right Controls (SKUsavvy: SAVE button) -->
+            <div class="designer_controls_top_right">
+                <button class="btn btn-primary" t-on-click="() => this.saveLayout()">
+                    💾 SAVE LAYOUT
+                </button>
+            </div>
+            
+            <!-- Zoom Controls Bottom Right (SKUsavvy style) -->
+            <div class="designer_zoom_controls">
+                <div class="zoom_btn" t-on-click="() => this.zoomIn()">+</div>
+                <div class="zoom_btn" t-on-click="() => this.zoomOut()">−</div>
+            </div>
+            
+            <!-- Canvas Workspace (Full Screen) -->
             <div class="designer_workspace">
                 <canvas t-ref="designerCanvas" id="designer_canvas"></canvas>
             </div>
             
+            <!-- Properties Panel (Only when item selected) -->
             <div class="designer_properties" t-if="state.selectedItem">
-                <h5>Properties</h5>
-                <p><strong>Type:</strong> <span t-esc="state.selectedItem.type"/></p>
-                <div class="form-group">
-                    <label>Name:</label>
-                    <input type="text" class="form-control" t-model="state.selectedItem.name"/>
+                <h5 style="margin-bottom: 15px; font-weight: 600;">Properties</h5>
+                <div style="margin-bottom: 10px;">
+                    <small style="color: #666; text-transform: uppercase; font-weight: 600;">Type</small>
+                    <div style="font-size: 14px; margin-top: 4px;" t-esc="state.selectedItem.type"/>
                 </div>
-                <div class="form-group" t-if="state.selectedItem.type === 'area'">
-                    <label>Area Type:</label>
-                    <select class="form-select" t-model="state.selectedItem.area_type">
-                        <option value="inbound">Inbound</option>
-                        <option value="storage">Storage</option>
-                        <option value="outbound">Outbound</option>
-                        <option value="staging">Staging</option>
-                        <option value="quality">Quality Check</option>
-                    </select>
+                <div class="form-group mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control form-control-sm" t-model="state.selectedItem.data.name"/>
                 </div>
-                <div class="row">
+                <div class="row mb-3">
                     <div class="col-6">
-                        <label>Position X:</label>
-                        <input type="number" class="form-control" t-model="state.selectedItem.position_x"/>
+                        <label class="form-label">Position X</label>
+                        <input type="number" class="form-control form-control-sm" 
+                               t-model="state.selectedItem.data.position_x"/>
                     </div>
                     <div class="col-6">
-                        <label>Position Y:</label>
-                        <input type="number" class="form-control" t-model="state.selectedItem.position_y"/>
+                        <label class="form-label">Position Y</label>
+                        <input type="number" class="form-control form-control-sm" 
+                               t-model="state.selectedItem.data.position_y"/>
                     </div>
                 </div>
-                <div class="row mt-2">
+                <div class="row mb-3">
                     <div class="col-6">
-                        <label>Width:</label>
-                        <input type="number" class="form-control" t-model="state.selectedItem.width"/>
+                        <label class="form-label">Width</label>
+                        <input type="number" class="form-control form-control-sm" 
+                               t-model="state.selectedItem.data.width"/>
                     </div>
                     <div class="col-6">
-                        <label>Height:</label>
-                        <input type="number" class="form-control" t-model="state.selectedItem.height"/>
+                        <label class="form-label">
+                            <span t-if="state.selectedItem.type === 'shelf'">Depth</span>
+                            <span t-else="">Height</span>
+                        </label>
+                        <input type="number" class="form-control form-control-sm" 
+                               t-model="state.selectedItem.data.depth || state.selectedItem.data.height"/>
                     </div>
                 </div>
-                <div class="form-group mt-2" t-if="state.selectedItem.type === 'shelf'">
-                    <label>Orientation:</label>
-                    <select class="form-select" t-model="state.selectedItem.orientation">
-                        <option value="horizontal">Horizontal</option>
-                        <option value="vertical">Vertical</option>
-                    </select>
-                </div>
-                <div class="form-group mt-2" t-if="state.selectedItem.type === 'shelf'">
-                    <label>Bins per Level:</label>
-                    <input type="number" class="form-control" t-model="state.selectedItem.bins_per_level"/>
-                </div>
-                <button class="btn btn-primary btn-sm mt-3 w-100" t-on-click="() => this.saveItemPosition(state.selectedItem)">
-                    💾 Save Changes
+                <button class="btn btn-primary btn-sm w-100" t-on-click="() => this.saveItemPosition(state.selectedItem)">
+                    Save Changes
                 </button>
-            </div>
-            
-            <div class="designer_help">
-                <strong>✅ Khi nào dùng Edit 2D?</strong><br/>
-                • Setup kho ban đầu | Mở rộng kho | Thêm kệ/bin | Chia lại lối đi<br/>
-                <strong>📌 Key Rule:</strong> Tồn kho = 0 hay 1M sản phẩm → Edit 2D vẫn giống nhau (NO inventory dependency)<br/>
-                <strong>💾 SAVE → What happens?</strong><br/>
-                • Persist: Area → Shelf → Bin (map 1-1 với stock.location)<br/>
-                • NOT touched: stock.quant inventory data<br/>
-                <strong>✅ Allowed:</strong> Thiết kế layout, kéo thả, xoay, chia bin theo grid, set dimensions<br/>
-                <strong>❌ NOT Allowed:</strong> Gán hàng vào bin (use 3D Viewer)
             </div>
         </div>
     </t>

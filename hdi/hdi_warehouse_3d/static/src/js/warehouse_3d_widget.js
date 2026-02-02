@@ -24,7 +24,9 @@ export class Warehouse2DDesigner extends Component {
             mode: 'select', // select, move, resize, create_shelf, create_bin
             gridSize: 20, // SKUsavvy-style: smaller grid for better precision
             zoom: 1.0,
-            showGrid: true
+            showGrid: true,
+            isDragging: false,
+            dragOffset: { x: 0, y: 0 }
         });
 
         onMounted(() => {
@@ -61,8 +63,11 @@ export class Warehouse2DDesigner extends Component {
         
         console.log('✅ Canvas found:', this.canvas);
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 1200;
-        this.canvas.height = 800;
+        
+        // SKUsavvy style: Full screen canvas
+        const container = this.canvas.parentElement;
+        this.canvas.width = container.clientWidth;
+        this.canvas.height = container.clientHeight;
         
         console.log(`✅ Canvas initialized: ${this.canvas.width}x${this.canvas.height}`);
         
@@ -70,6 +75,13 @@ export class Warehouse2DDesigner extends Component {
         this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
         this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+        
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            this.canvas.width = container.clientWidth;
+            this.canvas.height = container.clientHeight;
+            this.renderLayout();
+        });
         
         // Trigger initial render if data already loaded
         if (this.state.areas.length > 0 || this.state.shelves.length > 0 || this.state.bins.length > 0) {
@@ -203,12 +215,51 @@ export class Warehouse2DDesigner extends Component {
     }
 
     highlightSelected(item) {
-        // Highlight border for selected item
-        this.ctx.strokeStyle = '#FF0000';
+        if (!item || !item.data) return;
+        
+        const data = item.data;
+        let x, y, w, h;
+        
+        // Get bounds based on item type
+        if (item.type === 'area') {
+            x = data.position_x * this.state.gridSize;
+            y = data.position_y * this.state.gridSize;
+            w = data.width * this.state.gridSize;
+            h = data.height * this.state.gridSize;
+        } else if (item.type === 'shelf') {
+            x = data.position_x * this.state.gridSize;
+            y = data.position_y * this.state.gridSize;
+            w = data.width * this.state.gridSize;
+            h = data.depth * this.state.gridSize;
+        } else if (item.type === 'bin' && data.coordinates) {
+            x = data.coordinates.x * this.state.gridSize;
+            y = data.coordinates.y * this.state.gridSize;
+            w = (data.width || 0.5) * this.state.gridSize;
+            h = (data.depth || 0.5) * this.state.gridSize;
+        } else {
+            return;
+        }
+        
+        // Draw selection highlight
+        this.ctx.strokeStyle = this.state.isDragging ? '#00FF00' : '#FF4444';
         this.ctx.lineWidth = 3;
-        this.ctx.setLineDash([5, 5]);
-        // Draw highlight based on item type
+        this.ctx.setLineDash([8, 4]);
+        this.ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
         this.ctx.setLineDash([]);
+        
+        // Draw corner handles for resize mode
+        if (this.state.mode === 'resize') {
+            const handleSize = 8;
+            this.ctx.fillStyle = '#FF4444';
+            // Top-left
+            this.ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+            // Top-right
+            this.ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+            // Bottom-left
+            this.ctx.fillRect(x - handleSize/2, y + h - handleSize/2, handleSize, handleSize);
+            // Bottom-right
+            this.ctx.fillRect(x + w - handleSize/2, y + h - handleSize/2, handleSize, handleSize);
+        }
     }
 
     onMouseDown(e) {
@@ -217,47 +268,154 @@ export class Warehouse2DDesigner extends Component {
         const y = e.clientY - rect.top;
         
         // Select item at mouse position
-        this.state.selectedItem = this.getItemAt(x, y);
+        const item = this.getItemAt(x, y);
+        this.state.selectedItem = item;
+        
+        if (item) {
+            console.log(`🎯 Selected ${item.type}: ${item.data.name || item.data.code}`);
+            
+            // If in move mode and item selected, prepare for drag
+            if (this.state.mode === 'move') {
+                this.state.isDragging = true;
+                
+                // Calculate offset from item's top-left to mouse position
+                const itemX = (item.data.position_x || item.data.coordinates?.x || 0) * this.state.gridSize;
+                const itemY = (item.data.position_y || item.data.coordinates?.y || 0) * this.state.gridSize;
+                
+                this.state.dragOffset.x = x - itemX;
+                this.state.dragOffset.y = y - itemY;
+                
+                this.canvas.style.cursor = 'grabbing';
+                console.log(`🖐️ Started dragging ${item.type}`);
+            }
+        }
+        
+        this.renderLayout();
     }
 
     onMouseMove(e) {
-        if (this.state.mode === 'move' && this.state.selectedItem) {
-            const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Update cursor based on mode and hover
+        if (this.state.mode === 'move' && !this.state.isDragging) {
+            const item = this.getItemAt(x, y);
+            this.canvas.style.cursor = item ? 'grab' : 'default';
+        }
+        
+        // Handle dragging
+        if (this.state.isDragging && this.state.selectedItem) {
+            // Calculate new position with offset
+            const newX = x - this.state.dragOffset.x;
+            const newY = y - this.state.dragOffset.y;
             
-            // Update position (snap to grid)
-            const gridX = Math.round(x / this.state.gridSize);
-            const gridY = Math.round(y / this.state.gridSize);
+            // Snap to grid
+            const gridX = Math.round(newX / this.state.gridSize);
+            const gridY = Math.round(newY / this.state.gridSize);
             
-            this.updateItemPosition(this.state.selectedItem, gridX, gridY);
+            // Update item position in state (live preview)
+            const item = this.state.selectedItem.data;
+            if (item.position_x !== undefined) {
+                // Shelf or Area
+                item.position_x = Math.max(0, gridX);
+                item.position_y = Math.max(0, gridY);
+            } else if (item.coordinates) {
+                // Bin
+                item.coordinates.x = Math.max(0, gridX);
+                item.coordinates.y = Math.max(0, gridY);
+            }
+            
+            // Re-render with new position
             this.renderLayout();
         }
     }
 
     onMouseUp(e) {
-        if (this.state.selectedItem && this.state.mode === 'move') {
+        if (this.state.isDragging && this.state.selectedItem) {
+            console.log(`✅ Drag completed, saving position...`);
+            
             // Save position to database
             this.saveItemPosition(this.state.selectedItem);
+            
+            // Reset drag state
+            this.state.isDragging = false;
+            this.canvas.style.cursor = this.state.mode === 'move' ? 'grab' : 'default';
         }
     }
 
     getItemAt(x, y) {
         // Check which item is at this position
-        // Priority: bins > shelves > areas
+        // Priority: bins > shelves > areas (top to bottom)
+        
+        // Check bins first (smallest items, highest priority)
+        for (let bin of this.state.bins) {
+            if (!bin.coordinates) continue;
+            
+            const bx = bin.coordinates.x * this.state.gridSize;
+            const by = bin.coordinates.y * this.state.gridSize;
+            const bw = (bin.width || 0.5) * this.state.gridSize;
+            const bh = (bin.depth || 0.5) * this.state.gridSize;
+            
+            if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
+                return { type: 'bin', data: bin, model: 'stock.location' };
+            }
+        }
+        
+        // Check shelves
+        for (let shelf of this.state.shelves) {
+            const sx = shelf.position_x * this.state.gridSize;
+            const sy = shelf.position_y * this.state.gridSize;
+            const sw = shelf.width * this.state.gridSize;
+            const sh = shelf.depth * this.state.gridSize;
+            
+            if (x >= sx && x <= sx + sw && y >= sy && y <= sy + sh) {
+                return { type: 'shelf', data: shelf, model: 'warehouse.shelf' };
+            }
+        }
+        
+        // Check areas (largest, lowest priority)
+        for (let area of this.state.areas) {
+            const ax = area.position_x * this.state.gridSize;
+            const ay = area.position_y * this.state.gridSize;
+            const aw = area.width * this.state.gridSize;
+            const ah = area.height * this.state.gridSize;
+            
+            if (x >= ax && x <= ax + aw && y >= ay && y <= ay + ah) {
+                return { type: 'area', data: area, model: 'warehouse.area' };
+            }
+        }
+        
         return null;
     }
 
-    async updateItemPosition(item, x, y) {
-        // Update item position in state
-    }
-
     async saveItemPosition(item) {
-        // Save to database via ORM
-        await this.orm.write(item.model, [item.id], {
-            position_x: item.x,
-            position_y: item.y
-        });
+        if (!item || !item.data) return;
+        
+        try {
+            const data = item.data;
+            const updates = {};
+            
+            // Determine which fields to update based on item type
+            if (data.position_x !== undefined) {
+                // Shelf or Area
+                updates.position_x = data.position_x;
+                updates.position_y = data.position_y;
+            } else if (data.coordinates) {
+                // Bin - update via stock.location
+                updates.posx = data.coordinates.x;
+                updates.posy = data.coordinates.y;
+            }
+            
+            console.log(`💾 Saving ${item.type} #${data.id}:`, updates);
+            
+            await this.orm.write(item.model, [data.id], updates);
+            
+            console.log(`✅ ${item.type} position saved`);
+        } catch (e) {
+            console.error('❌ Failed to save position:', e);
+            alert('Failed to save position. Check console for details.');
+        }
     }
 
     async createShelf() {
