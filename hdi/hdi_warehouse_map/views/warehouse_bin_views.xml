@@ -121,18 +121,18 @@
                     <notebook>
                         <page string="Stock" name="stock">
                             <field name="quant_ids">
-                                <tree>
+                                <list>
                                     <field name="product_id"/>
                                     <field name="lot_id"/>
                                     <field name="quantity"/>
                                     <field name="reserved_quantity"/>
                                     <field name="available_quantity"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Movement History" name="history">
                             <field name="history_ids">
-                                <tree>
+                                <list>
                                     <field name="date"/>
                                     <field name="operation_type"/>
                                     <field name="product_id"/>
@@ -140,7 +140,7 @@
                                     <field name="quantity"/>
                                     <field name="reference"/>
                                     <field name="user_id"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Visualization" name="visualization">

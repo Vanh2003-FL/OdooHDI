@@ -55,14 +55,14 @@
                     <notebook>
                         <page string="Bins" name="bins">
                             <field name="bin_ids">
-                                <tree>
+                                <list>
                                     <field name="bin_number"/>
                                     <field name="code"/>
                                     <field name="complete_name"/>
                                     <field name="state" widget="badge" decoration-success="state == 'available'" decoration-danger="state == 'blocked'"/>
                                     <field name="current_sku"/>
                                     <field name="total_quantity"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>

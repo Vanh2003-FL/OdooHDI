@@ -45,12 +45,12 @@
                     <notebook>
                         <page string="Racks" name="racks">
                             <field name="rack_ids">
-                                <tree>
+                                <list>
                                     <field name="sequence" widget="handle"/>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="level_count"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Position" name="position">

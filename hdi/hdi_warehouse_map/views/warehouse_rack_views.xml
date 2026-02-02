@@ -55,12 +55,12 @@
                     <notebook>
                         <page string="Levels" name="levels">
                             <field name="level_ids">
-                                <tree>
+                                <list>
                                     <field name="level_number"/>
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="bin_count"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
