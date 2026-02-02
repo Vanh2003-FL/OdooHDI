@@ -11,7 +11,6 @@
                 <field name="name"/>
                 <field name="area_id"/>
                 <field name="level_count"/>
-                <field name="bin_count"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -49,16 +48,12 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Bins" name="bins">
-                            <field name="bin_ids">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="barcode"/>
-                                    <field name="level_number"/>
-                                    <field name="bin_number"/>
-                                    <field name="bin_state" widget="badge"/>
-                                </list>
-                            </field>
+                        <page string="Configuration" name="config">
+                            <group>
+                                <field name="bins_per_level"/>
+                                <field name="orientation"/>
+                                <field name="rotation"/>
+                            </group>
                         </page>
                         <page string="Notes">
                             <field name="notes"/>

@@ -329,15 +329,16 @@ export class Warehouse2DDesigner extends Component {
             } else {
                 // Empty bin (draft) - cannot move in 2D, must use shelf operations
                 alert('⚠️ Cannot move bins individually in 2D!\n\n' +
-                      'Bins are auto-positioned by SHELF.\n\n' +
+                      'BINs are auto-positioned within their parent SHELF.\n\n' +
                       '✅ To modify bins:\n' +
-                      '  • Edit SHELF (move, resize, rotate)\n' +
-                      '  • Bins follow shelf changes\n\n' +
-                      '❌ Individual bin operations:\n' +
+                      '  • Edit parent SHELF (move, resize, rotate)\n' +
+                      '  • Child bins follow SHELF changes\n\n' +
+                      '❌ Individual bin operations in 2D:\n' +
                       '  • Cannot move single bin\n' +
                       '  • Cannot resize single bin\n' +
                       '  • Cannot change level\n\n' +
-                      '📝 Use Divide Bins to change bin count');
+                      '💡 Edit bin position using form view\n' +
+                      '⚠️ IMPORTANT: Bin position MUST stay within parent SHELF boundaries!');
             }
             return;
         }
@@ -624,6 +625,45 @@ export class Warehouse2DDesigner extends Component {
         return cursors[handle] || 'default';
     }
 
+    /**
+     * 🟦 SKUSavvy Validation: Check if BIN fits within parent SHELF boundaries
+     * @param {Object} bin - BIN location object with pos_x, pos_y, bin_width, bin_depth
+     * @param {Object} shelf - Parent SHELF location object with pos_x, pos_y, width, height
+     * @returns {Object} {valid: boolean, message: string}
+     */
+    validateBinPosition(bin, shelf) {
+        const bin_pos_x = bin.pos_x || bin.coordinates?.x || 0;
+        const bin_pos_y = bin.pos_y || bin.coordinates?.y || 0;
+        const bin_width = bin.bin_width || 0.5;
+        const bin_height = bin.bin_depth || 0.5;
+        
+        const shelf_x_min = shelf.pos_x || 0;
+        const shelf_x_max = shelf_x_min + (shelf.width || 1);
+        const shelf_y_min = shelf.pos_y || 0;
+        const shelf_y_max = shelf_y_min + (shelf.height || 1);
+        
+        // Check if BIN bounds fit inside SHELF bounds
+        if (bin_pos_x < shelf_x_min || (bin_pos_x + bin_width) > shelf_x_max) {
+            return {
+                valid: false,
+                message: `❌ BIN X position out of bounds!\n` +
+                         `SHELF X range: ${shelf_x_min} to ${shelf_x_max}m\n` +
+                         `BIN X range: ${bin_pos_x} to ${bin_pos_x + bin_width}m`
+            };
+        }
+        
+        if (bin_pos_y < shelf_y_min || (bin_pos_y + bin_height) > shelf_y_max) {
+            return {
+                valid: false,
+                message: `❌ BIN Y position out of bounds!\n` +
+                         `SHELF Y range: ${shelf_y_min} to ${shelf_y_max}m\n` +
+                         `BIN Y range: ${bin_pos_y} to ${bin_pos_y + bin_height}m`
+            };
+        }
+        
+        return { valid: true, message: '✅ BIN position is valid' };
+    }
+
     async saveItemPosition(item) {
         if (!item || !item.data) return;
         
@@ -638,8 +678,8 @@ export class Warehouse2DDesigner extends Component {
                 updates.position_y = data.position_y;
             } else if (data.coordinates) {
                 // Bin - update via stock.location
-                updates.posx = data.coordinates.x;
-                updates.posy = data.coordinates.y;
+                updates.pos_x = data.coordinates.x;
+                updates.pos_y = data.coordinates.y;
             }
             
             console.log(`💾 Saving ${item.type} #${data.id} position:`, updates);
@@ -647,6 +687,25 @@ export class Warehouse2DDesigner extends Component {
             await this.orm.write(item.model, [data.id], updates);
             
             console.log(`✅ ${item.type} position saved`);
+            
+            // 🟦 SKUSavvy Rule: If SHELF moved, auto-update all child BINs
+            if (item.type === 'shelf') {
+                console.log(`🔄 SHELF #${data.id} moved - updating child bins...`);
+                const childBins = this.state.bins.filter(b => b.shelf_id === data.id);
+                console.log(`Found ${childBins.length} child bins to update`);
+                
+                // Update each bin's position relative to new shelf position
+                for (const bin of childBins) {
+                    const binUpdates = {
+                        pos_x: bin.coordinates?.x || 0,
+                        pos_y: bin.coordinates?.y || 0,
+                    };
+                    console.log(`  📦 Updating BIN #${bin.id}: pos_x=${binUpdates.pos_x}, pos_y=${binUpdates.pos_y}`);
+                    await this.orm.write('stock.location', [bin.id], binUpdates);
+                }
+                
+                console.log(`✅ All child bins updated`);
+            }
         } catch (e) {
             console.error('❌ Failed to save position:', e);
             alert('Failed to save position. Check console for details.');
@@ -679,9 +738,27 @@ export class Warehouse2DDesigner extends Component {
             
             console.log(`✅ ${item.type} dimensions saved`);
             
-            // If shelf was resized, may need to regenerate bins
+            // 🟦 SKUSavvy Rule: If SHELF resized, auto-update all child BINs
             if (item.type === 'shelf') {
-                console.log('⚠️ Shelf resized - bins may need regeneration');
+                console.log(`🔄 SHELF #${data.id} resized - updating child bins...`);
+                const childBins = this.state.bins.filter(b => b.shelf_id === data.id);
+                console.log(`Found ${childBins.length} child bins to update`);
+                
+                // Update each bin's dimensions and position relative to new shelf dimensions
+                for (const bin of childBins) {
+                    // Auto-calculate new dimensions based on shelf grid
+                    const binUpdates = {
+                        pos_x: bin.coordinates?.x || 0,
+                        pos_y: bin.coordinates?.y || 0,
+                        bin_width: data.width / (data.bins_per_level || 1),
+                        bin_depth: data.depth,
+                        bin_height: data.level_height || 0.5,
+                    };
+                    console.log(`  📦 Updating BIN #${bin.id} dimensions: width=${binUpdates.bin_width}, depth=${binUpdates.bin_depth}`);
+                    await this.orm.write('stock.location', [bin.id], binUpdates);
+                }
+                
+                console.log(`✅ All child bins updated with new dimensions`);
             }
         } catch (e) {
             console.error('❌ Failed to save dimensions:', e);

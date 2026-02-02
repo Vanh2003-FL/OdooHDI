@@ -10,11 +10,11 @@ class Warehouse3DController(http.Controller):
         """Get complete warehouse layout with bins and inventory"""
         Location = request.env['stock.location']
         
-        domain = [('usage', '=', 'internal'), ('shelf_id', '!=', False)]
+        domain = [('location_type', '=', 'bin')]
         if area_id:
-            domain.append(('area_id', '=', int(area_id)))
+            domain.append(('parent_warehouse_id', '=', int(area_id)))
         if shelf_id:
-            domain.append(('shelf_id', '=', int(shelf_id)))
+            domain.append(('parent_id', '=', int(shelf_id)))
         
         bins = Location.search(domain)
         

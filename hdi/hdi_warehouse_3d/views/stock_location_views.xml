@@ -7,9 +7,10 @@
         <field name="arch" type="xml">
             <list string="Warehouse Bins" create="true" delete="false">
                 <field name="name"/>
-                <field name="shelf_id"/>
-                <field name="level_number"/>
-                <field name="bin_number"/>
+                <field name="location_type" widget="badge"/>
+                <field name="bin_level"/>
+                <field name="bin_row"/>
+                <field name="bin_col"/>
                 <field name="barcode"/>
                 <field name="bin_state" widget="badge"/>
                 <field name="is_locked" widget="badge"/>
@@ -27,7 +28,8 @@
                     <div class="alert alert-info" role="alert" invisible="id">
                         <strong>💡 Creating a Bin Manually</strong><br/>
                         For best practice, create bins automatically by creating a <strong>Shelf</strong> first.<br/>
-                        When you set level_count and bins_per_level on a shelf, all bins auto-generate.
+                        When you set level_count and bins_per_level on a shelf, all bins auto-generate.<br/>
+                        <strong>⚠️ Important:</strong> BIN position must be within its parent SHELF boundaries!
                     </div>
                     
                     <div class="alert alert-danger" role="alert" invisible="not is_locked">
@@ -39,21 +41,23 @@
                     <group>
                         <group>
                             <field name="name" required="1"/>
+                            <field name="parent_id" required="1" domain="[('location_type', '=', 'shelf')]" 
+                                   help="Select the SHELF where this BIN will be placed"/>
                             <field name="barcode"/>
-                            <field name="shelf_id" required="1"/>
+                            <field name="location_type" widget="selection" invisible="1"/>
                         </group>
                         <group>
-                            <field name="level_number" required="1"/>
-                            <field name="bin_number" required="1"/>
+                            <field name="bin_level" required="1" help="Level number (1=bottom, 2, 3, 4...)"/>
+                            <field name="bin_row" required="1" help="Row position within shelf"/>
+                            <field name="bin_col" required="1" help="Column position within shelf"/>
                             <field name="bin_state" widget="badge"/>
                         </group>
                     </group>
                     
                     <group string="Position &amp; Dimensions">
                         <group>
-                            <field name="coordinate_x"/>
-                            <field name="coordinate_y"/>
-                            <field name="coordinate_z"/>
+                            <field name="pos_x"/>
+                            <field name="pos_y"/>
                         </group>
                         <group>
                             <field name="bin_width"/>
@@ -71,7 +75,7 @@
                         <group>
                             <field name="is_blocked" widget="boolean_toggle"/>
                             <field name="block_reason" invisible="not is_blocked"/>
-                            <field name="display_color" widget="color"/>
+                            <field name="display_color_code" widget="color"/>
                         </group>
                     </group>
                 </sheet>
@@ -85,10 +89,9 @@
         <field name="res_model">stock.location</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_stock_location_tree_bins"/>
-        <!-- No domain restriction - allows free creation -->
+        <field name="domain">[('location_type', '=', 'bin')]</field>
         <field name="context">{
-            'search_default_internal': 1,
-            'default_usage': 'internal',
+            'default_location_type': 'bin',
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -98,20 +101,32 @@
                 <strong>💡 Recommended Method:</strong> Create bins automatically by creating a <strong>Shelf</strong> first.<br/>
                 When you create a Shelf with level_count and bins_per_level, all bins are auto-generated.<br/><br/>
                 
-                <strong>Manual Bin Creation:</strong>
+                <strong>Manual Bin Creation (Advanced):</strong>
                 <ol>
-                    <li>Click <strong>✚ Create</strong> button above</li>
-                    <li>Fill in required fields:
+                    <li><strong>⚠️ FIRST: Select Parent SHELF</strong> - Bin position MUST be within this shelf!
                         <ul>
-                            <li><strong>Name</strong> (Location Name) - e.g., "BIN-L1-B1"</li>
-                            <li><strong>Parent Location</strong> - warehouse stock location</li>
-                            <li><strong>Shelf</strong> (required) - select shelf</li>
-                            <li><strong>Level Number</strong> - 1, 2, 3, 4...</li>
-                            <li><strong>Bin Number</strong> - position on level</li>
+                            <li>Shelf boundaries: X = [pos_x, pos_x + width], Y = [pos_y, pos_y + height]</li>
+                            <li>Bin must fit completely within shelf area</li>
                         </ul>
                     </li>
-                    <li>Save → coordinates &amp; barcode auto-calculate</li>
+                    <li>Fill in required fields:
+                        <ul>
+                            <li><strong>Name</strong> (Location Name) - e.g., "BIN-R1-C1-L1"</li>
+                            <li><strong>Bin Level</strong> - which level (1, 2, 3, 4...)</li>
+                            <li><strong>Bin Row</strong> - row position within shelf</li>
+                            <li><strong>Bin Column</strong> - column position within shelf</li>
+                        </ul>
+                    </li>
+                    <li>Set Position &amp; Dimensions:
+                        <ul>
+                            <li><strong>pos_x, pos_y</strong> - coordinate (MUST be within shelf bounds!)</li>
+                            <li><strong>bin_width, bin_depth, bin_height</strong> - physical size</li>
+                        </ul>
+                    </li>
+                    <li>Save → barcode auto-calculates</li>
                 </ol>
+                <br/>
+                <strong>❌ Position Validation:</strong> System will reject if BIN coordinates fall outside parent SHELF area.
             </p>
         </field>
     </record>

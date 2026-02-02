@@ -14,7 +14,7 @@ class StockMoveLine(models.Model):
     assigned_bin_id = fields.Many2one(
         'stock.location',
         string='Assigned Bin',
-        domain=[('usage', '=', 'internal'), ('shelf_id', '!=', False)],
+        domain=[('location_type', '=', 'bin')],
         help='Bin assigned via 3D putaway'
     )
 

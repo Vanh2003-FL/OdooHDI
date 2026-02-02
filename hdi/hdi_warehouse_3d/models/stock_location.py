@@ -49,7 +49,7 @@ class StockLocation(models.Model):
     max_weight = fields.Float(string='Max Weight (kg)', default=100)
     
     # Visual & State Properties
-    display_color = fields.Char(string='Display Color', compute='_compute_display_color')
+    display_color_code = fields.Char(string='Color Code', compute='_compute_display_color')
     bin_state = fields.Selection([
         ('empty', 'Empty'),
         ('available', 'Available'),
@@ -75,6 +75,59 @@ class StockLocation(models.Model):
                 raise ValidationError(f"{location.location_type.upper()} must have usage='view'")
             if location.location_type == 'bin' and location.usage != 'internal':
                 raise ValidationError("BIN must have usage='internal' (to hold inventory)")
+
+    @api.constrains('location_type', 'pos_x', 'pos_y', 'parent_id')
+    def _check_bin_position_within_shelf(self):
+        """🟦 SKUSavvy Rule: BIN position must be within parent SHELF boundaries"""
+        for location in self:
+            if location.location_type != 'bin':
+                continue
+                
+            # BIN must have parent SHELF
+            if not location.parent_id:
+                raise ValidationError(
+                    "🚫 BIN must have a parent SHELF!\n\n"
+                    "Cannot create standalone bin. Bin must be placed inside a SHELF.\n"
+                    "Each bin belongs to exactly one shelf in the warehouse hierarchy."
+                )
+            
+            parent = location.parent_id
+            if parent.location_type != 'shelf':
+                raise ValidationError(
+                    f"🚫 BIN parent must be a SHELF, not {parent.location_type.upper()}!\n\n"
+                    "Hierarchy: WAREHOUSE → AREA → SHELF → BIN\n"
+                    f"'{parent.name}' is {parent.location_type}, cannot contain bins."
+                )
+            
+            # Check if BIN position is within SHELF boundaries
+            # SHELF bounds: [pos_x, pos_x + width] × [pos_y, pos_y + height]
+            shelf = parent
+            bin_pos_x = location.pos_x
+            bin_pos_y = location.pos_y
+            bin_width = location.bin_width or 0.5
+            bin_height = location.bin_depth or 0.5
+            
+            shelf_x_min = shelf.pos_x
+            shelf_x_max = shelf.pos_x + shelf.width
+            shelf_y_min = shelf.pos_y
+            shelf_y_max = shelf.pos_y + shelf.height
+            
+            # Check if BIN bounds fit inside SHELF bounds
+            if not (bin_pos_x >= shelf_x_min and (bin_pos_x + bin_width) <= shelf_x_max):
+                raise ValidationError(
+                    f"❌ BIN X position out of bounds!\n\n"
+                    f"SHELF '{shelf.name}' X range: {shelf_x_min} to {shelf_x_max}m\n"
+                    f"BIN X range: {bin_pos_x} to {bin_pos_x + bin_width}m\n\n"
+                    f"BIN must fit completely within SHELF boundaries."
+                )
+            
+            if not (bin_pos_y >= shelf_y_min and (bin_pos_y + bin_height) <= shelf_y_max):
+                raise ValidationError(
+                    f"❌ BIN Y position out of bounds!\n\n"
+                    f"SHELF '{shelf.name}' Y range: {shelf_y_min} to {shelf_y_max}m\n"
+                    f"BIN Y range: {bin_pos_y} to {bin_pos_y + bin_height}m\n\n"
+                    f"BIN must fit completely within SHELF boundaries."
+                )
 
     # ============================================================================
     # COMPUTED FIELDS
@@ -118,11 +171,11 @@ class StockLocation(models.Model):
         }
         for location in self:
             if location.location_type == 'area':
-                location.display_color = location.color or '#E8E8FF'
+                location.display_color_code = location.color or '#E8E8FF'
             elif location.location_type == 'shelf':
-                location.display_color = location.color or '#D4D4FF'
+                location.display_color_code = location.color or '#D4D4FF'
             else:  # BIN
-                location.display_color = color_map.get(location.bin_state, '#CCCCCC')
+                location.display_color_code = color_map.get(location.bin_state, '#CCCCCC')
 
     # ============================================================================
     # CREATE / WRITE OVERRIDES
