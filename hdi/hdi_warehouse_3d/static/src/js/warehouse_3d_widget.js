@@ -1,7 +1,7 @@
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry";
-import { Component, useState, onMounted } from "@odoo/owl";
+import { Component, useState, onMounted, useRef } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { rpc } from "@web/core/network/rpc";
 
@@ -14,6 +14,7 @@ import { rpc } from "@web/core/network/rpc";
 export class Warehouse2DDesigner extends Component {
     setup() {
         this.orm = useService("orm");
+        this.canvasRef = useRef("designerCanvas");
         
         this.state = useState({
             areas: [],
@@ -21,13 +22,17 @@ export class Warehouse2DDesigner extends Component {
             bins: [],
             selectedItem: null,
             mode: 'select', // select, move, resize, create_shelf, create_bin
-            gridSize: 50,
-            zoom: 1.0
+            gridSize: 20, // SKUsavvy-style: smaller grid for better precision
+            zoom: 1.0,
+            showGrid: true
         });
 
         onMounted(() => {
             this.loadLayoutData();
-            this.initCanvas();
+            // Delay canvas init to ensure DOM is ready
+            setTimeout(() => {
+                this.initCanvas();
+            }, 100);
         });
     }
 
@@ -46,17 +51,31 @@ export class Warehouse2DDesigner extends Component {
     }
 
     initCanvas() {
-        if (!this.el) return;
-        this.canvas = this.el.querySelector('#designer_canvas');
-        if (!this.canvas) return;
+        console.log('🎨 Initializing canvas...');
+        
+        this.canvas = this.canvasRef.el;
+        if (!this.canvas) {
+            console.error('❌ Canvas element not found via ref');
+            return;
+        }
+        
+        console.log('✅ Canvas found:', this.canvas);
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = 1200;
         this.canvas.height = 800;
+        
+        console.log(`✅ Canvas initialized: ${this.canvas.width}x${this.canvas.height}`);
         
         // Mouse events for drag & drop
         this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
         this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+        
+        // Trigger initial render if data already loaded
+        if (this.state.areas.length > 0 || this.state.shelves.length > 0 || this.state.bins.length > 0) {
+            console.log('🎨 Data already loaded, rendering now...');
+            this.renderLayout();
+        }
     }
 
     renderLayout() {
@@ -92,7 +111,9 @@ export class Warehouse2DDesigner extends Component {
     }
 
     drawGrid() {
-        this.ctx.strokeStyle = '#E0E0E0';
+        if (!this.state.showGrid) return;
+        
+        this.ctx.strokeStyle = '#F0F0F0';
         this.ctx.lineWidth = 0.5;
         
         for (let x = 0; x < this.canvas.width; x += this.state.gridSize) {
@@ -116,34 +137,44 @@ export class Warehouse2DDesigner extends Component {
         const w = area.width * this.state.gridSize;
         const h = area.height * this.state.gridSize;
         
-        this.ctx.fillStyle = area.color || '#E8E8FF';
+        console.log(`📐 Area "${area.name}" at pixel (${x}, ${y}) size ${w}x${h}`);
+        
+        // SKUsavvy style: transparent area background
+        this.ctx.fillStyle = 'rgba(232, 232, 255, 0.15)';
         this.ctx.fillRect(x, y, w, h);
         
-        this.ctx.strokeStyle = '#333';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(x, y, w, h);
-        
-        this.ctx.fillStyle = '#000';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(area.name, x + 10, y + 20);
-    }
-
-    drawShelf(shelf) {
-        const x = shelf.position_x * this.state.gridSize;
-        const y = shelf.position_y * this.state.gridSize;
-        const w = shelf.width * 10; // Convert meters to pixels
-        const h = shelf.depth * 10;
-        
-        this.ctx.fillStyle = '#B3B3FF';
-        this.ctx.fillRect(x, y, w, h);
-        
-        this.ctx.strokeStyle = '#666';
+        // Thin border
+        this.ctx.strokeStyle = '#CCCCDD';
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(x, y, w, h);
         
-        this.ctx.fillStyle = '#000';
-        this.ctx.font = '10px Arial';
-        this.ctx.fillText(shelf.code, x + 2, y + 10);
+        // Area label
+        this.ctx.fillStyle = '#666';
+        this.ctx.font = '12px Arial';
+        this.ctx.fillText(area.name, x + 5, y + 15);
+    }
+
+    drawShelf(shelf) {
+        // Unified scale: all coordinates use gridSize
+        const x = shelf.position_x * this.state.gridSize;
+        const y = shelf.position_y * this.state.gridSize;
+        const w = shelf.width * this.state.gridSize; // Meters converted to grid units
+        const h = shelf.depth * this.state.gridSize;
+        
+        console.log(`📦 Shelf "${shelf.code}" at pixel (${x}, ${y}) size ${Math.round(w)}x${Math.round(h)}`);
+        
+        // SKUsavvy style: solid purple for shelves
+        this.ctx.fillStyle = '#9494FF';
+        this.ctx.fillRect(x, y, w, h);
+        
+        this.ctx.strokeStyle = '#6C63FF';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(x, y, w, h);
+        
+        // Shelf label (vertical if needed)
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'bold 11px Arial';
+        this.ctx.fillText(shelf.code, x + 3, y + 12);
     }
 
     drawBin(bin) {
@@ -152,16 +183,23 @@ export class Warehouse2DDesigner extends Component {
             return;
         }
         
-        const x = bin.coordinates.x * 10;
-        const y = bin.coordinates.y * 10;
-        const size = 8;
+        // Unified scale
+        const x = bin.coordinates.x * this.state.gridSize;
+        const y = bin.coordinates.y * this.state.gridSize;
+        const w = (bin.width || 0.5) * this.state.gridSize;
+        const h = (bin.depth || 0.5) * this.state.gridSize;
         
-        this.ctx.fillStyle = bin.color || '#E8E8FF';
-        this.ctx.fillRect(x, y, size, size);
+        // Color by state (SKUsavvy style)
+        let fillColor = '#D4D4FF'; // empty
+        if (bin.state === 'occupied') fillColor = '#6C63FF';
+        if (bin.state === 'blocked') fillColor = '#FF6B6B';
+        
+        this.ctx.fillStyle = bin.color || fillColor;
+        this.ctx.fillRect(x, y, w, h);
         
         this.ctx.strokeStyle = '#333';
-        this.ctx.lineWidth = 0.5;
-        this.ctx.strokeRect(x, y, size, size);
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(x, y, w, h);
     }
 
     highlightSelected(item) {

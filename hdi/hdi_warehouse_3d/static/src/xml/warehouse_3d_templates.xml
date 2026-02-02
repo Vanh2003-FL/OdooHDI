@@ -47,7 +47,7 @@
             </div>
             
             <div class="designer_workspace">
-                <canvas id="designer_canvas"></canvas>
+                <canvas t-ref="designerCanvas" id="designer_canvas"></canvas>
             </div>
             
             <div class="designer_properties" t-if="state.selectedItem">
