@@ -304,3 +304,32 @@ class Warehouse3DController(http.Controller):
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
+
+    @http.route('/warehouse_3d/assign_move_line_to_bin', type='json', auth='user')
+    def assign_move_line_to_bin(self, move_line_id, bin_id):
+        """Assign stock.move.line to specific bin
+        📌 Integration with Odoo 18 Incoming Picking workflow
+        📌 This sets destination, does NOT validate picking
+        
+        Flow:
+        1. User opens picking
+        2. Clicks "🏗️ 3D Putaway" button
+        3. Selects product + bin in 3D view
+        4. This endpoint updates move_line.location_dest_id
+        5. User validates picking normally
+        6. Odoo creates stock.quant at assigned bin
+        7. 3D view shows updated bin color
+        """
+        try:
+            MoveLine = request.env['stock.move.line']
+            move_line = MoveLine.browse(int(move_line_id))
+            
+            if not move_line.exists():
+                return {'success': False, 'error': 'Move line not found'}
+            
+            # Call move line method to assign bin
+            result = move_line.action_assign_to_bin_3d(int(bin_id))
+            
+            return result
+        except Exception as e:
+            return {'success': False, 'error': str(e)}

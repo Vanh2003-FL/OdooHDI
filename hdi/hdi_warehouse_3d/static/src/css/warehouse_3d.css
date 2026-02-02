@@ -297,3 +297,138 @@
 .mode_content .alert h4 {
     margin-bottom: 15px;
 }
+
+/* 3D PUTAWAY WIZARD Styles */
+.warehouse_putaway_wizard {
+    width: 100%;
+    height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+}
+
+.putaway_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: white;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.putaway_body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 300px 1fr 350px;
+    gap: 0;
+    overflow: hidden;
+}
+
+.putaway_move_lines {
+    padding: 20px;
+    background: white;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.move_line_list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.move_line_item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.move_line_item:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.move_line_item.selected {
+    background: #cfe2ff;
+    border-color: #0d6efd;
+}
+
+.move_line_info strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.putaway_warehouse {
+    display: flex;
+    flex-direction: column;
+    background: #2c3e50;
+    position: relative;
+}
+
+.warehouse_controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+}
+
+.warehouse_controls select {
+    max-width: 200px;
+}
+
+#putaway_canvas {
+    flex: 1;
+    background: #34495e;
+}
+
+.canvas_legend {
+    display: flex;
+    gap: 20px;
+    padding: 10px 15px;
+    background: rgba(255,255,255,0.95);
+    border-top: 1px solid #dee2e6;
+}
+
+.canvas_legend div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.color_box {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #333;
+    border-radius: 2px;
+}
+
+.putaway_bin_detail {
+    padding: 20px;
+    background: white;
+    border-left: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.putaway_footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: white;
+    border-top: 2px solid #dee2e6;
+}
+
+.footer_info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

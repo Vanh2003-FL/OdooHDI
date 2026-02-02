@@ -190,6 +190,108 @@
             </div>
         </div>
     </t>
+    
+    <!-- 3D PUTAWAY WIZARD for Incoming Picking -->
+    <t t-name="hdi_warehouse_3d.warehouse_3d_putaway_wizard">
+        <div class="warehouse_putaway_wizard">
+            <!-- Header -->
+            <div class="putaway_header">
+                <div>
+                    <h3>🏗️ 3D Putaway Assistant</h3>
+                    <p class="text-muted">
+                        Picking: <strong t-esc="state.picking?.name"/>
+                        | Scheduled: <t t-esc="state.picking?.scheduled_date"/>
+                    </p>
+                </div>
+                <button class="btn btn-secondary" t-on-click="() => this.closeWizard()">
+                    Close
+                </button>
+            </div>
+
+            <div class="putaway_body">
+                <!-- Left Panel: Move Lines -->
+                <div class="putaway_move_lines">
+                    <h5>📦 Products to Put Away</h5>
+                    <div class="move_line_list">
+                        <div t-foreach="state.moveLines" t-as="ml" t-key="ml.id"
+                             class="move_line_item"
+                             t-att-class="state.selectedMoveLine?.id === ml.id ? 'selected' : ''"
+                             t-on-click="() => this.selectMoveLine(ml)">
+                            <div class="move_line_info">
+                                <strong t-esc="ml.product_id[1]"/>
+                                <div class="text-muted small">
+                                    <span t-if="ml.lot_name">Lot: <t t-esc="ml.lot_name"/> | </span>
+                                    Qty: <t t-esc="ml.reserved_uom_qty"/> <t t-esc="ml.product_uom_id[1]"/>
+                                </div>
+                            </div>
+                            <div class="move_line_status">
+                                <span t-if="ml.warehouse_bin_assigned" class="badge bg-success">
+                                    ✓ <t t-esc="ml.assigned_bin_id[1]"/>
+                                </span>
+                                <span t-else="" class="badge bg-warning">
+                                    Pending
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 alert alert-info">
+                        <strong>📌 How it works:</strong><br/>
+                        1. Select a product<br/>
+                        2. Click a bin in warehouse view<br/>
+                        3. Confirm assignment<br/>
+                        4. Close and validate picking normally
+                    </div>
+                </div>
+
+                <!-- Center: Warehouse Canvas -->
+                <div class="putaway_warehouse">
+                    <div class="warehouse_controls">
+                        <select class="form-select form-select-sm" t-model="state.filterArea" 
+                                t-on-change="() => this.loadWarehouseData()">
+                            <option value="">All Areas</option>
+                            <!-- Areas populated dynamically -->
+                        </select>
+                        
+                        <span t-if="state.selectedMoveLine" class="badge bg-primary">
+                            Assigning: <t t-esc="state.selectedMoveLine.product_id[1]"/>
+                        </span>
+                    </div>
+                    
+                    <canvas id="putaway_canvas" width="800" height="600"></canvas>
+                    
+                    <div class="canvas_legend">
+                        <div><span class="color_box bin_empty"></span> Empty</div>
+                        <div><span class="color_box bin_available"></span> Available</div>
+                        <div><span class="color_box bin_full"></span> Full</div>
+                        <div><span class="color_box" style="background: #FFD700;"></span> Selected</div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Bin Detail -->
+                <div class="putaway_bin_detail" id="putaway_bin_detail">
+                    <div class="text-center text-muted">
+                        <p>👈 Select product, then click bin</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="putaway_footer">
+                <div class="footer_info">
+                    <strong>Progress:</strong>
+                    <t t-set="assigned" t-value="state.moveLines.filter(ml => ml.warehouse_bin_assigned).length"/>
+                    <t t-set="total" t-value="state.moveLines.length"/>
+                    <span class="badge bg-info"><t t-esc="assigned"/> / <t t-esc="total"/> assigned</span>
+                </div>
+                <div class="footer_actions">
+                    <button class="btn btn-primary" t-on-click="() => this.closeWizard()">
+                        ✅ Done - Return to Picking
+                    </button>
+                </div>
+            </div>
+        </div>
+    </t>
 
     <!-- UNIFIED WAREHOUSE VIEW with 2D/3D Toggle -->
     <t t-name="hdi_warehouse_3d.warehouse_unified_view">

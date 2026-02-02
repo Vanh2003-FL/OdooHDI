@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add 3D Putaway button to Picking Form -->
+    <record id="view_picking_form_3d_putaway" model="ir.ui.view">
+        <field name="name">stock.picking.form.3d.putaway</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Add button in header -->
+            <xpath expr="//header/button[@name='button_validate']" position="before">
+                <button name="action_open_3d_putaway" 
+                        type="object" 
+                        string="🏗️ 3D Putaway"
+                        class="btn-primary"
+                        invisible="state not in ['assigned', 'confirmed'] or picking_type_code not in ['incoming', 'internal']"
+                        help="Open 3D warehouse view to assign bins for products"/>
+            </xpath>
+            
+            <!-- Add bin assignment info in move lines -->
+            <xpath expr="//field[@name='move_line_ids_without_package']/tree/field[@name='location_dest_id']" position="after">
+                <field name="warehouse_bin_assigned" widget="boolean_toggle" 
+                       readonly="1"
+                       string="Bin Assigned"/>
+                <field name="assigned_bin_id" readonly="1" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Move Line form view - show bin assignment -->
+    <record id="view_move_line_form_3d" model="ir.ui.view">
+        <field name="name">stock.move.line.form.3d</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_dest_id']" position="after">
+                <field name="warehouse_bin_assigned" readonly="1"/>
+                <field name="assigned_bin_id" 
+                       readonly="1"
+                       invisible="not warehouse_bin_assigned"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

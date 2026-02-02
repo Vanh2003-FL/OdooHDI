@@ -20,6 +20,7 @@
         'views/warehouse_area_views.xml',
         'views/warehouse_shelf_views.xml',
         'views/stock_location_views.xml',
+        'views/stock_picking_views.xml',
         'views/warehouse_3d_templates.xml',
         'views/menu_views.xml',
         'data/warehouse_3d_data.xml',
@@ -27,6 +28,7 @@
     'assets': {
         'web.assets_backend': [
             'hdi_warehouse_3d/static/src/js/warehouse_3d_widget.js',
+            'hdi_warehouse_3d/static/src/js/warehouse_3d_putaway_wizard.js',
             'hdi_warehouse_3d/static/src/css/warehouse_3d.css',
             'hdi_warehouse_3d/static/src/xml/warehouse_3d_templates.xml',
         ],
