@@ -1,23 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menu Root -->
+    <!-- Menu Root: LAYOUT -->
     <menuitem id="menu_warehouse_map_root"
-              name="Warehouse Map"
+              name="LAYOUT"
               sequence="100"
               web_icon="hdi_warehouse_map,static/description/icon.png"/>
+    
+    <!-- Menu: View -->
+    <menuitem id="menu_warehouse_map_view"
+              name="View"
+              parent="menu_warehouse_map_root"
+              sequence="10"/>
+    
+    <!-- Menu: Shelves (Levels) -->
+    <menuitem id="menu_warehouse_level"
+              name="Shelves"
+              parent="menu_warehouse_map_view"
+              action="action_warehouse_level"
+              sequence="10"/>
+    
+    <!-- Menu: Areas (Zones) -->
+    <menuitem id="menu_warehouse_zone"
+              name="Areas"
+              parent="menu_warehouse_map_view"
+              action="action_warehouse_zone"
+              sequence="20"/>
+    
+    <!-- Menu: Bins -->
+    <menuitem id="menu_warehouse_bin"
+              name="Bins"
+              parent="menu_warehouse_map_view"
+              action="action_warehouse_bin"
+              sequence="30"/>
     
     <!-- Menu Configuration -->
     <menuitem id="menu_warehouse_map_config"
               name="Configuration"
               parent="menu_warehouse_map_root"
               sequence="100"/>
-    
-    <!-- Menu Zones -->
-    <menuitem id="menu_warehouse_zone"
-              name="Zones"
-              parent="menu_warehouse_map_config"
-              action="action_warehouse_zone"
-              sequence="10"/>
     
     <!-- Menu Aisles -->
     <menuitem id="menu_warehouse_aisle"
@@ -32,27 +52,6 @@
               parent="menu_warehouse_map_config"
               action="action_warehouse_rack"
               sequence="30"/>
-    
-    <!-- Menu Levels -->
-    <menuitem id="menu_warehouse_level"
-              name="Levels"
-              parent="menu_warehouse_map_config"
-              action="action_warehouse_level"
-              sequence="40"/>
-    
-    <!-- Menu Bins -->
-    <menuitem id="menu_warehouse_bin"
-              name="Bins"
-              parent="menu_warehouse_map_root"
-              action="action_warehouse_bin"
-              sequence="10"/>
-    
-    <!-- Menu Warehouse Map 2D/3D -->
-    <menuitem id="menu_warehouse_map_view"
-              name="Warehouse Map"
-              parent="menu_warehouse_map_root"
-              action="action_warehouse_map_view"
-              sequence="5"/>
     
     <!-- Menu Bin History -->
     <menuitem id="menu_bin_history"
