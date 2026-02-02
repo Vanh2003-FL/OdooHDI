@@ -29,12 +29,16 @@
                     + Create Shelf
                 </button>
                 <button class="btn btn-sm btn-light" t-on-click="() => this.divideBins()"
-                        title="Change bins per level (recreates bins)">
-                    Divide Bins
+                        title="Change bins per level (recreates bins automatically)">
+                    ✂️ Divide Bins
+                </button>
+                <button class="btn btn-sm btn-light" t-on-click="() => this.regenerateBins()"
+                        title="Regenerate all bins based on current shelf config">
+                    🔄 Regenerate Bins
                 </button>
                 <button class="btn btn-sm btn-light" t-on-click="() => this.rotateShelf()"
                         title="Rotate shelf 90 degrees">
-                    Rotate Shelf
+                    🔄 Rotate
                 </button>
                 <button class="btn btn-sm btn-light" t-on-click="() => this.toggleGrid()"
                         title="Toggle grid display">

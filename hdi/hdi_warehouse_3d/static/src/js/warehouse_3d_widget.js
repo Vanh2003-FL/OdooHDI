@@ -26,7 +26,9 @@ export class Warehouse2DDesigner extends Component {
             zoom: 1.0,
             showGrid: true,
             isDragging: false,
-            dragOffset: { x: 0, y: 0 }
+            dragOffset: { x: 0, y: 0 },
+            resizeHandle: null, // 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'top', 'bottom', 'left', 'right'
+            originalBounds: null
         });
 
         onMounted(() => {
@@ -259,18 +261,23 @@ export class Warehouse2DDesigner extends Component {
         this.ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
         this.ctx.setLineDash([]);
         
-        // Draw corner handles for resize mode
-        if (this.state.mode === 'resize') {
-            const handleSize = 8;
+        // Draw corner and edge handles for resize mode
+        if (this.state.mode === 'resize' && item.type !== 'bin') {
+            const handleSize = 10;
             this.ctx.fillStyle = '#FF4444';
-            // Top-left
-            this.ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
-            // Top-right
-            this.ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
-            // Bottom-left
-            this.ctx.fillRect(x - handleSize/2, y + h - handleSize/2, handleSize, handleSize);
-            // Bottom-right
-            this.ctx.fillRect(x + w - handleSize/2, y + h - handleSize/2, handleSize, handleSize);
+            
+            // Corner handles
+            this.ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize); // top-left
+            this.ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize); // top-right
+            this.ctx.fillRect(x - handleSize/2, y + h - handleSize/2, handleSize, handleSize); // bottom-left
+            this.ctx.fillRect(x + w - handleSize/2, y + h - handleSize/2, handleSize, handleSize); // bottom-right
+            
+            // Edge handles (middle of each side)
+            this.ctx.fillStyle = '#FF6666';
+            this.ctx.fillRect(x + w/2 - handleSize/2, y - handleSize/2, handleSize, handleSize); // top
+            this.ctx.fillRect(x + w/2 - handleSize/2, y + h - handleSize/2, handleSize, handleSize); // bottom
+            this.ctx.fillRect(x - handleSize/2, y + h/2 - handleSize/2, handleSize, handleSize); // left
+            this.ctx.fillRect(x + w - handleSize/2, y + h/2 - handleSize/2, handleSize, handleSize); // right
         }
     }
 
@@ -292,6 +299,31 @@ export class Warehouse2DDesigner extends Component {
         }
         
         this.state.selectedItem = item;
+        
+        // Handle resize mode
+        if (this.state.mode === 'resize' && item) {
+            const handle = this.getResizeHandleAt(item, x, y);
+            if (handle) {
+                this.state.resizeHandle = handle;
+                this.state.isDragging = true;
+                
+                // Store original bounds for calculating deltas
+                const data = item.data;
+                this.state.originalBounds = {
+                    x: data.position_x || 0,
+                    y: data.position_y || 0,
+                    width: item.type === 'area' ? data.width : data.width,
+                    height: item.type === 'area' ? data.height : data.depth,
+                    mouseX: x,
+                    mouseY: y
+                };
+                
+                console.log(`🔧 Started resizing ${item.type} from ${handle}`);
+                this.canvas.style.cursor = this.getCursorForHandle(handle);
+                this.renderLayout();
+                return;
+            }
+        }
         
         if (item) {
             console.log(`🎯 Selected ${item.type}: ${item.data.name || item.data.code}`);
@@ -327,13 +359,87 @@ export class Warehouse2DDesigner extends Component {
         const y = e.clientY - rect.top;
         
         // Update cursor based on mode and hover
-        if (this.state.mode === 'move' && !this.state.isDragging) {
-            const item = this.getItemAt(x, y);
-            this.canvas.style.cursor = item ? 'grab' : 'default';
+        if (!this.state.isDragging) {
+            const item = this.state.selectedItem || this.getItemAt(x, y);
+            
+            if (this.state.mode === 'resize' && item) {
+                const handle = this.getResizeHandleAt(item, x, y);
+                if (handle) {
+                    this.canvas.style.cursor = this.getCursorForHandle(handle);
+                    return;
+                }
+            }
+            
+            if (this.state.mode === 'move' && item) {
+                this.canvas.style.cursor = item ? 'grab' : 'default';
+                return;
+            }
+            
+            this.canvas.style.cursor = 'default';
         }
         
-        // Handle dragging
-        if (this.state.isDragging && this.state.selectedItem) {
+        // Handle resize dragging
+        if (this.state.isDragging && this.state.resizeHandle && this.state.selectedItem) {
+            const item = this.state.selectedItem;
+            const data = item.data;
+            const orig = this.state.originalBounds;
+            const handle = this.state.resizeHandle;
+            
+            // Calculate deltas from original mouse position
+            const dx = (x - orig.mouseX) / this.state.gridSize;
+            const dy = (y - orig.mouseY) / this.state.gridSize;
+            
+            // Apply resize based on which handle is being dragged
+            let newX = orig.x;
+            let newY = orig.y;
+            let newWidth = orig.width;
+            let newHeight = orig.height;
+            
+            if (handle.includes('left')) {
+                newX = orig.x + dx;
+                newWidth = orig.width - dx;
+            }
+            if (handle.includes('right')) {
+                newWidth = orig.width + dx;
+            }
+            if (handle.includes('top')) {
+                newY = orig.y + dy;
+                newHeight = orig.height - dy;
+            }
+            if (handle.includes('bottom')) {
+                newHeight = orig.height + dy;
+            }
+            
+            // Snap to grid
+            newX = Math.round(newX);
+            newY = Math.round(newY);
+            newWidth = Math.round(newWidth);
+            newHeight = Math.round(newHeight);
+            
+            // Apply minimum size constraints
+            const minSize = item.type === 'area' ? 2 : 1;
+            newWidth = Math.max(minSize, newWidth);
+            newHeight = Math.max(minSize, newHeight);
+            
+            // Update item dimensions
+            data.position_x = Math.max(0, newX);
+            data.position_y = Math.max(0, newY);
+            
+            if (item.type === 'area') {
+                data.width = newWidth;
+                data.height = newHeight;
+            } else if (item.type === 'shelf') {
+                data.width = newWidth;
+                data.depth = newHeight;
+            }
+            
+            // Live preview
+            this.renderLayout();
+            return;
+        }
+        
+        // Handle move dragging
+        if (this.state.isDragging && this.state.selectedItem && !this.state.resizeHandle) {
             // Calculate new position with offset
             const newX = x - this.state.dragOffset.x;
             const newY = y - this.state.dragOffset.y;
@@ -361,14 +467,20 @@ export class Warehouse2DDesigner extends Component {
 
     onMouseUp(e) {
         if (this.state.isDragging && this.state.selectedItem) {
-            console.log(`✅ Drag completed, saving position...`);
+            console.log(`✅ Operation completed, saving...`);
             
-            // Save position to database
-            this.saveItemPosition(this.state.selectedItem);
+            // Save position or dimensions to database
+            if (this.state.resizeHandle) {
+                this.saveItemDimensions(this.state.selectedItem);
+            } else {
+                this.saveItemPosition(this.state.selectedItem);
+            }
             
             // Reset drag state
             this.state.isDragging = false;
-            this.canvas.style.cursor = this.state.mode === 'move' ? 'grab' : 'default';
+            this.state.resizeHandle = null;
+            this.state.originalBounds = null;
+            this.canvas.style.cursor = 'default';
         }
     }
 
@@ -417,6 +529,57 @@ export class Warehouse2DDesigner extends Component {
         return null;
     }
 
+    getResizeHandleAt(item, x, y) {
+        if (!item || !item.data || item.type === 'bin') return null;
+        
+        const data = item.data;
+        const handleSize = 10;
+        const tolerance = handleSize / 2;
+        
+        let px, py, w, h;
+        if (item.type === 'area') {
+            px = data.position_x * this.state.gridSize;
+            py = data.position_y * this.state.gridSize;
+            w = data.width * this.state.gridSize;
+            h = data.height * this.state.gridSize;
+        } else if (item.type === 'shelf') {
+            px = data.position_x * this.state.gridSize;
+            py = data.position_y * this.state.gridSize;
+            w = data.width * this.state.gridSize;
+            h = data.depth * this.state.gridSize;
+        } else {
+            return null;
+        }
+        
+        // Check corner handles first (priority)
+        if (Math.abs(x - px) <= tolerance && Math.abs(y - py) <= tolerance) return 'top-left';
+        if (Math.abs(x - (px + w)) <= tolerance && Math.abs(y - py) <= tolerance) return 'top-right';
+        if (Math.abs(x - px) <= tolerance && Math.abs(y - (py + h)) <= tolerance) return 'bottom-left';
+        if (Math.abs(x - (px + w)) <= tolerance && Math.abs(y - (py + h)) <= tolerance) return 'bottom-right';
+        
+        // Check edge handles
+        if (Math.abs(x - (px + w/2)) <= tolerance && Math.abs(y - py) <= tolerance) return 'top';
+        if (Math.abs(x - (px + w/2)) <= tolerance && Math.abs(y - (py + h)) <= tolerance) return 'bottom';
+        if (Math.abs(x - px) <= tolerance && Math.abs(y - (py + h/2)) <= tolerance) return 'left';
+        if (Math.abs(x - (px + w)) <= tolerance && Math.abs(y - (py + h/2)) <= tolerance) return 'right';
+        
+        return null;
+    }
+
+    getCursorForHandle(handle) {
+        const cursors = {
+            'top-left': 'nwse-resize',
+            'top-right': 'nesw-resize',
+            'bottom-left': 'nesw-resize',
+            'bottom-right': 'nwse-resize',
+            'top': 'ns-resize',
+            'bottom': 'ns-resize',
+            'left': 'ew-resize',
+            'right': 'ew-resize'
+        };
+        return cursors[handle] || 'default';
+    }
+
     async saveItemPosition(item) {
         if (!item || !item.data) return;
         
@@ -435,7 +598,7 @@ export class Warehouse2DDesigner extends Component {
                 updates.posy = data.coordinates.y;
             }
             
-            console.log(`💾 Saving ${item.type} #${data.id}:`, updates);
+            console.log(`💾 Saving ${item.type} #${data.id} position:`, updates);
             
             await this.orm.write(item.model, [data.id], updates);
             
@@ -443,6 +606,42 @@ export class Warehouse2DDesigner extends Component {
         } catch (e) {
             console.error('❌ Failed to save position:', e);
             alert('Failed to save position. Check console for details.');
+        }
+    }
+
+    async saveItemDimensions(item) {
+        if (!item || !item.data) return;
+        
+        try {
+            const data = item.data;
+            const updates = {};
+            
+            // Update dimensions based on item type
+            if (item.type === 'area') {
+                updates.position_x = data.position_x;
+                updates.position_y = data.position_y;
+                updates.width = data.width;
+                updates.height = data.height;
+            } else if (item.type === 'shelf') {
+                updates.position_x = data.position_x;
+                updates.position_y = data.position_y;
+                updates.width = data.width;
+                updates.depth = data.depth;
+            }
+            
+            console.log(`💾 Saving ${item.type} #${data.id} dimensions:`, updates);
+            
+            await this.orm.write(item.model, [data.id], updates);
+            
+            console.log(`✅ ${item.type} dimensions saved`);
+            
+            // If shelf was resized, may need to regenerate bins
+            if (item.type === 'shelf') {
+                console.log('⚠️ Shelf resized - bins may need regeneration');
+            }
+        } catch (e) {
+            console.error('❌ Failed to save dimensions:', e);
+            alert('Failed to save dimensions. Check console for details.');
         }
     }
 
@@ -499,30 +698,60 @@ export class Warehouse2DDesigner extends Component {
     async divideBins() {
         // Divide shelf into more bins per level
         if (!this.state.selectedItem || this.state.selectedItem.type !== 'shelf') {
-            alert('Please select a shelf first');
+            alert('⚠️ Please select a shelf first');
             return;
         }
         
-        const newBinCount = parseInt(prompt('Bins per level:', this.state.selectedItem.bins_per_level));
-        if (newBinCount && newBinCount > 0) {
-            // Update shelf with new bin division
-            await this.orm.write('warehouse.shelf', [this.state.selectedItem.id], {
+        const shelf = this.state.selectedItem.data;
+        const currentBins = shelf.bins_per_level || 2;
+        const newBinCount = parseInt(prompt(`Bins per level (current: ${currentBins}):`, currentBins));
+        
+        if (!newBinCount || newBinCount <= 0) {
+            alert('❌ Invalid bin count');
+            return;
+        }
+        
+        try {
+            // Update shelf configuration - this will auto-regenerate bins via write() override
+            await this.orm.write('warehouse.shelf', [shelf.id], {
                 bins_per_level: newBinCount
             });
             
-            // Note: This will require re-creating bins
-            alert('⚠️ To apply changes, please delete old bins and re-create shelf');
+            alert(`✅ Shelf divided into ${newBinCount} bins per level.\nBins regenerated automatically!`);
+            
+            // Reload data to show new bins
+            await this.loadLayoutData();
+        } catch (e) {
+            console.error('❌ Failed to divide bins:', e);
+            alert('❌ Failed to divide bins. Check console for details.');
         }
     }
 
-    async createBin() {
-        // Create new bin in selected shelf
+    async regenerateBins() {
+        // Regenerate all bins for selected shelf
         if (!this.state.selectedItem || this.state.selectedItem.type !== 'shelf') {
-            alert('Please select a shelf first');
+            alert('⚠️ Please select a shelf first');
             return;
         }
         
-        // Open wizard to create bin with size input
+        if (!confirm('🔄 Regenerate all bins for this shelf?\n\nThis will DELETE existing bins and create new ones based on current configuration.')) {
+            return;
+        }
+        
+        try {
+            const shelf = this.state.selectedItem.data;
+            
+            // Call backend method to regenerate bins
+            await this.orm.call('warehouse.shelf', 'action_regenerate_bins', [[shelf.id]]);
+            
+            alert('✅ Bins regenerated successfully!');
+            
+            // Reload data to show new bins
+            await this.loadLayoutData();
+        } catch (e) {
+            console.error('❌ Failed to regenerate bins:', e);
+            alert('❌ Failed to regenerate bins. Check console for details.');
+        }
     }
 
     async resizeItem() {

@@ -60,6 +60,31 @@ class WarehouseShelf(models.Model):
             shelf._create_bins()
         return shelf
 
+    def write(self, vals):
+        """Override write to regenerate bins if configuration changes"""
+        result = super(WarehouseShelf, self).write(vals)
+        
+        # Regenerate bins if level_count or bins_per_level changed
+        if 'level_count' in vals or 'bins_per_level' in vals:
+            for shelf in self:
+                shelf._create_bins()
+        
+        return result
+
+    def action_regenerate_bins(self):
+        """Manual action to regenerate all bins for this shelf"""
+        for shelf in self:
+            shelf._create_bins()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': f'Regenerated {self.bin_count} bins successfully!',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
     def _create_bins(self):
         """Auto-create stock.location bins for each level using grid division"""
         Location = self.env['stock.location']
