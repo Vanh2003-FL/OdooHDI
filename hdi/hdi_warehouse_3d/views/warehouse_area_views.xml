@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Area List View -->
+    <record id="view_warehouse_area_list" model="ir.ui.view">
+        <field name="name">warehouse.area.list</field>
+        <field name="model">warehouse.area</field>
+        <field name="arch" type="xml">
+            <list string="Warehouse Areas">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="shelf_count"/>
+                <field name="temperature_controlled" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Area Form View -->
+    <record id="view_warehouse_area_form" model="ir.ui.view">
+        <field name="name">warehouse.area.form</field>
+        <field name="model">warehouse.area</field>
+        <field name="arch" type="xml">
+            <form string="Warehouse Area">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="warehouse_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="temperature_controlled"/>
+                            <field name="temperature_min" invisible="not temperature_controlled"/>
+                            <field name="temperature_max" invisible="not temperature_controlled"/>
+                            <field name="color" widget="color"/>
+                        </group>
+                    </group>
+                    <group string="Layout Position">
+                        <group>
+                            <field name="position_x"/>
+                            <field name="position_y"/>
+                        </group>
+                        <group>
+                            <field name="width"/>
+                            <field name="height"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Shelves" name="shelves">
+                            <field name="shelf_ids">
+                                <list>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="level_count"/>
+                                    <field name="bin_count"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Description">
+                            <field name="description"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Area Action -->
+    <record id="action_warehouse_area" model="ir.actions.act_window">
+        <field name="name">Areas</field>
+        <field name="res_model">warehouse.area</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

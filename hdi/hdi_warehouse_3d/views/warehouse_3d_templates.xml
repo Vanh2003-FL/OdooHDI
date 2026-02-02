@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="warehouse_3d_view" name="Warehouse 3D View">
+        <t t-name="hdi_warehouse_3d.warehouse_3d_viewer">
+            <div class="warehouse_3d_container">
+                <div class="warehouse_3d_controls">
+                    <button class="btn btn-primary" id="view_2d">2D View</button>
+                    <button class="btn btn-primary" id="view_3d">3D View</button>
+                    <select id="area_filter" class="form-select">
+                        <option value="">All Areas</option>
+                    </select>
+                </div>
+                <div id="warehouse_3d_canvas" class="warehouse_3d_canvas"></div>
+                <div id="bin_detail_panel" class="bin_detail_panel"></div>
+            </div>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Shelf List View -->
+    <record id="view_warehouse_shelf_list" model="ir.ui.view">
+        <field name="name">warehouse.shelf.list</field>
+        <field name="model">warehouse.shelf</field>
+        <field name="arch" type="xml">
+            <list string="Warehouse Shelves">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="area_id"/>
+                <field name="level_count"/>
+                <field name="bin_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Shelf Form View -->
+    <record id="view_warehouse_shelf_form" model="ir.ui.view">
+        <field name="name">warehouse.shelf.form</field>
+        <field name="model">warehouse.shelf</field>
+        <field name="arch" type="xml">
+            <form string="Warehouse Shelf">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="area_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="level_count"/>
+                            <field name="level_height"/>
+                            <field name="max_weight"/>
+                        </group>
+                    </group>
+                    <group string="Physical Dimensions">
+                        <group>
+                            <field name="width"/>
+                            <field name="depth"/>
+                            <field name="height"/>
+                        </group>
+                        <group>
+                            <field name="position_x"/>
+                            <field name="position_y"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Bins" name="bins">
+                            <field name="bin_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="barcode"/>
+                                    <field name="level_number"/>
+                                    <field name="bin_number"/>
+                                    <field name="bin_state" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Shelf Action -->
+    <record id="action_warehouse_shelf" model="ir.actions.act_window">
+        <field name="name">Shelves</field>
+        <field name="res_model">warehouse.shelf</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

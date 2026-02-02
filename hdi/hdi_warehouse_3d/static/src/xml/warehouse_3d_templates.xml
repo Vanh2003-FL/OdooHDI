@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="hdi_warehouse_3d.warehouse_3d_viewer">
+        <div class="warehouse_3d_container">
+            <div class="warehouse_3d_controls">
+                <button class="btn btn-primary" t-on-click="() => this.switchView('2d')">2D View</button>
+                <button class="btn btn-primary" t-on-click="() => this.switchView('3d')">3D View</button>
+                <select class="form-select" t-model="this.selectedArea">
+                    <option value="">All Areas</option>
+                </select>
+            </div>
+            <div class="warehouse_3d_canvas"></div>
+            <div class="bin_detail_panel"></div>
+        </div>
+    </t>
+</templates>

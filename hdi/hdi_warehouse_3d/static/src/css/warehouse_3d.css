@@ -1,0 +1,44 @@
+.warehouse_3d_container {
+    width: 100%;
+    height: 600px;
+    position: relative;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+}
+
+.warehouse_3d_controls {
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 10px;
+}
+
+.warehouse_3d_canvas {
+    width: 100%;
+    height: calc(100% - 50px);
+    position: relative;
+}
+
+.bin_detail_panel {
+    position: absolute;
+    right: 10px;
+    top: 60px;
+    width: 300px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: none;
+}
+
+.bin_detail_panel.active {
+    display: block;
+}
+
+/* Bin state colors */
+.bin_empty { background-color: #E8E8FF; }
+.bin_available { background-color: #B3B3FF; }
+.bin_full { background-color: #6666FF; }
+.bin_blocked { background-color: #87CEEB; }
