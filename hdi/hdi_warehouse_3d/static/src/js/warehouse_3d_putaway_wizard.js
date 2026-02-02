@@ -3,6 +3,7 @@
 import { registry } from "@web/core/registry";
 import { Component, useState, onMounted } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { rpc } from "@web/core/network/rpc";
 
 /**
  * 3D PUTAWAY WIZARD
@@ -25,7 +26,6 @@ import { useService } from "@web/core/utils/hooks";
 export class Warehouse3DPutawayWizard extends Component {
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
         this.action = useService("action");
         
         this.state = useState({
@@ -43,7 +43,7 @@ export class Warehouse3DPutawayWizard extends Component {
             // Get picking context
             this.state.pickingId = this.props.action?.context?.default_picking_id;
             
-            if (this.state.pickingId) {
+            if (this.state.pickingId && this.rpc) {
                 await this.loadPickingData();
                 await this.loadWarehouseData();
             }
@@ -51,39 +51,49 @@ export class Warehouse3DPutawayWizard extends Component {
     }
 
     async loadPickingData() {
-        // Load picking and move lines
-        const picking = await this.orm.read(
-            'stock.picking',
-            [this.state.pickingId],
-            ['name', 'partner_id', 'scheduled_date', 'picking_type_id', 'state']
-        );
-        this.state.picking = picking[0];
+        if (!this.orm) return;
+        try {
+            // Load picking and move lines
+            const picking = await this.orm.read(
+                'stock.picking',
+                [this.state.pickingId],
+                ['name', 'partner_id', 'scheduled_date', 'picking_type_id', 'state']
+            );
+            this.state.picking = picking[0];
 
-        // Load move lines that need bin assignment
-        const moveLines = await this.orm.searchRead(
-            'stock.move.line',
-            [
-                ['picking_id', '=', this.state.pickingId],
-                ['location_dest_id.usage', '=', 'internal'],
-            ],
-            ['product_id', 'lot_id', 'lot_name', 'reserved_uom_qty', 'product_uom_id', 
-             'location_dest_id', 'warehouse_bin_assigned', 'assigned_bin_id']
-        );
-        this.state.moveLines = moveLines;
-        
-        // Auto-select first unassigned line
-        const unassigned = moveLines.find(ml => !ml.warehouse_bin_assigned);
-        if (unassigned) {
-            this.state.selectedMoveLine = unassigned;
+            // Load move lines that need bin assignment
+            const moveLines = await this.orm.searchRead(
+                'stock.move.line',
+                [
+                    ['picking_id', '=', this.state.pickingId],
+                    ['location_dest_id.usage', '=', 'internal'],
+                ],
+                ['product_id', 'lot_id', 'lot_name', 'reserved_uom_qty', 'product_uom_id', 
+                 'location_dest_id', 'warehouse_bin_assigned', 'assigned_bin_id']
+            );
+            this.state.moveLines = moveLines;
+            
+            // Auto-select first unassigned line
+            const unassigned = moveLines.find(ml => !ml.warehouse_bin_assigned);
+            if (unassigned) {
+                this.state.selectedMoveLine = unassigned;
+            }
+        } catch (e) {
+            console.error('Failed to load picking data:', e);
         }
     }
 
     async loadWarehouseData() {
-        const data = await this.rpc('/warehouse_3d/get_layout', {
-            area_id: this.state.filterArea
-        });
-        this.state.bins = data.bins;
-        this.renderWarehouse();
+        if (!this.orm) return;
+        try {
+            const data = await rpc('/warehouse_3d/get_layout', {
+                area_id: this.state.filterArea
+            });
+            this.state.bins = data.bins;
+            this.renderWarehouse();
+        } catch (e) {
+            console.error('Failed to load warehouse data:', e);
+        }
     }
 
     renderWarehouse() {
@@ -128,7 +138,7 @@ export class Warehouse3DPutawayWizard extends Component {
         this.state.selectedBin = bin;
         
         // Show bin details
-        const detail = await this.rpc('/warehouse_3d/get_bin_detail', {
+        const detail = await rpc('/warehouse_3d/get_bin_detail', {
             bin_id: bin.id
         });
         
@@ -166,7 +176,7 @@ export class Warehouse3DPutawayWizard extends Component {
         
         try {
             // Call backend to assign bin
-            const result = await this.rpc('/warehouse_3d/assign_move_line_to_bin', {
+            const result = await rpc('/warehouse_3d/assign_move_line_to_bin', {
                 move_line_id: this.state.selectedMoveLine.id,
                 bin_id: this.state.selectedBin.id,
             });

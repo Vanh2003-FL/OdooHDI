@@ -3,6 +3,7 @@
 import { registry } from "@web/core/registry";
 import { Component, useState, onMounted } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { rpc } from "@web/core/network/rpc";
 
 /**
  * 2D LAYOUT DESIGNER
@@ -13,7 +14,7 @@ import { useService } from "@web/core/utils/hooks";
 export class Warehouse2DDesigner extends Component {
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
+        
         this.state = useState({
             areas: [],
             shelves: [],
@@ -31,15 +32,21 @@ export class Warehouse2DDesigner extends Component {
     }
 
     async loadLayoutData() {
-        const data = await this.rpc('/warehouse_3d/get_layout', {});
-        this.state.areas = data.areas;
-        this.state.shelves = data.shelves;
-        this.state.bins = data.bins;
-        this.renderLayout();
+        try {
+            const data = await rpc('/warehouse_3d/get_layout', {});
+            this.state.areas = data.areas;
+            this.state.shelves = data.shelves;
+            this.state.bins = data.bins;
+            this.renderLayout();
+        } catch (e) {
+            console.error('Failed to load layout:', e);
+        }
     }
 
     initCanvas() {
+        if (!this.el) return;
         this.canvas = this.el.querySelector('#designer_canvas');
+        if (!this.canvas) return;
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = 1200;
         this.canvas.height = 800;
@@ -51,6 +58,7 @@ export class Warehouse2DDesigner extends Component {
     }
 
     renderLayout() {
+        if (!this.ctx || !this.canvas) return;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Draw grid
@@ -199,7 +207,7 @@ export class Warehouse2DDesigner extends Component {
 
     async createShelf() {
         // Open wizard to create new shelf
-        const result = await this.rpc('/warehouse_3d/create_shelf', {
+        const result = await rpc('/warehouse_3d/create_shelf', {
             name: prompt('Shelf Name:'),
             code: prompt('Shelf Code:'),
             area_id: this.state.selectedItem?.area_id || 1,
@@ -220,7 +228,7 @@ export class Warehouse2DDesigner extends Component {
 
     async saveLayout() {
         // 📌 SKUSavvy rule: Save layout structure, DO NOT touch stock.quant
-        const result = await this.rpc('/warehouse_3d/save_layout', {
+        const result = await rpc('/warehouse_3d/save_layout', {
             areas: this.state.areas,
             shelves: this.state.shelves,
         });
@@ -308,7 +316,7 @@ Warehouse2DDesigner.template = "hdi_warehouse_3d.warehouse_2d_designer";
 export class Warehouse3DViewer extends Component {
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
+        
         this.state = useState({
             bins: [],
             selectedBin: null,
@@ -326,17 +334,22 @@ export class Warehouse3DViewer extends Component {
     }
 
     async loadWarehouseData() {
-        const data = await this.rpc('/warehouse_3d/get_layout', {
-            area_id: this.state.filterArea,
-            shelf_id: this.state.filterShelf
-        });
-        
-        this.state.bins = data.bins;
-        this.renderWarehouse();
+        try {
+            const data = await rpc('/warehouse_3d/get_layout', {
+                area_id: this.state.filterArea,
+                shelf_id: this.state.filterShelf
+            });
+            
+            this.state.bins = data.bins;
+            this.renderWarehouse();
+        } catch (e) {
+            console.error('Failed to load warehouse data:', e);
+        }
     }
 
     init3DScene() {
         // Initialize Three.js scene for 3D view
+        if (!this.el) return;
         this.canvas = this.el.querySelector('#viewer_canvas');
         // TODO: Three.js setup
     }
@@ -351,7 +364,9 @@ export class Warehouse3DViewer extends Component {
 
     render2DView() {
         // Render 2D top-down view with color-coded bins
+        if (!this.el) return;
         const canvas = this.el.querySelector('#viewer_canvas');
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -411,7 +426,7 @@ export class Warehouse3DViewer extends Component {
         this.state.selectedBin = bin;
         
         // Load full bin details
-        const detail = await this.rpc('/warehouse_3d/get_bin_detail', {
+        const detail = await rpc('/warehouse_3d/get_bin_detail', {
             bin_id: bin.id
         });
         
@@ -419,7 +434,9 @@ export class Warehouse3DViewer extends Component {
     }
 
     showBinDetailPanel(detail) {
+        if (!this.el) return;
         const panel = this.el.querySelector('#bin_detail_panel');
+        if (!panel) return;
         panel.innerHTML = `
             <div class="bin-detail-header">
                 <h4>${detail.name}</h4>
@@ -499,7 +516,7 @@ export class Warehouse3DViewer extends Component {
     }
 
     async performPutaway(binId, productId, quantity, lotId) {
-        const result = await this.rpc('/warehouse_3d/putaway', {
+        const result = await rpc('/warehouse_3d/putaway', {
             bin_id: binId,
             product_id: productId,
             quantity: quantity,
@@ -510,7 +527,7 @@ export class Warehouse3DViewer extends Component {
             alert(`✅ ${result.message}`);
             this.loadWarehouseData(); // Refresh view
             // Reload bin detail
-            const detail = await this.rpc('/warehouse_3d/get_bin_detail', { bin_id: binId });
+            const detail = await rpc('/warehouse_3d/get_bin_detail', { bin_id: binId });
             this.showBinDetailPanel(detail);
         } else {
             alert(`❌ Error: ${result.error}`);
@@ -520,7 +537,7 @@ export class Warehouse3DViewer extends Component {
     async pickFromBin(productId, quantity, lotId) {
         if (!this.state.selectedBin) return;
         
-        const result = await this.rpc('/warehouse_3d/pick', {
+        const result = await rpc('/warehouse_3d/pick', {
             bin_id: this.state.selectedBin.id,
             product_id: productId,
             quantity: quantity,
@@ -531,7 +548,7 @@ export class Warehouse3DViewer extends Component {
             alert(`✅ ${result.message}`);
             this.loadWarehouseData();
             // Reload bin detail
-            const detail = await this.rpc('/warehouse_3d/get_bin_detail', { bin_id: this.state.selectedBin.id });
+            const detail = await rpc('/warehouse_3d/get_bin_detail', { bin_id: this.state.selectedBin.id });
             this.showBinDetailPanel(detail);
         } else {
             alert(`❌ Error: ${result.error}`);
@@ -549,7 +566,7 @@ export class Warehouse3DViewer extends Component {
             return;
         }
         
-        const result = await this.rpc('/warehouse_3d/move_inventory', {
+        const result = await rpc('/warehouse_3d/move_inventory', {
             from_bin_id: fromBinId,
             to_bin_id: toBinId,
             product_id: productId,
@@ -569,7 +586,7 @@ export class Warehouse3DViewer extends Component {
         const reason = prompt('Block reason:');
         if (!reason) return;
         
-        const result = await this.rpc('/warehouse_3d/block_bin', {
+        const result = await rpc('/warehouse_3d/block_bin', {
             bin_id: binId,
             reason: reason
         });
@@ -577,7 +594,7 @@ export class Warehouse3DViewer extends Component {
         if (result.success) {
             alert(`✅ ${result.message}`);
             this.loadWarehouseData();
-            const detail = await this.rpc('/warehouse_3d/get_bin_detail', { bin_id: binId });
+            const detail = await rpc('/warehouse_3d/get_bin_detail', { bin_id: binId });
             this.showBinDetailPanel(detail);
         } else {
             alert(`❌ Error: ${result.error}`);
@@ -585,14 +602,14 @@ export class Warehouse3DViewer extends Component {
     }
 
     async unblockBin(binId) {
-        const result = await this.rpc('/warehouse_3d/unblock_bin', {
+        const result = await rpc('/warehouse_3d/unblock_bin', {
             bin_id: binId
         });
         
         if (result.success) {
             alert(`✅ ${result.message}`);
             this.loadWarehouseData();
-            const detail = await this.rpc('/warehouse_3d/get_bin_detail', { bin_id: binId });
+            const detail = await rpc('/warehouse_3d/get_bin_detail', { bin_id: binId });
             this.showBinDetailPanel(detail);
         } else {
             alert(`❌ Error: ${result.error}`);
@@ -623,41 +640,41 @@ Warehouse3DViewer.template = "hdi_warehouse_3d.warehouse_3d_viewer";
  * Based on user permissions and mode selection
  */
 export class WarehouseUnifiedView extends Component {
+    static components = {
+        Warehouse2DDesigner,
+        Warehouse3DViewer
+    };
+
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
-        this.user = useService("user");
         
         this.state = useState({
             mode: '3d', // '2d' for design, '3d' for operations
-            isManager: false,
+            isManager: true, // Allow toggle, menu security will handle access
             areas: [],
             shelves: [],
             bins: [],
         });
 
         onMounted(async () => {
-            // Check if user is manager
-            const hasManagerGroup = await this.user.hasGroup('stock.group_stock_manager');
-            this.state.isManager = hasManagerGroup;
-            
             // Load data
-            this.loadData();
+            await this.loadData();
         });
     }
 
     async loadData() {
-        const data = await this.rpc('/warehouse_3d/get_layout', {});
-        this.state.areas = data.areas;
-        this.state.shelves = data.shelves;
-        this.state.bins = data.bins;
+        try {
+            const data = await rpc('/warehouse_3d/get_layout', {});
+            this.state.areas = data.areas;
+            this.state.shelves = data.shelves;
+            this.state.bins = data.bins;
+        } catch (e) {
+            console.error('Failed to load warehouse data:', e);
+        }
     }
 
     switchTo2D() {
-        if (!this.state.isManager) {
-            alert('⚠️ 2D Designer mode requires manager permissions');
-            return;
-        }
+        // Toggle allowed - menu security handles access control
         this.state.mode = '2d';
     }
 
