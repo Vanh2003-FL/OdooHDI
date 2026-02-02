@@ -6,11 +6,13 @@
         <field name="model">warehouse.shelf</field>
         <field name="arch" type="xml">
             <list string="Warehouse Shelves">
-                <field name="sequence" widget="handle"/>
                 <field name="code"/>
                 <field name="name"/>
                 <field name="area_id"/>
-                <field name="level_count"/>
+                <field name="shelf_type" widget="badge"/>
+                <field name="width"/>
+                <field name="depth"/>
+                <field name="rotation"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -23,42 +25,64 @@
         <field name="arch" type="xml">
             <form string="Warehouse Shelf">
                 <sheet>
-                    <group>
+                    <!-- 1️⃣ THÔNG TIN CƠ BẢN (BẮTBUỘC) -->
+                    <group string="Basic Information">
                         <group>
-                            <field name="name"/>
-                            <field name="code"/>
-                            <field name="area_id"/>
+                            <field name="name" required="1" placeholder="e.g., SHELF-A1"/>
+                            <field name="code" required="1" placeholder="e.g., SHA1"/>
+                        </group>
+                        <group>
+                            <field name="area_id" required="1" domain="[('active', '=', True)]"/>
+                            <field name="shelf_type" required="1" widget="selection"/>
+                        </group>
+                    </group>
+
+                    <!-- 2️⃣ LAYOUT 2D (BẮTBUỘC) -->
+                    <group string="Layout Position &amp; Dimensions">
+                        <group>
+                            <field name="position_x" required="1"/>
+                            <field name="position_y" required="1"/>
+                        </group>
+                        <group>
+                            <field name="width" required="1" string="Length (m)"/>
+                            <field name="depth" required="1"/>
+                        </group>
+                    </group>
+
+                    <!-- ROTATION (Optional) -->
+                    <group string="Configuration">
+                        <group>
+                            <field name="rotation" help="Rotation angle: 0 or 90 degrees"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group>
                             <field name="sequence"/>
-                        </group>
-                        <group>
-                            <field name="level_count"/>
-                            <field name="level_height"/>
-                            <field name="max_weight"/>
+                            <field name="warehouse_id" readonly="1" invisible="not warehouse_id"/>
                         </group>
                     </group>
-                    <group string="Physical Dimensions">
-                        <group>
-                            <field name="width"/>
-                            <field name="depth"/>
-                            <field name="height"/>
-                        </group>
-                        <group>
-                            <field name="position_x"/>
-                            <field name="position_y"/>
-                        </group>
+
+                    <!-- NOTES -->
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" colspan="2"/>
                     </group>
-                    <notebook>
-                        <page string="Configuration" name="config">
+
+                    <!-- 🔴 DEPRECATED FIELDS SECTION (Hidden by default) -->
+                    <details string="🔴 Deprecated Fields (for backward compatibility)" closed="1">
+                        <group string="Legacy Fields">
                             <group>
-                                <field name="bins_per_level"/>
-                                <field name="orientation"/>
-                                <field name="rotation"/>
+                                <field name="height" readonly="1"/>
+                                <field name="max_weight" readonly="1"/>
                             </group>
-                        </page>
-                        <page string="Notes">
-                            <field name="notes"/>
-                        </page>
-                    </notebook>
+                            <group>
+                                <field name="level_count" readonly="1"/>
+                                <field name="level_height" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="bins_per_level" readonly="1"/>
+                                <field name="orientation" readonly="1"/>
+                            </group>
+                        </group>
+                    </details>
                 </sheet>
             </form>
         </field>
@@ -69,5 +93,37 @@
         <field name="name">Shelves</field>
         <field name="res_model">warehouse.shelf</field>
         <field name="view_mode">list,form</field>
+        <field name="context">{'default_usage': 'view'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Shelf
+            </p>
+            <p>
+                <strong>✅ Shelf = Physical container for bins</strong><br/>
+                <br/>
+                <strong>🔹 Required Fields (1️⃣):</strong>
+                <ul>
+                    <li><strong>Shelf Name:</strong> e.g., "SHELF-A1", "Storage Rack 01"</li>
+                    <li><strong>Shelf Code:</strong> e.g., "SHA1", "SR01"</li>
+                    <li><strong>Parent Area:</strong> Select which area/zone (Inbound, Storage, QC, etc.)</li>
+                    <li><strong>Shelf Type:</strong> Selective / Pallet / Flow</li>
+                </ul>
+                <br/>
+                <strong>🔹 Layout 2D (2️⃣) - Required for 2D visualization:</strong>
+                <ul>
+                    <li><strong>Position X, Y:</strong> Coordinate in warehouse (0.0 = top-left)</li>
+                    <li><strong>Length (m):</strong> Width of shelf</li>
+                    <li><strong>Depth (m):</strong> Depth of shelf</li>
+                </ul>
+                <br/>
+                <strong>🔹 Configuration (Optional):</strong>
+                <ul>
+                    <li><strong>Rotation:</strong> 0 or 90 degrees</li>
+                </ul>
+                <br/>
+                <strong>📌 Note:</strong> BINs are created separately as stock.location with location_type='bin'<br/>
+                Each BIN must belong to exactly one SHELF (via location_id field).
+            </p>
+        </field>
     </record>
 </odoo>

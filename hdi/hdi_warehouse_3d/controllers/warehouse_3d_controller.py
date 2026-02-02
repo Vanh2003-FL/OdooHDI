@@ -91,24 +91,21 @@ class Warehouse3DController(http.Controller):
             return {'success': False, 'error': str(e)}
 
     @http.route('/warehouse_3d/create_shelf', type='json', auth='user')
-    def create_shelf(self, name, code, area_id, **kwargs):
-        """Create new shelf with auto-bin generation"""
+    def create_shelf(self, name, code, area_id, shelf_type, position_x, position_y, width, depth, **kwargs):
+        """Create new shelf with required fields per SKUSavvy spec"""
         try:
             shelf = request.env['warehouse.shelf'].create({
                 'name': name,
                 'code': code,
                 'area_id': int(area_id),
-                'position_x': kwargs.get('position_x', 0),
-                'position_y': kwargs.get('position_y', 0),
-                'width': kwargs.get('width', 1.2),
-                'depth': kwargs.get('depth', 1.0),
-                'height': kwargs.get('height', 2.5),
-                'orientation': kwargs.get('orientation', 'horizontal'),
-                'level_count': kwargs.get('level_count', 4),
-                'bins_per_level': kwargs.get('bins_per_level', 2),
+                'shelf_type': shelf_type,  # selective / pallet / flow
+                'position_x': float(position_x),
+                'position_y': float(position_y),
+                'width': float(width),  # Length (m)
+                'depth': float(depth),  # Depth (m)
+                'rotation': float(kwargs.get('rotation', 0.0)),  # Optional
             })
-            # Bins are auto-created by _create_bins() in create() method
-            return {'success': True, 'shelf_id': shelf.id, 'bin_count': shelf.bin_count}
+            return {'success': True, 'shelf_id': shelf.id, 'message': f'Created shelf {shelf.name}'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
