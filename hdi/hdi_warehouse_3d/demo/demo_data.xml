@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Demo Area -->
+    <record id="demo_area_storage" model="warehouse.area">
+        <field name="name">Storage Zone A</field>
+        <field name="code">ZONE-A</field>
+        <field name="warehouse_id" ref="stock.warehouse0"/>
+        <field name="area_type">storage</field>
+        <field name="position_x">5</field>
+        <field name="position_y">5</field>
+        <field name="width">15</field>
+        <field name="height">10</field>
+        <field name="color">#E8E8FF</field>
+    </record>
+
+    <!-- Demo Shelf -->
+    <record id="demo_shelf_01" model="warehouse.shelf">
+        <field name="name">Shelf A1</field>
+        <field name="code">SHELF-A1</field>
+        <field name="area_id" ref="demo_area_storage"/>
+        <field name="position_x">6</field>
+        <field name="position_y">6</field>
+        <field name="width">1.2</field>
+        <field name="depth">1.0</field>
+        <field name="height">2.5</field>
+        <field name="level_count">4</field>
+        <field name="bins_per_level">2</field>
+        <field name="orientation">horizontal</field>
+    </record>
+
+    <record id="demo_shelf_02" model="warehouse.shelf">
+        <field name="name">Shelf A2</field>
+        <field name="code">SHELF-A2</field>
+        <field name="area_id" ref="demo_area_storage"/>
+        <field name="position_x">8</field>
+        <field name="position_y">6</field>
+        <field name="width">1.2</field>
+        <field name="depth">1.0</field>
+        <field name="height">2.5</field>
+        <field name="level_count">4</field>
+        <field name="bins_per_level">2</field>
+        <field name="orientation">horizontal</field>
+    </record>
+
+    <record id="demo_shelf_03" model="warehouse.shelf">
+        <field name="name">Shelf A3</field>
+        <field name="code">SHELF-A3</field>
+        <field name="area_id" ref="demo_area_storage"/>
+        <field name="position_x">10</field>
+        <field name="position_y">6</field>
+        <field name="width">1.2</field>
+        <field name="depth">1.0</field>
+        <field name="height">2.5</field>
+        <field name="level_count">4</field>
+        <field name="bins_per_level">2</field>
+        <field name="orientation">horizontal</field>
+    </record>
+</odoo>

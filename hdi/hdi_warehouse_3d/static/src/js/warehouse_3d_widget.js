@@ -34,12 +34,14 @@ export class Warehouse2DDesigner extends Component {
     async loadLayoutData() {
         try {
             const data = await rpc('/warehouse_3d/get_layout', {});
-            this.state.areas = data.areas;
-            this.state.shelves = data.shelves;
-            this.state.bins = data.bins;
+            console.log('📦 Loaded warehouse data:', data);
+            this.state.areas = data.areas || [];
+            this.state.shelves = data.shelves || [];
+            this.state.bins = data.bins || [];
+            console.log(`✅ Areas: ${this.state.areas.length}, Shelves: ${this.state.shelves.length}, Bins: ${this.state.bins.length}`);
             this.renderLayout();
         } catch (e) {
-            console.error('Failed to load layout:', e);
+            console.error('❌ Failed to load layout:', e);
         }
     }
 
@@ -58,25 +60,35 @@ export class Warehouse2DDesigner extends Component {
     }
 
     renderLayout() {
-        if (!this.ctx || !this.canvas) return;
+        if (!this.ctx || !this.canvas) {
+            console.warn('⚠️ Canvas not ready');
+            return;
+        }
+        
+        console.log('🎨 Rendering layout...');
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Draw grid
         this.drawGrid();
         
         // Draw areas
+        console.log(`Drawing ${this.state.areas.length} areas`);
         this.state.areas.forEach(area => this.drawArea(area));
         
         // Draw shelves
+        console.log(`Drawing ${this.state.shelves.length} shelves`);
         this.state.shelves.forEach(shelf => this.drawShelf(shelf));
         
         // Draw bins
+        console.log(`Drawing ${this.state.bins.length} bins`);
         this.state.bins.forEach(bin => this.drawBin(bin));
         
         // Draw selected item highlight
         if (this.state.selectedItem) {
             this.highlightSelected(this.state.selectedItem);
         }
+        
+        console.log('✅ Layout rendered');
     }
 
     drawGrid() {
@@ -135,11 +147,16 @@ export class Warehouse2DDesigner extends Component {
     }
 
     drawBin(bin) {
+        if (!bin.coordinates) {
+            console.warn('⚠️ Bin missing coordinates:', bin);
+            return;
+        }
+        
         const x = bin.coordinates.x * 10;
         const y = bin.coordinates.y * 10;
         const size = 8;
         
-        this.ctx.fillStyle = bin.color;
+        this.ctx.fillStyle = bin.color || '#E8E8FF';
         this.ctx.fillRect(x, y, size, size);
         
         this.ctx.strokeStyle = '#333';

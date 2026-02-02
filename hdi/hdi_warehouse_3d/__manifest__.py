@@ -25,6 +25,9 @@
         'views/menu_views.xml',
         'data/warehouse_3d_data.xml',
     ],
+    'demo': [
+        'demo/demo_data.xml',
+    ],
     'assets': {
         'web.assets_backend': [
             'hdi_warehouse_3d/static/src/js/warehouse_3d_widget.js',
