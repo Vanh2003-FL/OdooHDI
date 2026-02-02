@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
-        <!-- Sample Warehouse Configuration Data -->
-        <!-- Sử dụng warehouse WH có sẵn từ stock addon -->
-        <!-- Không tạo warehouse mới -->
-    </data>
-</odoo>
