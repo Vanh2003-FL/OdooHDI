@@ -17,6 +17,7 @@ class StockLocationLayout(models.Model):
     _name = 'stock.location.layout'
     _description = 'Warehouse Location Layout Metadata'
     _order = 'warehouse_id, location_type, sequence'
+    _rec_name = 'name'
     
     name = fields.Char(
         string='Layout Name',
@@ -108,9 +109,12 @@ class StockLocationLayout(models.Model):
     def _compute_name(self):
         for layout in self:
             if layout.location_id:
-                layout.name = f"{layout.location_type.upper()}: {layout.location_id.name}"
-            else:
+                loc_type = layout.location_type or 'location'
+                layout.name = f"{loc_type.upper()}: {layout.location_id.name}"
+            elif layout.location_type:
                 layout.name = f"New {layout.location_type}"
+            else:
+                layout.name = "New Layout"
     
     @api.depends('location_id', 'x', 'y', 'width', 'height', 'z_level', 'rotation', 'location_type', 'child_layout_ids')
     def _compute_layout_json(self):
@@ -119,6 +123,15 @@ class StockLocationLayout(models.Model):
         This is the KEY data structure that 2D/3D viewers will consume.
         """
         for layout in self:
+            # Skip if record not saved yet (NewId)
+            if not layout.id or isinstance(layout.id, type(layout.id)) and not isinstance(layout.id, int):
+                layout.layout_json = '{}'
+                continue
+            
+            if not layout.location_id or not layout.location_id.id:
+                layout.layout_json = '{}'
+                continue
+            
             data = {
                 'id': layout.id,
                 'type': layout.location_type,
@@ -230,14 +243,13 @@ class StockLocationLayout(models.Model):
             'name': _('Stock in %s') % self.location_id.name,
             'type': 'ir.actions.act_window',
             'res_model': 'stock.quant',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [
                 ('location_id', '=', self.location_id.id),
                 ('quantity', '>', 0)
             ],
             'context': {
                 'default_location_id': self.location_id.id,
-                'search_default_lot_id': 1,  # Group by lot/serial
             }
         }
     
@@ -258,7 +270,7 @@ class StockLocationLayout(models.Model):
             'name': _('Lots/Serials in %s') % self.location_id.name,
             'type': 'ir.actions.act_window',
             'res_model': 'stock.lot',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('id', 'in', lot_ids)],
             'context': {
                 'default_location_id': self.location_id.id,
@@ -269,6 +281,7 @@ class StockLocationLayout(models.Model):
         """
         🗺️ Get complete warehouse layout for 2D/3D rendering
         Returns hierarchical structure: Warehouse > Zones > Racks > Bins
+        Includes stock heatmap intensity for each bin
         """
         layouts = self.search([
             ('warehouse_id', '=', warehouse_id),
@@ -285,6 +298,23 @@ class StockLocationLayout(models.Model):
         
         for zone in zones:
             zone_data = json.loads(zone.layout_json)
+            
+            # Compute heatmap intensity for racks and bins
+            if 'racks' in zone_data:
+                for rack in zone_data['racks']:
+                    if 'bins' in rack:
+                        for bin_item in rack['bins']:
+                            # Calculate stock intensity (0-1)
+                            if bin_item['stock_qty'] > 0:
+                                # Find layout to get capacity reference (max 1000 units per bin)
+                                bin_layout = self.browse(bin_item['id'])
+                                intensity = min(1.0, bin_item['stock_qty'] / 1000.0)
+                                bin_item['stock_intensity'] = intensity
+                                bin_item['total_quantity'] = bin_item['stock_qty']
+                            else:
+                                bin_item['stock_intensity'] = 0.0
+                                bin_item['total_quantity'] = 0
+            
             result['zones'].append(zone_data)
         
         return result

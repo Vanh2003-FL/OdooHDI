@@ -9,16 +9,19 @@
 import { registry } from "@web/core/registry";
 import { Component, useState, onMounted, useRef } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { rpc } from "@web/core/network/rpc";
 
 export class WarehouseMap2D extends Component {
     setup() {
         this.orm = useService("orm");
+        this.user = useService("user");
         this.notification = useService("notification");
         this.action = useService("action");
+        this.rpc = rpc;
         
         this.canvasRef = useRef("mapCanvas");
         this.state = useState({
-            warehouseId: this.props.warehouseId || 1,
+            warehouseId: null,  // Will be set in onMounted
             layoutData: null,
             selectedBin: null,
             highlightedBins: [],
@@ -28,13 +31,57 @@ export class WarehouseMap2D extends Component {
             zoom: 1.0,
             panX: 0,
             panY: 0,
+            // Edit mode properties
+            gridSize: 20,
+            snapToGrid: true,
+            isResizing: false,
+            resizeHandle: null,
+            dragStartX: 0,
+            dragStartY: 0,
         });
         
         onMounted(() => {
             this.initializeCanvas();
-            this.loadWarehouseLayout();
+            this.initializeWarehouse();
             this.setupEventHandlers();
         });
+    }
+    
+    /**
+     * 🏭 Initialize warehouse ID (from props, context, or user's default)
+     */
+    async initializeWarehouse() {
+        // Try to get warehouse ID from props
+        if (this.props.warehouseId) {
+            this.state.warehouseId = this.props.warehouseId;
+            this.loadWarehouseLayout();
+            return;
+        }
+        
+        // Try to get from context/action
+        if (this.props.context?.default_warehouse_id) {
+            this.state.warehouseId = this.props.context.default_warehouse_id;
+            this.loadWarehouseLayout();
+            return;
+        }
+        
+        // Get user's default warehouse
+        try {
+            const userId = this.user.userId;
+            const user = await this.orm.read('res.users', [userId], ['warehouse_id']);
+            if (user && user[0] && user[0].warehouse_id) {
+                this.state.warehouseId = user[0].warehouse_id[0];
+            } else {
+                // Get first warehouse
+                const warehouses = await this.orm.search('stock.warehouse', [], { limit: 1 });
+                this.state.warehouseId = warehouses[0] || 1;
+            }
+            this.loadWarehouseLayout();
+        } catch (error) {
+            console.error('Failed to get user warehouse:', error);
+            this.state.warehouseId = 1;
+            this.loadWarehouseLayout();
+        }
     }
     
     /**
@@ -63,12 +110,22 @@ export class WarehouseMap2D extends Component {
         this.state.warehouseId = warehouseId;
         
         try {
-            const data = await this.env.services.rpc('/warehouse_map/layout/' + warehouseId);
+            console.log('Loading warehouse layout for warehouse:', warehouseId);
+            const data = await this.rpc('/warehouse_map/layout/' + warehouseId);
+            console.log('Warehouse layout data:', data);
+            
+            if (!data || !data.zones || data.zones.length === 0) {
+                this.notification.add('No warehouse layout configured', { type: 'warning' });
+                this.state.layoutData = { zones: [] };
+                this.render2DMap();
+                return;
+            }
+            
             this.state.layoutData = data;
             this.render2DMap();
         } catch (error) {
             console.error('Failed to load warehouse layout:', error);
-            this.notification.add('Failed to load warehouse layout', { type: 'danger' });
+            this.notification.add('Failed to load warehouse layout: ' + error.message, { type: 'danger' });
         }
     }
     
@@ -76,7 +133,11 @@ export class WarehouseMap2D extends Component {
      * 🎨 Render 2D warehouse map
      */
     render2DMap() {
-        if (!this.ctx || !this.state.layoutData) return;
+        if (!this.ctx) return;
+        if (!this.state.layoutData) {
+            this.drawEmptyState();
+            return;
+        }
         
         const ctx = this.ctx;
         const { zoom, panX, panY } = this.state;
@@ -93,15 +154,109 @@ export class WarehouseMap2D extends Component {
         ctx.fillStyle = '#f9f9f9';
         ctx.fillRect(0, 0, this.canvas.width / zoom, this.canvas.height / zoom);
         
+        // Draw grid always visible for layout reference
+        this.drawGrid();
+        
         // Draw zones
-        if (this.state.layoutData.zones) {
+        if (this.state.layoutData.zones && this.state.layoutData.zones.length > 0) {
             this.state.layoutData.zones.forEach(zone => {
                 this.drawZone(zone);
             });
+        } else {
+            // No zones configured
+            ctx.restore();
+            this.drawEmptyState();
+            return;
+        }
+        
+        // Draw resize handles if selected
+        if (this.state.editMode && this.state.selectedBin) {
+            this.drawResizeHandles(this.state.selectedBin);
         }
         
         // Restore context
         ctx.restore();
+    }
+    
+    /**
+     * 📭 Draw empty state message
+     */
+    drawEmptyState() {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#999';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No warehouse layout configured', this.canvas.width / 2, this.canvas.height / 2);
+        ctx.fillText('Click Edit Mode and use right-click to add zones/racks/bins', this.canvas.width / 2, this.canvas.height / 2 + 30);
+    }
+    
+    /**
+     * 📐 Draw grid for snap-to-grid
+     */
+    drawGrid() {
+        const ctx = this.ctx;
+        const gridSize = this.state.gridSize;
+        const width = this.canvas.width / this.state.zoom;
+        const height = this.canvas.height / this.state.zoom;
+        
+        // Lighter grid in normal mode, darker in edit mode
+        ctx.strokeStyle = this.state.editMode ? '#ccc' : '#e8e8e8';
+        ctx.lineWidth = 0.5;
+        
+        // Vertical lines
+        for (let x = 0; x <= width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        
+        // Horizontal lines
+        for (let y = 0; y <= height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+    }
+    
+    /**
+     * 🔲 Draw resize handles around selected bin
+     */
+    drawResizeHandles(bin) {
+        const ctx = this.ctx;
+        const handleSize = 8;
+        
+        ctx.fillStyle = '#2196F3';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        
+        // 8 handles: corners + midpoints
+        const handles = [
+            { x: bin.x, y: bin.y, pos: 'nw' },
+            { x: bin.x + bin.w/2, y: bin.y, pos: 'n' },
+            { x: bin.x + bin.w, y: bin.y, pos: 'ne' },
+            { x: bin.x + bin.w, y: bin.y + bin.h/2, pos: 'e' },
+            { x: bin.x + bin.w, y: bin.y + bin.h, pos: 'se' },
+            { x: bin.x + bin.w/2, y: bin.y + bin.h, pos: 's' },
+            { x: bin.x, y: bin.y + bin.h, pos: 'sw' },
+            { x: bin.x, y: bin.y + bin.h/2, pos: 'w' },
+        ];
+        
+        handles.forEach(handle => {
+            ctx.fillRect(
+                handle.x - handleSize/2,
+                handle.y - handleSize/2,
+                handleSize,
+                handleSize
+            );
+            ctx.strokeRect(
+                handle.x - handleSize/2,
+                handle.y - handleSize/2,
+                handleSize,
+                handleSize
+            );
+        });
     }
     
     /**
@@ -169,55 +324,254 @@ export class WarehouseMap2D extends Component {
     }
     
     /**
-     * 📍 Draw a bin (storage location)
+     * 📦 Draw a bin (storage location)
      */
     drawBin(bin) {
         const ctx = this.ctx;
         
-        // Check if bin is highlighted
-        const isHighlighted = this.state.highlightedBins.includes(bin.location_id);
-        const isSelected = this.state.selectedBin?.location_id === bin.location_id;
+        // Validate bin has required properties
+        if (!bin || bin.x === undefined || bin.y === undefined || bin.w === undefined || bin.h === undefined) {
+            return;
+        }
         
-        // Determine color based on stock quantity (heatmap)
-        let fillColor = bin.color || '#f39c12';
-        if (this.state.showHeatmap && bin.stock_qty > 0) {
-            const intensity = Math.min(bin.stock_qty / 100, 1.0);
-            fillColor = this.getHeatmapColor(intensity);
+        // Determine bin color (stock heatmap or default)
+        let fillColor = bin.color || '#95a5a6';
+        
+        if (this.state.showHeatmap && bin.stock_intensity !== undefined) {
+            fillColor = this.getHeatmapColor(bin.stock_intensity);
+        }
+        
+        // Highlight if selected or highlighted
+        if (this.state.selectedBin && this.state.selectedBin.id === bin.id) {
+            fillColor = '#3498db';
+        } else if (this.state.highlightedBins.includes(bin.location_id)) {
+            fillColor = '#f39c12';
         }
         
         // Draw bin
         ctx.fillStyle = fillColor;
-        ctx.globalAlpha = isSelected ? 0.9 : (isHighlighted ? 0.7 : 0.5);
+        ctx.globalAlpha = 0.7;
         ctx.fillRect(bin.x, bin.y, bin.w, bin.h);
         ctx.globalAlpha = 1.0;
         
-        // Draw border
-        ctx.strokeStyle = isSelected ? '#000' : (isHighlighted ? '#ff0' : '#666');
-        ctx.lineWidth = isSelected ? 3 : (isHighlighted ? 2 : 1);
+        ctx.strokeStyle = '#7f8c8d';
+        ctx.lineWidth = 1;
         ctx.strokeRect(bin.x, bin.y, bin.w, bin.h);
         
         // Draw bin label
         if (this.state.showLabels) {
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(bin.location_name, bin.x + bin.w / 2, bin.y + bin.h / 2);
+            ctx.fillStyle = '#000';
+            ctx.font = '11px Arial';
+            ctx.fillText(bin.location_name || 'Unknown', bin.x + 3, bin.y + 12);
             
-            // Show stock quantity
-            if (bin.stock_qty > 0) {
-                ctx.font = '10px Arial';
-                ctx.fillText(`Qty: ${bin.stock_qty}`, bin.x + bin.w / 2, bin.y + bin.h / 2 + 15);
-            }
-            
-            // Show lot count
-            if (bin.lot_count > 0) {
-                ctx.fillText(`Lots: ${bin.lot_count}`, bin.x + bin.w / 2, bin.y + bin.h / 2 + 28);
+            // Show stock quantity if available
+            if (bin.total_quantity) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(`${bin.total_quantity}`, bin.x + 3, bin.y + 24);
             }
         }
     }
     
     /**
-     * 🌡️ Get heatmap color based on intensity (0-1)
+     * 🔍 Get resize handle at position
+     */
+    getResizeHandle(bin, x, y) {
+        const handleSize = 12;
+        const handles = [
+            { x: bin.x, y: bin.y, pos: 'nw' },
+            { x: bin.x + bin.w/2, y: bin.y, pos: 'n' },
+            { x: bin.x + bin.w, y: bin.y, pos: 'ne' },
+            { x: bin.x + bin.w, y: bin.y + bin.h/2, pos: 'e' },
+            { x: bin.x + bin.w, y: bin.y + bin.h, pos: 'se' },
+            { x: bin.x + bin.w/2, y: bin.y + bin.h, pos: 's' },
+            { x: bin.x, y: bin.y + bin.h, pos: 'sw' },
+            { x: bin.x, y: bin.y + bin.h/2, pos: 'w' },
+        ];
+        
+        for (const handle of handles) {
+            if (Math.abs(x - handle.x) < handleSize && Math.abs(y - handle.y) < handleSize) {
+                return handle.pos;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * 🖱️ Get cursor style for resize handle
+     */
+    getResizeCursor(handle) {
+        const cursors = {
+            'nw': 'nw-resize', 'n': 'n-resize', 'ne': 'ne-resize',
+            'e': 'e-resize', 'se': 'se-resize', 's': 's-resize',
+            'sw': 'sw-resize', 'w': 'w-resize'
+        };
+        return cursors[handle] || 'default';
+    }
+    
+    /**
+     * 📏 Resize bin based on handle drag
+     */
+    resizeBin(bin, x, y, handle) {
+        const minSize = 40;
+        
+        switch(handle) {
+            case 'nw':
+                bin.w = Math.max(minSize, bin.w + (bin.x - x));
+                bin.h = Math.max(minSize, bin.h + (bin.y - y));
+                bin.x = x;
+                bin.y = y;
+                break;
+            case 'n':
+                bin.h = Math.max(minSize, bin.h + (bin.y - y));
+                bin.y = y;
+                break;
+            case 'ne':
+                bin.w = Math.max(minSize, x - bin.x);
+                bin.h = Math.max(minSize, bin.h + (bin.y - y));
+                bin.y = y;
+                break;
+            case 'e':
+                bin.w = Math.max(minSize, x - bin.x);
+                break;
+            case 'se':
+                bin.w = Math.max(minSize, x - bin.x);
+                bin.h = Math.max(minSize, y - bin.y);
+                break;
+            case 's':
+                bin.h = Math.max(minSize, y - bin.y);
+                break;
+            case 'sw':
+                bin.w = Math.max(minSize, bin.w + (bin.x - x));
+                bin.h = Math.max(minSize, y - bin.y);
+                bin.x = x;
+                break;
+            case 'w':
+                bin.w = Math.max(minSize, bin.w + (bin.x - x));
+                bin.x = x;
+                break;
+        }
+        
+        // Snap to grid
+        if (this.state.snapToGrid) {
+            bin.x = Math.round(bin.x / this.state.gridSize) * this.state.gridSize;
+            bin.y = Math.round(bin.y / this.state.gridSize) * this.state.gridSize;
+            bin.w = Math.round(bin.w / this.state.gridSize) * this.state.gridSize;
+            bin.h = Math.round(bin.h / this.state.gridSize) * this.state.gridSize;
+        }
+        
+        this.render2DMap();
+    }
+    
+    /**
+     * 📋 Show context menu for adding rack/bin
+     */
+    showContextMenu(x, y, screenX, screenY) {
+        // Will be implemented with action service to open dialog
+        this.notification.add(
+            'Right-click menu: Add Rack/Bin at (' + Math.round(x) + ', ' + Math.round(y) + ')',
+            { type: 'info' }
+        );
+    }
+    
+    /**
+     * ➕ Add new rack to warehouse
+     */
+    async addRack(x, y) {
+        try {
+            const result = await this.action.doAction({
+                type: 'ir.actions.act_window',
+                name: 'Add Rack',
+                res_model: 'stock.location.layout',
+                view_mode: 'form',
+                views: [[false, 'form']],
+                target: 'new',
+                context: {
+                    default_warehouse_id: this.state.warehouseId,
+                    default_location_type: 'rack',
+                    default_x: Math.round(x),
+                    default_y: Math.round(y),
+                    default_width: 200,
+                    default_height: 100,
+                }
+            });
+            
+            if (result) {
+                await this.loadWarehouseLayout();
+            }
+        } catch (error) {
+            console.error('Failed to add rack:', error);
+        }
+    }
+    
+    /**
+     * ➕ Add new bin to warehouse
+     */
+    async addBin(x, y) {
+        try {
+            const result = await this.action.doAction({
+                type: 'ir.actions.act_window',
+                name: 'Add Bin',
+                res_model: 'stock.location.layout',
+                view_mode: 'form',
+                views: [[false, 'form']],
+                target: 'new',
+                context: {
+                    default_warehouse_id: this.state.warehouseId,
+                    default_location_type: 'bin',
+                    default_x: Math.round(x),
+                    default_y: Math.round(y),
+                    default_width: 80,
+                    default_height: 60,
+                }
+            });
+            
+            if (result) {
+                await this.loadWarehouseLayout();
+            }
+        } catch (error) {
+            console.error('Failed to add bin:', error);
+        }
+    }
+    
+    /**
+     * ✏️ Update bin position (drag & drop in edit mode)
+     */
+    updateBinPosition(bin, x, y) {
+        bin.x = x;
+        bin.y = y;
+        
+        // Snap to grid
+        if (this.state.snapToGrid) {
+            bin.x = Math.round(bin.x / this.state.gridSize) * this.state.gridSize;
+            bin.y = Math.round(bin.y / this.state.gridSize) * this.state.gridSize;
+        }
+        
+        this.render2DMap();
+    }
+    
+    /**
+     * 💾 Save bin position to server
+     */
+    async saveBinPosition(bin) {
+        try {
+            await this.rpc('/warehouse_map/update_layout', {
+                layout_id: bin.id,
+                x: bin.x,
+                y: bin.y,
+                width: bin.w,
+                height: bin.h,
+            });
+            
+            this.notification.add('Layout updated', { type: 'success' });
+        } catch (error) {
+            console.error('Failed to save layout:', error);
+            this.notification.add('Failed to save layout', { type: 'danger' });
+        }
+    }
+    
+    /**
+     * 🎨 Get heatmap color based on intensity
      */
     getHeatmapColor(intensity) {
         // Green (low) -> Yellow -> Red (high)
@@ -245,9 +599,22 @@ export class WarehouseMap2D extends Component {
             this.handleCanvasClick(x, y);
         });
         
-        // Drag handler (for edit mode)
+        // Right-click context menu for edit mode
+        this.canvas.addEventListener('contextmenu', (e) => {
+            if (!this.state.editMode) return;
+            e.preventDefault();
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - this.state.panX) / this.state.zoom;
+            const y = (e.clientY - rect.top - this.state.panY) / this.state.zoom;
+            
+            this.showContextMenu(x, y, e.clientX, e.clientY);
+        });
+        
+        // Drag handler (for edit mode - move or resize)
         let isDragging = false;
         let dragTarget = null;
+        let resizeHandle = null;
         
         this.canvas.addEventListener('mousedown', (e) => {
             if (!this.state.editMode) return;
@@ -256,27 +623,63 @@ export class WarehouseMap2D extends Component {
             const x = (e.clientX - rect.left - this.state.panX) / this.state.zoom;
             const y = (e.clientY - rect.top - this.state.panY) / this.state.zoom;
             
+            // Check if clicking resize handle
+            if (this.state.selectedBin) {
+                resizeHandle = this.getResizeHandle(this.state.selectedBin, x, y);
+                if (resizeHandle) {
+                    this.state.isResizing = true;
+                    this.state.resizeHandle = resizeHandle;
+                    this.state.dragStartX = x;
+                    this.state.dragStartY = y;
+                    return;
+                }
+            }
+            
+            // Otherwise try to drag bin
             dragTarget = this.findBinAt(x, y);
             if (dragTarget) {
                 isDragging = true;
+                this.state.dragStartX = x - dragTarget.x;
+                this.state.dragStartY = y - dragTarget.y;
                 this.canvas.style.cursor = 'grabbing';
             }
         });
         
         this.canvas.addEventListener('mousemove', (e) => {
-            if (!isDragging || !dragTarget) return;
-            
             const rect = this.canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left - this.state.panX) / this.state.zoom;
             const y = (e.clientY - rect.top - this.state.panY) / this.state.zoom;
             
-            this.updateBinPosition(dragTarget, x, y);
+            // Handle resize
+            if (this.state.isResizing && this.state.selectedBin) {
+                this.resizeBin(this.state.selectedBin, x, y, this.state.resizeHandle);
+                return;
+            }
+            
+            // Handle drag
+            if (!isDragging || !dragTarget) {
+                // Update cursor for resize handles
+                if (this.state.editMode && this.state.selectedBin) {
+                    const handle = this.getResizeHandle(this.state.selectedBin, x, y);
+                    this.canvas.style.cursor = handle ? this.getResizeCursor(handle) : 'default';
+                }
+                return;
+            }
+            
+            this.updateBinPosition(dragTarget, x - this.state.dragStartX, y - this.state.dragStartY);
         });
         
         this.canvas.addEventListener('mouseup', () => {
+            if (this.state.isResizing && this.state.selectedBin) {
+                this.saveBinPosition(this.state.selectedBin);
+                this.state.isResizing = false;
+                this.state.resizeHandle = null;
+            }
+            
             if (isDragging && dragTarget) {
                 this.saveBinPosition(dragTarget);
             }
+            
             isDragging = false;
             dragTarget = null;
             this.canvas.style.cursor = 'default';
@@ -335,7 +738,7 @@ export class WarehouseMap2D extends Component {
      */
     async showBinDetails(locationId) {
         try {
-            const data = await this.env.services.rpc('/warehouse_map/bin_details/' + locationId);
+            const data = await this.rpc('/warehouse_map/bin_details/' + locationId);
             
             // Show notification with bin info
             let message = `📦 ${data.location_complete_name}\n`;
@@ -373,7 +776,7 @@ export class WarehouseMap2D extends Component {
      */
     async highlightBySerial(serialNumber) {
         try {
-            const result = await this.env.services.rpc('/warehouse_map/scan_serial', {
+            const result = await this.rpc('/warehouse_map/scan_serial', {
                 serial_number: serialNumber
             });
             
@@ -406,38 +809,14 @@ export class WarehouseMap2D extends Component {
     }
     
     /**
-     * ✏️ Update bin position (drag & drop in edit mode)
-     */
-    updateBinPosition(bin, x, y) {
-        bin.x = x - bin.w / 2;
-        bin.y = y - bin.h / 2;
-        this.render2DMap();
-    }
-    
-    /**
-     * 💾 Save bin position to server
-     */
-    async saveBinPosition(bin) {
-        try {
-            await this.env.services.rpc('/warehouse_map/update_layout', {
-                layout_id: bin.id,
-                x: bin.x,
-                y: bin.y
-            });
-            
-            this.notification.add('Bin position saved', { type: 'success' });
-        } catch (error) {
-            console.error('Failed to save bin position:', error);
-            this.notification.add('Failed to save position', { type: 'danger' });
-        }
-    }
-    
-    /**
      * 🔄 Toggle features
      */
     toggleEditMode() {
         this.state.editMode = !this.state.editMode;
-        this.canvas.style.cursor = this.state.editMode ? 'move' : 'default';
+        const canvas = this.canvasRef.el;
+        if (canvas) {
+            canvas.style.cursor = this.state.editMode ? 'move' : 'default';
+        }
     }
     
     toggleHeatmap() {

@@ -9,16 +9,12 @@
             <list string="Location Layouts" decoration-info="location_type=='zone'" 
                   decoration-warning="location_type=='rack'" decoration-success="location_type=='bin'">
                 <field name="sequence" widget="handle"/>
-                <field name="warehouse_id"/>
-                <field name="location_id"/>
                 <field name="location_type"/>
                 <field name="x"/>
                 <field name="y"/>
                 <field name="z_level"/>
                 <field name="width"/>
                 <field name="height"/>
-                <field name="stock_quantity"/>
-                <field name="lot_count"/>
                 <field name="view_type"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
@@ -134,8 +130,6 @@
         <field name="model">stock.location.layout</field>
         <field name="arch" type="xml">
             <search string="Location Layouts">
-                <field name="warehouse_id"/>
-                <field name="location_id"/>
                 <separator/>
                 <filter string="Zones" name="filter_zone" domain="[('location_type', '=', 'zone')]"/>
                 <filter string="Racks" name="filter_rack" domain="[('location_type', '=', 'rack')]"/>
@@ -145,11 +139,6 @@
                 <filter string="3D View" name="filter_3d" domain="[('view_type', 'in', ['3d', 'both'])]"/>
                 <separator/>
                 <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Warehouse" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
-                    <filter string="Type" name="group_type" context="{'group_by': 'location_type'}"/>
-                    <filter string="Parent" name="group_parent" context="{'group_by': 'parent_layout_id'}"/>
-                </group>
             </search>
         </field>
     </record>
@@ -159,7 +148,6 @@
         <field name="name">Warehouse Layout Configuration</field>
         <field name="res_model">stock.location.layout</field>
         <field name="view_mode">list,form</field>
-        <field name="context">{'search_default_filter_bin': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Configure your warehouse layout for 2D/3D visualization

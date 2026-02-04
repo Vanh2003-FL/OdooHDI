@@ -90,20 +90,12 @@ class WarehouseLayoutGenerator(models.TransientModel):
             })
             created_count += 1
         
-        # Show result
+        # Show result and open layouts
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Layout Generated',
-                'message': f'Created {created_count} layout records for {self.warehouse_id.name}',
-                'type': 'success',
-                'sticky': False,
-                'next': {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'stock.location.layout',
-                    'view_mode': 'list,form',
-                    'domain': [('warehouse_id', '=', self.warehouse_id.id)],
-                }
-            }
+            'type': 'ir.actions.act_window',
+            'name': f'Generated Layouts ({created_count})',
+            'res_model': 'stock.location.layout',
+            'view_mode': 'list,form',
+            'domain': [('warehouse_id', '=', self.warehouse_id.id)],
+            'context': {'create': False},
         }
