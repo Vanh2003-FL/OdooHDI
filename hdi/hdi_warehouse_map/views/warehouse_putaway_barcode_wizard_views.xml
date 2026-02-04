@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- 🔦 Barcode Put-Away Wizard Form View -->
+    <record id="view_warehouse_putaway_barcode_wizard_form" model="ir.ui.view">
+        <field name="name">warehouse.putaway.barcode.wizard.form</field>
+        <field name="model">warehouse.putaway.barcode.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Barcode Put-Away - Scan to Assign">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="scan_product,scan_bin,done"/>
+                    <button name="action_complete_putaway" string="✅ Complete &amp; Close" type="object" class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <span invisible="state == 'scan_product'">🔦 Scan Product Barcode</span>
+                            <span invisible="state == 'scan_bin'">🎯 Scan Bin Barcode</span>
+                            <span invisible="state == 'done'">✅ Put-Away Complete</span>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="picking_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="current_product_id" readonly="1" invisible="not current_product_id"/>
+                            <field name="current_lot_id" readonly="1" invisible="not current_lot_id"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Scan Input Area -->
+                    <group string="🔦 Barcode Scanner">
+                        <field name="scanned_barcode" placeholder="Scan barcode here..." class="oe_inline" style="font-size: 18px; width: 100%;"/>
+                        <button name="action_scan_barcode" string="Process Scan" type="object" class="btn-primary btn-lg" style="width: 100%;"/>
+                    </group>
+                    
+                    <!-- Message Display -->
+                    <group string="📄 Scan Result" invisible="not message">
+                        <div class="alert alert-info" style="white-space: pre-wrap; font-size: 16px; padding: 20px;">
+                            <field name="message" readonly="1" nolabel="1"/>
+                        </div>
+                    </group>
+                    
+                    <!-- Assigned Lines -->
+                    <group string="✅ Assigned Products" invisible="not assigned_line_ids">
+                        <field name="assigned_line_ids" nolabel="1">
+                            <tree>
+                                <field name="product_id"/>
+                                <field name="lot_id"/>
+                                <field name="destination_location_id"/>
+                                <field name="assigned_datetime"/>
+                            </tree>
+                        </field>
+                    </group>
+                    
+                    <!-- Instructions -->
+                    <group string="📖 Instructions">
+                        <div class="alert alert-success">
+                            <h4>Workflow:</h4>
+                            <ol style="margin-left: 20px;">
+                                <li><strong>Step 1:</strong> Scan PRODUCT barcode or LOT/SERIAL number</li>
+                                <li><strong>Step 2:</strong> Scan DESTINATION BIN barcode</li>
+                                <li><strong>Step 3:</strong> System auto-assigns product to bin</li>
+                                <li><strong>Step 4:</strong> Repeat for next product</li>
+                            </ol>
+                            <p><strong>🔥 Quick Tips:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>Product barcode = Product.barcode or Product.default_code</li>
+                                <li>Bin barcode = stock.location.barcode</li>
+                                <li>System prevents duplicate assignments</li>
+                            </ul>
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- 🔦 Action to open barcode wizard -->
+    <record id="action_warehouse_putaway_barcode_wizard" model="ir.actions.act_window">
+        <field name="name">Barcode Put-Away (Scan to Assign)</field>
+        <field name="res_model">warehouse.putaway.barcode.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'active_id': active_id}</field>
+    </record>
+    
+    <!-- 🔥 Add barcode button to stock.picking form -->
+    <record id="view_picking_form_inherit_barcode_putaway" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.barcode.putaway</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_assign']" position="after">
+                <button name="%(action_warehouse_putaway_barcode_wizard)d" 
+                        string="🔦 Barcode Put-Away" 
+                        type="action" 
+                        invisible="state not in ('assigned', 'confirmed') or picking_type_code != 'incoming'"
+                        class="btn-success"/>
+            </xpath>
+        </field>
+    </record>
+    
+</odoo>

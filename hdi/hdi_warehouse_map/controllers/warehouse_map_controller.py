@@ -163,3 +163,53 @@ class WarehouseMapController(http.Controller):
             })
         
         return {'bins': results}
+    
+    @http.route('/warehouse_map/assign_to_bin', type='json', auth='user', methods=['POST'])
+    def assign_product_to_bin(self, move_line_id, location_dest_id):
+        """
+        🎯 API: Assign move line to specific bin location (Put-Away)
+        
+        Used by:
+        - Put-away wizard
+        - Barcode scanning workflow
+        - 2D/3D map click-to-assign
+        
+        Workflow:
+        1. Get stock.move.line
+        2. Update location_dest_id
+        3. Return updated layout JSON
+        """
+        try:
+            move_line = request.env['stock.move.line'].browse(move_line_id)
+            if not move_line.exists():
+                return {'error': 'Move line not found'}
+            
+            location = request.env['stock.location'].browse(location_dest_id)
+            if not location.exists():
+                return {'error': 'Location not found'}
+            
+            if location.usage != 'internal':
+                return {'error': f'Location {location.name} is not a valid storage location'}
+            
+            # Update destination
+            move_line.write({'location_dest_id': location.id})
+            
+            # Get bin layout info for highlighting
+            bin_layout = request.env['stock.location.layout'].search([
+                ('location_id', '=', location.id)
+            ], limit=1)
+            
+            result = {
+                'success': True,
+                'move_line_id': move_line.id,
+                'product_name': move_line.product_id.name,
+                'location_name': location.complete_name,
+            }
+            
+            if bin_layout:
+                result['bin_layout'] = json.loads(bin_layout.layout_json)
+            
+            return result
+            
+        except Exception as e:
+            return {'error': str(e)}

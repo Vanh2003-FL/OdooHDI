@@ -47,7 +47,27 @@ Stock (Warehouse)
 Scan Serial → Find lot_id → Read stock.quant → Get location_id → Highlight bin
 ```
 
-### 5. **Layout Management**
+### 5. **Put-Away Workflow** 🚀 **NEW!**
+**2 Ways to assign goods to bins after receipt:**
+
+#### **Method 1: Manual Wizard**
+```
+Receipt → "📦 Assign to Bins" button → Select product → Choose bin → Validate
+```
+
+#### **Method 2: Barcode Scanning** 🔦
+```
+Receipt → "🔦 Barcode Put-Away" button → Scan product → Scan bin → Auto-assign
+```
+
+**Workflow:**
+1. Purchase Order → Receipt (stock.picking 'incoming')
+2. Click **"Assign to Bins"** or **"Barcode Put-Away"**
+3. Assign products to specific bin locations
+4. Validate receipt → stock.quant created with bin location
+5. View on 2D/3D map automatically
+
+### 6. **Layout Management**
 - Model: `stock.location.layout` (1 model cho cả 2D & 3D)
 - 2D base data: x, y, width, height, rotation
 - 3D extension: z_level (tầng kệ), depth
@@ -148,6 +168,56 @@ hdi_warehouse_map/
 GET /warehouse_map/layout/<warehouse_id>
 
 Response:
+{
+  "warehouse_id": 1,
+  "warehouse_name": "Main Warehouse",
+  "zones": [...]
+}
+```
+
+### 2. Scan Serial to Highlight Bin
+```
+POST /warehouse_map/scan_serial
+Body: {"serial_number": "SN001"}
+
+Response:
+{
+  "lot_id": 5,
+  "location_id": 123,
+  "bin_layout": {...}
+}
+```
+
+### 3. Get Bin Details
+```
+GET /warehouse_map/bin_details/<location_id>
+
+Response:
+{
+  "location_id": 123,
+  "quants": [...],
+  "total_quantity": 50
+}
+```
+
+### 4. Assign to Bin (Put-Away) 🚀 **NEW!**
+```
+POST /warehouse_map/assign_to_bin
+Body: {
+  "move_line_id": 456,
+  "location_dest_id": 123
+}
+
+Response:
+{
+  "success": true,
+  "product_name": "Product A",
+  "location_name": "WH/Stock/Zone-A/Rack-1/Bin-001",
+  "bin_layout": {...}
+}
+```
+
+### 5. Search Product
 {
   "warehouse_id": 1,
   "zones": [
@@ -296,7 +366,7 @@ Inventory
 # FORBIDDEN - Module NEVER creates inventory
 self.env['stock.quant'].create({...})
 self.env['stock.move'].create({...})
-self.env['stock.move.line'].create({...})
+self.env['stock.move.line'].create({...})  # ❌ Don't CREATE
 ```
 
 ### ✅ ALWAYS DO
@@ -307,16 +377,33 @@ quants = self.env['stock.quant'].search([
     ('quantity', '>', 0)
 ])
 quantity = sum(quants.mapped('quantity'))
+
+# ✅ OK - UPDATE location_dest_id during put-away
+move_line.write({'location_dest_id': bin_location.id})  # ✅ PUT-AWAY workflow
 ```
 
 ### 📌 Principles
 1. **2D/3D CHỈ ĐỌC** stock.quant + lot_id
-2. **KHÔNG TẠO** tồn kho
-3. **Tồn kho chỉ tạo qua:**
+2. **KHÔNG TẠO** tồn kho (stock.quant)
+3. **CÓ THỂ CẬP NHẬT** location_dest_id trong stock.move.line (put-away)
+4. **Tồn kho chỉ tạo qua:**
    - Purchase Order → Receipt (validated)
    - Manufacturing Order
    - Inventory Adjustment
    - Internal Transfer (validated)
+
+### 🚀 Put-Away Workflow
+```python
+# ✅ CORRECT - Assign product to bin during put-away
+receipt = env['stock.picking'].browse(receipt_id)
+for move_line in receipt.move_line_ids:
+    # Update destination BEFORE validation
+    move_line.write({'location_dest_id': target_bin_id})
+
+# After validation → stock.quant auto-created by Odoo
+receipt.button_validate()  
+# → stock.quant(location_id=target_bin_id) created automatically
+```
 
 ---
 

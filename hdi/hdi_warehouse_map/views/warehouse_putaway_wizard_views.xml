@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- 🚀 Put-Away Wizard Form View -->
+    <record id="view_warehouse_putaway_wizard_form" model="ir.ui.view">
+        <field name="name">warehouse.putaway.wizard.form</field>
+        <field name="model">warehouse.putaway.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Bins - Put Away">
+                <header>
+                    <button name="action_open_warehouse_map" string="🗺️ Open Warehouse Map" type="object" class="oe_highlight"/>
+                    <button name="action_validate_putaway" string="✅ Validate Put-Away" type="object" class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"/>
+                </header>
+                
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="picking_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Products to Assign">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="quantity" readonly="1"/>
+                                    <field name="lot_id" readonly="1"/>
+                                    <field name="current_dest_location_id" string="Current Location" readonly="1"/>
+                                    <field name="new_dest_location_id" string="🎯 New Bin" 
+                                           domain="[('usage', '=', 'internal')]"
+                                           options="{'no_create': True}"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- 🚀 Action to open wizard from stock.picking -->
+    <record id="action_warehouse_putaway_wizard" model="ir.actions.act_window">
+        <field name="name">Assign to Bins (Put-Away)</field>
+        <field name="res_model">warehouse.putaway.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'active_id': active_id}</field>
+    </record>
+    
+    <!-- 🔥 Add button to stock.picking form (Receipt) -->
+    <record id="view_picking_form_inherit_putaway" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.putaway</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_assign']" position="after">
+                <button name="%(action_warehouse_putaway_wizard)d" 
+                        string="📦 Assign to Bins" 
+                        type="action" 
+                        invisible="state not in ('assigned', 'confirmed') or picking_type_code != 'incoming'"
+                        class="btn-primary"/>
+            </xpath>
+        </field>
+    </record>
+    
+</odoo>
