@@ -350,12 +350,84 @@ Inventory
 4. **Layout Tree** - List all layouts
 
 ### Controls
+- **Edit Mode** 🔥 - Enable drag & drop to adjust layout
 - Barcode scanner input
 - Product search
 - Heatmap toggle
 - Labels toggle
-- Edit mode toggle
-- Zoom controls
+- Zoom controls (mouse wheel)
+- Pan support (drag canvas)
+
+---
+
+## ✏️ Cách điều chỉnh sơ đồ 2D
+
+### **Cách 1: Drag & Drop (Nhanh)** 🖱️
+
+1. Mở **2D Warehouse Map**
+2. Click nút **"✏️ Edit Mode"** trên toolbar
+3. **Drag & drop bins** để di chuyển vị trí
+4. Thả chuột → tự động save vị trí mới
+5. Tắt Edit Mode khi xong
+
+**Workflow:**
+```
+Enable Edit Mode → Drag bin → Drop → Auto-save to database
+```
+
+**Code implementation:**
+- [warehouse_map_2d.js](static/src/js/warehouse_map_2d.js#L248-L283) - Drag handler
+- [warehouse_map_2d.js](static/src/js/warehouse_map_2d.js#L409-L432) - Save position
+- API: `POST /warehouse_map/update_layout`
+
+---
+
+### **Cách 2: Form Configuration (Chi tiết)** 📝
+
+1. Inventory → **Warehouse Map** → **Layout Configuration**
+2. Chọn location cần chỉnh sửa
+3. Nhập tọa độ thủ công:
+   - **x, y**: Vị trí 2D (pixels)
+   - **width, height**: Kích thước bin
+   - **rotation**: Góc xoay (0-360°)
+   - **z_level**: Tầng (cho 3D, 0=sàn, 1,2,3=kệ)
+   - **color**: Màu sắc (#hex)
+4. Save
+
+**Fields chỉnh sửa:**
+```python
+# 2D Base (required)
+x, y          # Position (px)
+width, height # Size (px)
+rotation      # Angle (0-360°)
+
+# 3D Extension (optional)
+z_level       # Floor level (0,1,2,3...)
+depth         # 3D depth (px)
+
+# Visual
+color         # Hex color (#3498db)
+```
+
+---
+
+### **Cách 3: Import Demo Data** 📦
+
+Tạo file XML với layout coordinates:
+```xml
+<record id="bin_a1_01_layout" model="stock.location.layout">
+    <field name="location_id" ref="location_bin_a1_01"/>
+    <field name="warehouse_id" ref="stock.warehouse0"/>
+    <field name="location_type">bin</field>
+    <field name="x">100</field>
+    <field name="y">150</field>
+    <field name="width">80</field>
+    <field name="height">60</field>
+    <field name="rotation">0</field>
+    <field name="z_level">1</field>
+    <field name="color">#2ecc71</field>
+</record>
+```
 
 ---
 

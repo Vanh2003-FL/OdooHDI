@@ -24,7 +24,7 @@
                     <notebook>
                         <page string="Products to Assign">
                             <field name="line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="product_id" readonly="1"/>
                                     <field name="quantity" readonly="1"/>
                                     <field name="lot_id" readonly="1"/>
@@ -32,7 +32,7 @@
                                     <field name="new_dest_location_id" string="🎯 New Bin" 
                                            domain="[('usage', '=', 'internal')]"
                                            options="{'no_create': True}"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>

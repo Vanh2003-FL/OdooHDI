@@ -49,12 +49,12 @@
                     <!-- Assigned Lines -->
                     <group string="✅ Assigned Products" invisible="not assigned_line_ids">
                         <field name="assigned_line_ids" nolabel="1">
-                            <tree>
+                            <list>
                                 <field name="product_id"/>
                                 <field name="lot_id"/>
                                 <field name="destination_location_id"/>
                                 <field name="assigned_datetime"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                     

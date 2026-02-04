@@ -6,7 +6,7 @@
         <field name="name">stock.location.layout.tree</field>
         <field name="model">stock.location.layout</field>
         <field name="arch" type="xml">
-            <tree string="Location Layouts" decoration-info="location_type=='zone'" 
+            <list string="Location Layouts" decoration-info="location_type=='zone'" 
                   decoration-warning="location_type=='rack'" decoration-success="location_type=='bin'">
                 <field name="sequence" widget="handle"/>
                 <field name="warehouse_id"/>
@@ -21,7 +21,7 @@
                 <field name="lot_count"/>
                 <field name="view_type"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -113,7 +113,7 @@
                         <page string="Child Locations" name="children" 
                               invisible="location_type == 'bin'">
                             <field name="child_layout_ids" mode="tree">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="location_id" domain="[('usage', '=', 'internal')]"/>
                                     <field name="location_type"/>
@@ -124,7 +124,7 @@
                                     <field name="height"/>
                                     <field name="stock_quantity"/>
                                     <field name="lot_count"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         
