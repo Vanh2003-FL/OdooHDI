@@ -12,6 +12,9 @@
                         t-att-class="{'active': state.editMode}">
                     <i class="fa fa-edit"/> Edit Mode
                 </button>
+                <button t-if="state.editMode" t-on-click="() => this.saveLayout()" class="btn-save">
+                    <i class="fa fa-save"/> Save Layout
+                </button>
                 <button t-on-click="() => this.toggleHeatmap()" 
                         t-att-class="{'active': state.showHeatmap}">
                     <i class="fa fa-fire"/> Heatmap
@@ -35,8 +38,8 @@
     
     <!-- 3D Warehouse View Template -->
     <t t-name="hdi_warehouse_map.WarehouseMap3D">
-        <div class="o_warehouse_map_3d_container">
-            <div ref="map3dContainer" class="warehouse-map-3d-view"/>
+        <div class="o_warehouse_map_3d">
+            <div ref="map3dContainer" class="warehouse-map-3d-view" style="width: 100%; height: 600px;"/>
             
             <!-- 3D Controls -->
             <div class="warehouse-map-toolbar">
@@ -61,26 +64,12 @@
     
     <!-- Main Controller Template -->
     <t t-name="hdi_warehouse_map.WarehouseMapController">
-        <div class="warehouse_map_controller">
-            <div class="view-switcher" style="margin-bottom: 10px;">
-                <button t-on-click="() => this.switchView('2d')" 
-                        class="btn"
-                        t-att-class="{'btn-primary': state.viewMode === '2d', 'btn-secondary': state.viewMode !== '2d'}">
-                    <i class="fa fa-map"/> 2D Map
-                </button>
-                <button t-on-click="() => this.switchView('3d')" 
-                        class="btn"
-                        t-att-class="{'btn-primary': state.viewMode === '3d', 'btn-secondary': state.viewMode !== '3d'}">
-                    <i class="fa fa-cube"/> 3D View
-                </button>
+        <div class="warehouse_map_controller" style="padding: 10px;">
+            <div class="alert alert-info">
+                <strong>2D Warehouse Map</strong> - Use menu: Stock > Warehouse Map > 2D Warehouse Map
             </div>
-            
-            <div t-if="state.viewMode === '2d'">
-                <WarehouseMap2D warehouseId="state.warehouseId"/>
-            </div>
-            
-            <div t-if="state.viewMode === '3d'">
-                <WarehouseMap3D warehouseId="state.warehouseId"/>
+            <div class="alert alert-info">
+                <strong>3D Warehouse View</strong> - Use menu: Stock > Warehouse Map > 3D Warehouse View
             </div>
         </div>
     </t>

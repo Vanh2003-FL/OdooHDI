@@ -164,6 +164,56 @@ class WarehouseMapController(http.Controller):
         
         return {'bins': results}
     
+    @http.route('/warehouse_map/batch_update_layout', type='json', auth='user', methods=['POST'])
+    def batch_update_layout(self, warehouse_id, changes):
+        """
+        💾 API: Batch update layout positions (save after drag/drop editing)
+        
+        Params:
+            warehouse_id: int
+            changes: list of dicts with {id, x, y, w, h, ...}
+        """
+        try:
+            layout_model = request.env['stock.location.layout']
+            success_count = 0
+            
+            for change in changes:
+                layout = layout_model.browse(change.get('id'))
+                if not layout.exists():
+                    continue
+                
+                # Prepare update values
+                vals = {}
+                if 'x' in change:
+                    vals['x'] = change['x']
+                if 'y' in change:
+                    vals['y'] = change['y']
+                if 'w' in change:
+                    vals['width'] = change['w']
+                if 'h' in change:
+                    vals['height'] = change['h']
+                if 'rotation' in change:
+                    vals['rotation'] = change['rotation']
+                if 'capacity' in change:
+                    vals['capacity'] = change['capacity']
+                if 'stage' in change:
+                    vals['stage'] = change['stage']
+                
+                if vals:
+                    layout.write(vals)
+                    success_count += 1
+            
+            return {
+                'success': True,
+                'updated_count': success_count,
+                'total': len(changes),
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+            }
+
     @http.route('/warehouse_map/assign_to_bin', type='json', auth='user', methods=['POST'])
     def assign_product_to_bin(self, move_line_id, location_dest_id):
         """

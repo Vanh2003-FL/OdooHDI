@@ -41,14 +41,19 @@ export class WarehouseMap3D extends Component {
     async loadWarehouseLayout() {
         const warehouseId = this.props.warehouseId || 1;
         this.state.warehouseId = warehouseId;
+        console.log('[3D] Loading warehouse layout for warehouse:', warehouseId);
         
         try {
             const data = await this.rpc('/warehouse_map/layout/' + warehouseId);
+            console.log('[3D] Received layout data:', data);
+            
             this.state.layoutData = data;
+            
+            // Now render the 3D map
+            console.log('[3D] Calling render3DMap...');
             this.render3DMap();
         } catch (error) {
-            console.error('Failed to load warehouse layout:', error);
-            this.notification.add('Failed to load warehouse layout', { type: 'danger' });
+            console.error('[3D] Error loading layout:', error);
         }
     }
     
@@ -57,8 +62,26 @@ export class WarehouseMap3D extends Component {
      * ⚠️ 3D KHÔNG LÀM NGHIỆP VỤ - Chỉ visual và highlight
      */
     render3DMap() {
-        const container = this.containerRef.el;
-        if (!container || !this.state.layoutData) return;
+        let container = this.containerRef?.el;
+        console.log('[3D] render3DMap - containerRef:', !!container);
+        
+        if (!container) {
+            // Fallback: find by class
+            container = document.querySelector('.warehouse-map-3d-view');
+            console.log('[3D] Found by querySelector:', !!container);
+        }
+        
+        if (!container) {
+            console.error('[3D] Container not found!');
+            return;
+        }
+        
+        if (!this.state.layoutData) {
+            console.warn('[3D] No layout data to render');
+            return;
+        }
+        
+        console.log('[3D] Starting 3D render with', this.state.layoutData.zones?.length || 0, 'zones');
         
         // Clear existing content
         container.innerHTML = '';
@@ -68,20 +91,25 @@ export class WarehouseMap3D extends Component {
         scene.className = 'warehouse-3d-scene';
         scene.style.cssText = `
             width: 100%;
-            height: 100%;
+            height: 600px;
             perspective: 1200px;
             perspective-origin: 50% 50%;
             position: relative;
             background: linear-gradient(to bottom, #2c3e50 0%, #34495e 100%);
+            overflow: hidden;
         `;
         
         // Create warehouse world
         const world = document.createElement('div');
         world.className = 'warehouse-3d-world';
         world.style.cssText = `
-            width: 100%;
-            height: 100%;
+            width: 1400px;
+            height: 600px;
             position: absolute;
+            left: 50%;
+            top: 50%;
+            margin-left: -700px;
+            margin-top: -300px;
             transform-style: preserve-3d;
             transform: rotateX(${this.state.rotationX}deg) rotateY(${this.state.rotationY}deg) scale(${this.state.zoom});
             transition: transform 0.3s ease;
@@ -92,6 +120,7 @@ export class WarehouseMap3D extends Component {
         
         // Draw zones and structures
         if (this.state.layoutData.zones) {
+            console.log('[3D] Drawing', this.state.layoutData.zones.length, 'zones');
             this.state.layoutData.zones.forEach(zone => {
                 this.create3DZone(world, zone);
             });
@@ -103,6 +132,8 @@ export class WarehouseMap3D extends Component {
         // Store reference for updates
         this.scene3D = scene;
         this.world3D = world;
+        
+        console.log('[3D] 3D render complete');
     }
     
     /**
@@ -114,7 +145,7 @@ export class WarehouseMap3D extends Component {
         floor.style.cssText = `
             position: absolute;
             width: 1400px;
-            height: 500px;
+            height: 600px;
             background: 
                 repeating-linear-gradient(
                     0deg,
@@ -411,8 +442,19 @@ export class WarehouseMap3D extends Component {
      * 🎮 Setup 3D controls (rotation, zoom)
      */
     setupControls() {
-        const container = this.containerRef.el;
-        if (!container) return;
+        let container = this.containerRef?.el;
+        
+        if (!container) {
+            // Fallback
+            container = document.querySelector('.warehouse-map-3d-view');
+        }
+        
+        if (!container) {
+            console.error('[3D] Container not found for controls setup');
+            return;
+        }
+        
+        console.log('[3D] Setting up controls');
         
         let isDragging = false;
         let lastX = 0;
@@ -462,6 +504,7 @@ export class WarehouseMap3D extends Component {
         });
         
         container.style.cursor = 'grab';
+        container.style.overflow = 'hidden';
     }
     
     /**

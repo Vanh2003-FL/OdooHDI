@@ -14,10 +14,17 @@ import { rpc } from "@web/core/network/rpc";
 export class WarehouseMap2D extends Component {
     setup() {
         this.orm = useService("orm");
-        this.user = useService("user");
         this.notification = useService("notification");
         this.action = useService("action");
         this.rpc = rpc;
+        
+        // Try to get user service if available
+        try {
+            this.user = useService("user");
+        } catch (e) {
+            // Fallback if user service not available
+            this.user = null;
+        }
         
         this.canvasRef = useRef("mapCanvas");
         this.state = useState({
@@ -42,13 +49,16 @@ export class WarehouseMap2D extends Component {
         
         onMounted(() => {
             this.initializeCanvas();
-            this.initializeWarehouse();
-            this.setupEventHandlers();
+            // Ensure canvas is ready before loading data
+            setTimeout(() => {
+                this.initializeWarehouse();
+                this.setupEventHandlers();
+            }, 200);
         });
     }
     
     /**
-     * 🏭 Initialize warehouse ID (from props, context, or user's default)
+     * 🏭 Initialize warehouse ID (from props, context, or default)
      */
     async initializeWarehouse() {
         // Try to get warehouse ID from props
@@ -65,20 +75,13 @@ export class WarehouseMap2D extends Component {
             return;
         }
         
-        // Get user's default warehouse
+        // Default to warehouse 1 (or get first available)
         try {
-            const userId = this.user.userId;
-            const user = await this.orm.read('res.users', [userId], ['warehouse_id']);
-            if (user && user[0] && user[0].warehouse_id) {
-                this.state.warehouseId = user[0].warehouse_id[0];
-            } else {
-                // Get first warehouse
-                const warehouses = await this.orm.search('stock.warehouse', [], { limit: 1 });
-                this.state.warehouseId = warehouses[0] || 1;
-            }
+            const warehouses = await this.orm.search('stock.warehouse', [], { limit: 1 });
+            this.state.warehouseId = (warehouses && warehouses.length > 0) ? warehouses[0] : 1;
             this.loadWarehouseLayout();
         } catch (error) {
-            console.error('Failed to get user warehouse:', error);
+            console.error('Failed to get warehouse:', error);
             this.state.warehouseId = 1;
             this.loadWarehouseLayout();
         }
@@ -88,18 +91,73 @@ export class WarehouseMap2D extends Component {
      * 🎨 Initialize canvas for 2D rendering
      */
     initializeCanvas() {
-        const canvas = this.canvasRef.el;
-        if (!canvas) return;
+        // Try different ways to find canvas
+        let canvas = this.canvasRef?.el;
+        console.log('[Canvas] Method 1 - useRef el:', !!canvas);
+        
+        if (!canvas) {
+            // Try querySelector
+            canvas = document.querySelector('canvas.warehouse-map-canvas');
+            console.log('[Canvas] Method 2 - querySelector:', !!canvas);
+        }
+        
+        if (!canvas) {
+            // Try finding by tag within container
+            const container = this.$el || document.querySelector('.o_warehouse_map_2d_container');
+            if (container) {
+                canvas = container.querySelector('canvas');
+                console.log('[Canvas] Method 3 - querySelector in container:', !!canvas);
+            }
+        }
+        
+        if (!canvas) {
+            console.error('[Canvas] Canvas element not found, creating offscreen canvas...');
+            // Create offscreen canvas as fallback
+            canvas = document.createElement('canvas');
+            canvas.className = 'warehouse-map-canvas';
+            canvas.style.width = '100%';
+            canvas.style.height = '600px';
+            canvas.style.display = 'block';
+            canvas.style.border = '1px solid #ddd';
+            canvas.style.backgroundColor = '#f9f9f9';
+            
+            // Try to append to container
+            const container = document.querySelector('.o_warehouse_map_2d_container');
+            if (container) {
+                // Insert at beginning
+                container.insertBefore(canvas, container.firstChild);
+                console.log('[Canvas] Created and inserted fallback canvas');
+            } else {
+                console.error('[Canvas] Could not find container to append fallback canvas');
+                // Try again later
+                setTimeout(() => this.initializeCanvas(), 100);
+                return;
+            }
+        }
         
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
-        // Set canvas size
-        canvas.width = canvas.parentElement.clientWidth;
+        // Set canvas size - fallback to 1000 if parent width is 0
+        const parentWidth = canvas.parentElement?.clientWidth || 0;
+        const finalWidth = parentWidth > 0 ? parentWidth : 1000;
+        
+        canvas.width = finalWidth;
         canvas.height = 600;
         
+        // Also set CSS size to match
+        canvas.style.width = '100%';
+        canvas.style.height = '600px';
+        canvas.style.display = 'block';
+        canvas.style.border = '1px solid #ddd';
+        canvas.style.backgroundColor = '#f9f9f9';
+        
+        console.log('[Canvas] Initialized:', { width: canvas.width, height: canvas.height, parentWidth, ctx: !!this.ctx });
+        
         // Enable smooth rendering
-        this.ctx.imageSmoothingEnabled = true;
+        if (this.ctx) {
+            this.ctx.imageSmoothingEnabled = true;
+        }
     }
     
     /**
@@ -108,23 +166,25 @@ export class WarehouseMap2D extends Component {
     async loadWarehouseLayout() {
         const warehouseId = this.props.warehouseId || 1;
         this.state.warehouseId = warehouseId;
+        console.log('[Layout] Loading warehouse layout for warehouse:', warehouseId);
         
         try {
-            console.log('Loading warehouse layout for warehouse:', warehouseId);
             const data = await this.rpc('/warehouse_map/layout/' + warehouseId);
-            console.log('Warehouse layout data:', data);
+            console.log('[Layout] Received data:', data);
             
             if (!data || !data.zones || data.zones.length === 0) {
+                console.warn('[Layout] No zones in data');
                 this.notification.add('No warehouse layout configured', { type: 'warning' });
                 this.state.layoutData = { zones: [] };
                 this.render2DMap();
                 return;
             }
             
+            console.log('[Layout] Found zones:', data.zones.length);
             this.state.layoutData = data;
             this.render2DMap();
         } catch (error) {
-            console.error('Failed to load warehouse layout:', error);
+            console.error('[Layout] Failed to load warehouse layout:', error);
             this.notification.add('Failed to load warehouse layout: ' + error.message, { type: 'danger' });
         }
     }
@@ -133,9 +193,11 @@ export class WarehouseMap2D extends Component {
      * 🎨 Render 2D warehouse map
      */
     render2DMap() {
-        if (!this.ctx) return;
-        if (!this.state.layoutData) {
-            this.drawEmptyState();
+        console.log('[Render] render2DMap called, ctx:', !!this.ctx, 'data zones:', this.state.layoutData?.zones?.length || 0);
+        if (!this.ctx) {
+            console.warn('[Render] Canvas context not ready, retrying...');
+            // Retry if context not yet ready
+            setTimeout(() => this.render2DMap(), 50);
             return;
         }
         
@@ -154,19 +216,15 @@ export class WarehouseMap2D extends Component {
         ctx.fillStyle = '#f9f9f9';
         ctx.fillRect(0, 0, this.canvas.width / zoom, this.canvas.height / zoom);
         
-        // Draw grid always visible for layout reference
+        // Draw grid always visible - even with no data
         this.drawGrid();
+        console.log('[Render] Grid drawn');
         
-        // Draw zones
-        if (this.state.layoutData.zones && this.state.layoutData.zones.length > 0) {
+        // Draw zones if data exists
+        if (this.state.layoutData && this.state.layoutData.zones && this.state.layoutData.zones.length > 0) {
             this.state.layoutData.zones.forEach(zone => {
                 this.drawZone(zone);
             });
-        } else {
-            // No zones configured
-            ctx.restore();
-            this.drawEmptyState();
-            return;
         }
         
         // Draw resize handles if selected
@@ -176,18 +234,29 @@ export class WarehouseMap2D extends Component {
         
         // Restore context
         ctx.restore();
+        
+        // Draw empty state message if no zones (after restore so text appears on top)
+        if (!this.state.layoutData || !this.state.layoutData.zones || this.state.layoutData.zones.length === 0) {
+            this.drawEmptyStateOverlay();
+        }
     }
     
     /**
-     * 📭 Draw empty state message
+     * 📭 Draw empty state message as overlay
      */
-    drawEmptyState() {
+    drawEmptyStateOverlay() {
         const ctx = this.ctx;
-        ctx.fillStyle = '#999';
-        ctx.font = '16px Arial';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('No warehouse layout configured', this.canvas.width / 2, this.canvas.height / 2);
-        ctx.fillText('Click Edit Mode and use right-click to add zones/racks/bins', this.canvas.width / 2, this.canvas.height / 2 + 30);
+        ctx.fillText('📭 No warehouse layout configured', this.canvas.width / 2, this.canvas.height / 2 - 20);
+        
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#ddd';
+        ctx.fillText('👉 Click "Edit Mode" button and right-click to add zones/racks/bins', this.canvas.width / 2, this.canvas.height / 2 + 20);
     }
     
     /**
@@ -195,9 +264,16 @@ export class WarehouseMap2D extends Component {
      */
     drawGrid() {
         const ctx = this.ctx;
+        if (!ctx) {
+            console.error('[Grid] No context to draw grid');
+            return;
+        }
+        
         const gridSize = this.state.gridSize;
         const width = this.canvas.width / this.state.zoom;
         const height = this.canvas.height / this.state.zoom;
+        
+        console.log('[Grid] Drawing grid:', { gridSize, width, height, zoom: this.state.zoom });
         
         // Lighter grid in normal mode, darker in edit mode
         ctx.strokeStyle = this.state.editMode ? '#ccc' : '#e8e8e8';
@@ -218,6 +294,8 @@ export class WarehouseMap2D extends Component {
             ctx.lineTo(width, y);
             ctx.stroke();
         }
+        
+        console.log('[Grid] Grid drawn successfully');
     }
     
     /**
@@ -264,6 +342,7 @@ export class WarehouseMap2D extends Component {
      */
     drawZone(zone) {
         const ctx = this.ctx;
+        console.log('[Zone] Drawing zone:', zone.location_name, {x: zone.x, y: zone.y, w: zone.w, h: zone.h, racks: zone.racks?.length || 0});
         
         // Draw zone boundary
         ctx.strokeStyle = zone.color || '#3498db';
@@ -279,9 +358,12 @@ export class WarehouseMap2D extends Component {
         
         // Draw racks
         if (zone.racks) {
+            console.log('[Zone] Drawing', zone.racks.length, 'racks');
             zone.racks.forEach(rack => {
                 this.drawRack(rack);
             });
+        } else {
+            console.warn('[Zone] Zone has NO racks');
         }
     }
     
@@ -809,7 +891,95 @@ export class WarehouseMap2D extends Component {
     }
     
     /**
-     * 🔄 Toggle features
+     * � Save layout changes to database
+     */
+    async saveLayout() {
+        console.log('[Save] Saving layout changes...');
+        
+        if (!this.state.layoutData || !this.state.layoutData.zones) {
+            this.notification.add('No layout data to save', { type: 'warning' });
+            return;
+        }
+        
+        try {
+            // Collect all zone/rack/bin changes
+            const changes = [];
+            const processed = new Set();
+            
+            const collectChanges = (container) => {
+                if (container.zones) {
+                    container.zones.forEach(zone => {
+                        if (!processed.has(zone.id)) {
+                            changes.push({
+                                id: zone.id,
+                                x: zone.x,
+                                y: zone.y,
+                                w: zone.w,
+                                h: zone.h,
+                            });
+                            processed.add(zone.id);
+                        }
+                        
+                        if (zone.racks) {
+                            zone.racks.forEach(rack => {
+                                if (!processed.has(rack.id)) {
+                                    changes.push({
+                                        id: rack.id,
+                                        x: rack.x,
+                                        y: rack.y,
+                                        w: rack.w,
+                                        h: rack.h,
+                                        rotation: rack.rotation || 0,
+                                    });
+                                    processed.add(rack.id);
+                                }
+                                
+                                if (rack.bins) {
+                                    rack.bins.forEach(bin => {
+                                        if (!processed.has(bin.id)) {
+                                            changes.push({
+                                                id: bin.id,
+                                                x: bin.x,
+                                                y: bin.y,
+                                                w: bin.w,
+                                                h: bin.h,
+                                                capacity: bin.capacity,
+                                                stage: bin.stage,
+                                            });
+                                            processed.add(bin.id);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+            
+            collectChanges(this.state.layoutData);
+            
+            // Send batch update to server
+            const result = await this.rpc('/warehouse_map/batch_update_layout', {
+                warehouse_id: this.state.warehouseId,
+                changes: changes,
+            });
+            
+            if (result.success) {
+                this.notification.add(`✅ Saved ${changes.length} layout changes`, {
+                    type: 'success',
+                });
+                console.log('[Save] Layout saved successfully:', result);
+            } else {
+                this.notification.add('Failed to save layout', { type: 'danger' });
+            }
+        } catch (error) {
+            console.error('[Save] Error saving layout:', error);
+            this.notification.add('Error saving layout: ' + error.message, { type: 'danger' });
+        }
+    }
+    
+    /**
+     * �🔄 Toggle features
      */
     toggleEditMode() {
         this.state.editMode = !this.state.editMode;
