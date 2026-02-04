@@ -280,6 +280,15 @@
     background: #c0392b;
 }
 
+.warehouse-map-toolbar button.btn-details {
+    background: #27ae60;
+    font-weight: bold;
+}
+
+.warehouse-map-toolbar button.btn-details:hover {
+    background: #229954;
+}
+
 /* ========================================
    Responsive Design
    ======================================== */

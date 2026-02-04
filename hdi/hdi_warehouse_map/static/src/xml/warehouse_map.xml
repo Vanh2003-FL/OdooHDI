@@ -26,6 +26,11 @@
                 <button t-on-click="() => this.resetView()">
                     <i class="fa fa-refresh"/> Reset View
                 </button>
+                <button t-if="state.selectedBinLocationId" 
+                        t-on-click="() => this.openBinDetailsForm()"
+                        class="btn-details">
+                    <i class="fa fa-info-circle"/> Chi tiết Bin
+                </button>
             </div>
             
             <!-- Loading State -->

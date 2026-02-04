@@ -31,6 +31,7 @@ export class WarehouseMap2D extends Component {
             warehouseId: null,  // Will be set in onMounted
             layoutData: null,
             selectedBin: null,
+            selectedBinLocationId: null,  // For opening details form
             highlightedBins: [],
             editMode: false,
             showHeatmap: false,
@@ -46,6 +47,9 @@ export class WarehouseMap2D extends Component {
             dragStartX: 0,
             dragStartY: 0,
         });
+        
+        // Track current notification to avoid stacking
+        this.currentNotification = null;
         
         onMounted(() => {
             this.initializeCanvas();
@@ -85,6 +89,41 @@ export class WarehouseMap2D extends Component {
             this.state.warehouseId = 1;
             this.loadWarehouseLayout();
         }
+    }
+    
+    /**
+     * 🔔 Helper: Close previous notification
+     */
+    closeAllNotifications() {
+        this.currentNotification = null;
+    }
+    
+    /**
+     * 🔔 Show notification (close previous, show new immediately)
+     */
+    showNotification(message, options = {}) {
+        // Close previous notification if exists
+        if (this.currentNotification) {
+            try {
+                this.currentNotification.close?.();
+            } catch (e) {
+                // Ignore errors
+            }
+        }
+        
+        this.currentNotification = this.notification.add(message, options);
+        
+        // Auto close after 3.5 seconds
+        setTimeout(() => {
+            try {
+                this.currentNotification?.close?.();
+            } catch (e) {
+                // Ignore errors
+            }
+            this.currentNotification = null;
+        }, 3500);
+        
+        return this.currentNotification;
     }
     
     /**
@@ -174,7 +213,7 @@ export class WarehouseMap2D extends Component {
             
             if (!data || !data.zones || data.zones.length === 0) {
                 console.warn('[Layout] No zones in data');
-                this.notification.add('No warehouse layout configured', { type: 'warning' });
+                this.showNotification('No warehouse layout configured', { type: 'warning' });
                 this.state.layoutData = { zones: [] };
                 this.render2DMap();
                 return;
@@ -185,7 +224,7 @@ export class WarehouseMap2D extends Component {
             this.render2DMap();
         } catch (error) {
             console.error('[Layout] Failed to load warehouse layout:', error);
-            this.notification.add('Failed to load warehouse layout: ' + error.message, { type: 'danger' });
+            this.showNotification('Failed to load warehouse layout: ' + error.message, { type: 'danger' });
         }
     }
     
@@ -549,11 +588,8 @@ export class WarehouseMap2D extends Component {
      * 📋 Show context menu for adding rack/bin
      */
     showContextMenu(x, y, screenX, screenY) {
-        // Will be implemented with action service to open dialog
-        this.notification.add(
-            'Right-click menu: Add Rack/Bin at (' + Math.round(x) + ', ' + Math.round(y) + ')',
-            { type: 'info' }
-        );
+        // Context menu - skip notification (not important enough to show)
+        console.log('Right-click at:', { x: Math.round(x), y: Math.round(y) });
     }
     
     /**
@@ -633,7 +669,40 @@ export class WarehouseMap2D extends Component {
     }
     
     /**
-     * 💾 Save bin position to server
+     * 📦 Update rack position and move all bins inside it
+     */
+    updateRackPosition(rack, x, y) {
+        // Calculate delta movement
+        const deltaX = x - rack.x;
+        const deltaY = y - rack.y;
+        
+        // Update rack position
+        rack.x = x;
+        rack.y = y;
+        
+        // Snap to grid
+        if (this.state.snapToGrid) {
+            rack.x = Math.round(rack.x / this.state.gridSize) * this.state.gridSize;
+            rack.y = Math.round(rack.y / this.state.gridSize) * this.state.gridSize;
+        }
+        
+        // Recalculate delta after grid snap
+        const actualDeltaX = rack.x - (x - deltaX);
+        const actualDeltaY = rack.y - (y - deltaY);
+        
+        // Move all bins in this rack by same delta
+        if (rack.bins) {
+            rack.bins.forEach(bin => {
+                bin.x += actualDeltaX;
+                bin.y += actualDeltaY;
+            });
+        }
+        
+        this.render2DMap();
+    }
+    
+    /**
+     * 💾 Save bin position to server (silent, no notification)
      */
     async saveBinPosition(bin) {
         try {
@@ -644,11 +713,44 @@ export class WarehouseMap2D extends Component {
                 width: bin.w,
                 height: bin.h,
             });
-            
-            this.notification.add('Layout updated', { type: 'success' });
+            // Silent save - no notification
         } catch (error) {
             console.error('Failed to save layout:', error);
-            this.notification.add('Failed to save layout', { type: 'danger' });
+            // Silent error - no notification
+        }
+    }
+    
+    /**
+     * 💾 Save rack position to server (and all its bins) - silent
+     */
+    async saveRackPosition(rack) {
+        try {
+            // Save rack position
+            await this.rpc('/warehouse_map/update_layout', {
+                layout_id: rack.id,
+                x: rack.x,
+                y: rack.y,
+                width: rack.w,
+                height: rack.h,
+            });
+            
+            // Save all bins in this rack
+            if (rack.bins) {
+                for (const bin of rack.bins) {
+                    await this.rpc('/warehouse_map/update_layout', {
+                        layout_id: bin.id,
+                        x: bin.x,
+                        y: bin.y,
+                        width: bin.w,
+                        height: bin.h,
+                    });
+                }
+            }
+            
+            // Silent save - no notification
+        } catch (error) {
+            console.error('Failed to save rack position:', error);
+            // Silent error - no notification
         }
     }
     
@@ -696,6 +798,7 @@ export class WarehouseMap2D extends Component {
         // Drag handler (for edit mode - move or resize)
         let isDragging = false;
         let dragTarget = null;
+        let dragTargetType = null; // 'bin' or 'rack'
         let resizeHandle = null;
         
         this.canvas.addEventListener('mousedown', (e) => {
@@ -717,10 +820,22 @@ export class WarehouseMap2D extends Component {
                 }
             }
             
-            // Otherwise try to drag bin
+            // Try to drag bin first
             dragTarget = this.findBinAt(x, y);
             if (dragTarget) {
                 isDragging = true;
+                dragTargetType = 'bin';
+                this.state.dragStartX = x - dragTarget.x;
+                this.state.dragStartY = y - dragTarget.y;
+                this.canvas.style.cursor = 'grabbing';
+                return;
+            }
+            
+            // If no bin, try to drag rack
+            dragTarget = this.findRackAt(x, y);
+            if (dragTarget) {
+                isDragging = true;
+                dragTargetType = 'rack';
                 this.state.dragStartX = x - dragTarget.x;
                 this.state.dragStartY = y - dragTarget.y;
                 this.canvas.style.cursor = 'grabbing';
@@ -748,7 +863,13 @@ export class WarehouseMap2D extends Component {
                 return;
             }
             
-            this.updateBinPosition(dragTarget, x - this.state.dragStartX, y - this.state.dragStartY);
+            if (dragTargetType === 'rack') {
+                // Dragging rack - move rack and all its bins
+                this.updateRackPosition(dragTarget, x - this.state.dragStartX, y - this.state.dragStartY);
+            } else {
+                // Dragging bin
+                this.updateBinPosition(dragTarget, x - this.state.dragStartX, y - this.state.dragStartY);
+            }
         });
         
         this.canvas.addEventListener('mouseup', () => {
@@ -759,11 +880,16 @@ export class WarehouseMap2D extends Component {
             }
             
             if (isDragging && dragTarget) {
-                this.saveBinPosition(dragTarget);
+                if (dragTargetType === 'rack') {
+                    this.saveRackPosition(dragTarget);
+                } else {
+                    this.saveBinPosition(dragTarget);
+                }
             }
             
             isDragging = false;
             dragTarget = null;
+            dragTargetType = null;
             this.canvas.style.cursor = 'default';
         });
         
@@ -773,6 +899,13 @@ export class WarehouseMap2D extends Component {
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
             this.state.zoom = Math.max(0.5, Math.min(3.0, this.state.zoom * delta));
             this.render2DMap();
+        });
+        
+        // Keyboard shortcut: D for Details
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'd' || e.key === 'D') && this.state.selectedBinLocationId) {
+                this.openBinDetailsForm();
+            }
         });
     }
     
@@ -815,40 +948,86 @@ export class WarehouseMap2D extends Component {
     }
     
     /**
+     * 📦 Find rack at coordinates
+     * Detect when dragging on rack (but not on bin inside it)
+     */
+    findRackAt(x, y) {
+        if (!this.state.layoutData?.zones) return null;
+        
+        for (const zone of this.state.layoutData.zones) {
+            if (zone.racks) {
+                for (const rack of zone.racks) {
+                    // Check if click is on rack border area (not inside bins)
+                    if (x >= rack.x && x <= rack.x + rack.w &&
+                        y >= rack.y && y <= rack.y + rack.h) {
+                        
+                        // If there's a bin at this position, return null (bin takes priority)
+                        if (rack.bins) {
+                            for (const bin of rack.bins) {
+                                if (x >= bin.x && x <= bin.x + bin.w &&
+                                    y >= bin.y && y <= bin.y + bin.h) {
+                                    return null; // Bin found, don't drag rack
+                                }
+                            }
+                        }
+                        
+                        // No bin at this position, so it's rack area
+                        return rack;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
      * 📦 Show bin details popup
-     * Khi click bin → show danh sách lot/serial
+     * Khi click bin → show thông tin đơn giản
      */
     async showBinDetails(locationId) {
         try {
             const data = await this.rpc('/warehouse_map/bin_details/' + locationId);
             
-            // Show notification with bin info
+            // Save location ID for opening details form
+            this.state.selectedBinLocationId = locationId;
+            
+            // Show simple notification with bin info only
             let message = `📦 ${data.location_complete_name}\n`;
-            message += `Total Qty: ${data.total_quantity}\n`;
-            message += `Lots/Serials: ${data.lot_count}\n\n`;
+            message += `Qty: ${data.total_quantity}\n`;
+            message += `(Nhấn D để xem chi tiết)`;
             
-            if (data.quants && data.quants.length > 0) {
-                message += 'Items:\n';
-                data.quants.slice(0, 5).forEach(q => {
-                    message += `• ${q.product_name}`;
-                    if (q.lot_name) {
-                        message += ` [${q.lot_name}]`;
-                    }
-                    message += `: ${q.quantity} ${q.uom}\n`;
-                });
-                
-                if (data.quants.length > 5) {
-                    message += `... and ${data.quants.length - 5} more`;
-                }
-            }
-            
-            this.notification.add(message, { 
+            // Show notification (auto-dismiss after 3.5 seconds)
+            this.showNotification(message, { 
                 type: 'info',
-                sticky: true,
             });
             
         } catch (error) {
             console.error('Failed to load bin details:', error);
+        }
+    }
+    
+    /**
+     * 🔍 Open bin details form in Odoo
+     */
+    async openBinDetailsForm() {
+        if (!this.state.selectedBinLocationId) {
+            this.showNotification('Please select a bin first', { type: 'warning' });
+            return;
+        }
+        
+        try {
+            await this.action.doAction({
+                type: 'ir.actions.act_window',
+                name: 'Bin Details',
+                res_model: 'stock.location',
+                res_id: this.state.selectedBinLocationId,
+                view_mode: 'form',
+                views: [[false, 'form']],
+                target: 'new',
+            });
+        } catch (error) {
+            console.error('Failed to open bin details form:', error);
+            this.showNotification('Failed to open bin details', { type: 'danger' });
         }
     }
     
@@ -863,7 +1042,7 @@ export class WarehouseMap2D extends Component {
             });
             
             if (result.error) {
-                this.notification.add(result.error, { type: 'warning' });
+                this.showNotification(result.error, { type: 'warning' });
                 return;
             }
             
@@ -879,14 +1058,14 @@ export class WarehouseMap2D extends Component {
                 message += `• ${bin.location_name}: ${bin.quantity} units\n`;
             });
             
-            this.notification.add(message, {
+            this.showNotification(message, {
                 type: 'success',
                 sticky: true,
             });
             
         } catch (error) {
             console.error('Failed to scan serial:', error);
-            this.notification.add('Failed to scan serial number', { type: 'danger' });
+            this.showNotification('Failed to scan serial number', { type: 'danger' });
         }
     }
     
@@ -897,7 +1076,7 @@ export class WarehouseMap2D extends Component {
         console.log('[Save] Saving layout changes...');
         
         if (!this.state.layoutData || !this.state.layoutData.zones) {
-            this.notification.add('No layout data to save', { type: 'warning' });
+            this.showNotification('No layout data to save', { type: 'warning' });
             return;
         }
         
@@ -965,16 +1144,16 @@ export class WarehouseMap2D extends Component {
             });
             
             if (result.success) {
-                this.notification.add(`✅ Saved ${changes.length} layout changes`, {
+                this.showNotification(`✅ Saved ${changes.length} layout changes`, {
                     type: 'success',
                 });
                 console.log('[Save] Layout saved successfully:', result);
             } else {
-                this.notification.add('Failed to save layout', { type: 'danger' });
+                this.showNotification('Failed to save layout', { type: 'danger' });
             }
         } catch (error) {
             console.error('[Save] Error saving layout:', error);
-            this.notification.add('Error saving layout: ' + error.message, { type: 'danger' });
+            this.showNotification('Error saving layout: ' + error.message, { type: 'danger' });
         }
     }
     
