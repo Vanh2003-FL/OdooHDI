@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Warehouse Shelves - Form View -->
+        <record id="warehouse_shelves_form" model="ir.ui.view">
+            <field name="name">warehouse.shelves.form</field>
+            <field name="model">warehouse.shelves</field>
+            <field name="arch" type="xml">
+                <form string="Warehouse Shelves/Racks">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_bins" type="object" class="oe_stat_button" icon="fa-cube">
+                                <field string="Bins" name="bin_count" widget="statinfo"/>
+                            </button>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="view_id" required="1"/>
+                                <field name="shelf_type" required="1"/>
+                            </group>
+                            <group>
+                                <field name="active"/>
+                                <field name="color"/>
+                            </group>
+                        </group>
+                        
+                        <separator string="Position &amp; Dimensions"/>
+                        <group>
+                            <group>
+                                <field name="x_pos"/>
+                                <field name="y_pos"/>
+                            </group>
+                            <group>
+                                <field name="width"/>
+                                <field name="height"/>
+                                <field name="depth"/>
+                            </group>
+                        </group>
+                        
+                        <separator string="Configuration"/>
+                        <group>
+                            <group>
+                                <field name="rows"/>
+                                <field name="columns"/>
+                                <field name="levels"/>
+                            </group>
+                            <group>
+                                <field name="capacity_weight"/>
+                                <field name="max_height"/>
+                            </group>
+                        </group>
+                        
+                        <field name="description" placeholder="Mô tả chi tiết về kệ..." nolabel="1"/>
+                        
+                        <separator string="Bins"/>
+                        <field name="bin_ids">
+                            <tree>
+                                <field name="name"/>
+                                <field name="level"/>
+                                <field name="column"/>
+                                <field name="row"/>
+                                <field name="status"/>
+                                <field name="bin_type"/>
+                            </tree>
+                        </field>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Warehouse Shelves - Tree View -->
+        <record id="warehouse_shelves_tree" model="ir.ui.view">
+            <field name="name">warehouse.shelves.tree</field>
+            <field name="model">warehouse.shelves</field>
+            <field name="arch" type="xml">
+                <tree string="Warehouse Shelves">
+                    <field name="name"/>
+                    <field name="view_id"/>
+                    <field name="shelf_type"/>
+                    <field name="rows"/>
+                    <field name="columns"/>
+                    <field name="levels"/>
+                    <field name="bin_count"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Warehouse Shelves - Action -->
+        <record id="warehouse_shelves_action" model="ir.actions.act_window">
+            <field name="name">Warehouse Shelves</field>
+            <field name="res_model">warehouse.shelves</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{"search_default_view_id": context.get('default_view_id', False)}</field>
+        </record>
+
+    </data>
+</odoo>

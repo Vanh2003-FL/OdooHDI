@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Warehouse View - Form View -->
+        <record id="warehouse_view_form" model="ir.ui.view">
+            <field name="name">warehouse.view.form</field>
+            <field name="model">warehouse.view</field>
+            <field name="arch" type="xml">
+                <form string="Warehouse Diagram View">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                        </div>
+                        <group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="warehouse_id" required="1"/>
+                                <field name="width"/>
+                                <field name="height"/>
+                                <field name="scale"/>
+                            </group>
+                            <group>
+                                <field name="active"/>
+                                <field name="created_date"/>
+                            </group>
+                        </group>
+                        <field name="description" placeholder="Mô tả chi tiết về sơ đồ kho..." nolabel="1"/>
+                        <notebook>
+                            <page string="Shelves" name="shelves">
+                                <field name="shelves_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="shelf_type"/>
+                                        <field name="rows"/>
+                                        <field name="columns"/>
+                                        <field name="levels"/>
+                                        <field name="bin_count"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Areas" name="areas">
+                                <field name="area_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="area_type"/>
+                                        <field name="is_dangerous"/>
+                                        <field name="active"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Warehouse View - Tree View -->
+        <record id="warehouse_view_tree" model="ir.ui.view">
+            <field name="name">warehouse.view.tree</field>
+            <field name="model">warehouse.view</field>
+            <field name="arch" type="xml">
+                <tree string="Warehouse Diagram Views">
+                    <field name="name"/>
+                    <field name="warehouse_id"/>
+                    <field name="width"/>
+                    <field name="height"/>
+                    <field name="scale"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Warehouse View - Action -->
+        <record id="warehouse_view_action" model="ir.actions.act_window">
+            <field name="name">Warehouse Diagram Views</field>
+            <field name="res_model">warehouse.view</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new warehouse diagram view
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
