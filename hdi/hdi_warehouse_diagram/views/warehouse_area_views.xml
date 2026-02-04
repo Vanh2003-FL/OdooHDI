@@ -39,12 +39,12 @@
             </field>
         </record>
 
-        <!-- Warehouse Area - Tree View -->
-        <record id="warehouse_area_tree" model="ir.ui.view">
-            <field name="name">warehouse.area.tree</field>
+        <!-- Warehouse Area - List View -->
+        <record id="warehouse_area_list" model="ir.ui.view">
+            <field name="name">warehouse.area.list</field>
             <field name="model">warehouse.area</field>
             <field name="arch" type="xml">
-                <tree string="Warehouse Areas">
+                <list string="Warehouse Areas">
                     <field name="name"/>
                     <field name="view_id"/>
                     <field name="area_type"/>
@@ -52,7 +52,7 @@
                     <field name="width"/>
                     <field name="height"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -60,7 +60,7 @@
         <record id="warehouse_area_action" model="ir.actions.act_window">
             <field name="name">Warehouse Areas</field>
             <field name="res_model">warehouse.area</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="context">{"search_default_warehouse_view_id": context.get('default_view_id', False)}</field>
         </record>
 

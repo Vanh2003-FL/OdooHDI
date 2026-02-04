@@ -74,12 +74,12 @@
             </field>
         </record>
 
-        <!-- Warehouse Bin - Tree View -->
-        <record id="warehouse_bin_tree" model="ir.ui.view">
-            <field name="name">warehouse.bin.tree</field>
+        <!-- Warehouse Bin - List View -->
+        <record id="warehouse_bin_list" model="ir.ui.view">
+            <field name="name">warehouse.bin.list</field>
             <field name="model">warehouse.bin</field>
             <field name="arch" type="xml">
-                <tree string="Warehouse Bins">
+                <list string="Warehouse Bins">
                     <field name="name"/>
                     <field name="shelves_id"/>
                     <field name="level"/>
@@ -89,7 +89,7 @@
                     <field name="status"/>
                     <field name="is_reserved"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -128,7 +128,7 @@
         <record id="warehouse_bin_action" model="ir.actions.act_window">
             <field name="name">Warehouse Bins</field>
             <field name="res_model">warehouse.bin</field>
-            <field name="view_mode">tree,kanban,form</field>
+            <field name="view_mode">list,kanban,form</field>
             <field name="context">{"search_default_shelves_id": context.get('default_shelves_id', False)}</field>
         </record>
 
