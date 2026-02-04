@@ -14,11 +14,8 @@
                 </header>
             </xpath>
             
-            <xpath expr="//group[@name='localization']" position="after">
-                <group string="Warehouse Map Configuration" name="warehouse_map">
-                    <field name="location_type"/>
-                    <field name="location_layout_ids" invisible="1"/>
-                </group>
+            <xpath expr="//field[@name='usage']" position="after">
+                <field name="location_type"/>
             </xpath>
         </field>
     </record>

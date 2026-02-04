@@ -13,12 +13,12 @@ import { useService } from "@web/core/utils/hooks";
 export class WarehouseMap3D extends Component {
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
         this.notification = useService("notification");
+        this.action = useService("action");
         
         this.containerRef = useRef("map3dContainer");
         this.state = useState({
-            warehouseId: null,
+            warehouseId: this.props.warehouseId || 1,
             layoutData: null,
             selectedBin: null,
             highlightedBins: [],
@@ -41,7 +41,7 @@ export class WarehouseMap3D extends Component {
         this.state.warehouseId = warehouseId;
         
         try {
-            const data = await this.rpc('/warehouse_map/layout/' + warehouseId);
+            const data = await this.env.services.rpc('/warehouse_map/layout/' + warehouseId);
             this.state.layoutData = data;
             this.render3DMap();
         } catch (error) {
@@ -360,7 +360,7 @@ export class WarehouseMap3D extends Component {
         
         // Show bin details
         try {
-            const data = await this.rpc('/warehouse_map/bin_details/' + bin.location_id);
+            const data = await this.env.services.rpc('/warehouse_map/bin_details/' + bin.location_id);
             
             let message = `📦 ${data.location_complete_name}\n`;
             message += `Total Qty: ${data.total_quantity}\n`;
@@ -381,7 +381,7 @@ export class WarehouseMap3D extends Component {
      */
     async highlightBySerial(serialNumber) {
         try {
-            const result = await this.rpc('/warehouse_map/scan_serial', {
+            const result = await this.env.services.rpc('/warehouse_map/scan_serial', {
                 serial_number: serialNumber
             });
             

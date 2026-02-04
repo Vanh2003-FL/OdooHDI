@@ -12,14 +12,14 @@
         <menuitem id="menu_warehouse_map_2d"
                   name="2D Warehouse Map"
                   parent="menu_warehouse_map_root"
-                  action="action_warehouse_map_2d"
+                  action="action_warehouse_map_2d_client"
                   sequence="10"/>
         
         <!-- 3D Map Menu -->
         <menuitem id="menu_warehouse_map_3d"
                   name="3D Warehouse View"
                   parent="menu_warehouse_map_root"
-                  action="action_warehouse_map_3d"
+                  action="action_warehouse_map_3d_client"
                   sequence="20"/>
         
         <!-- Layout Configuration Menu -->

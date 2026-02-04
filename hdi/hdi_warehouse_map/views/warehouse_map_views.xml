@@ -17,96 +17,27 @@
                             <field name="company_id" readonly="1"/>
                             <field name="lot_stock_id" readonly="1"/>
                         </group>
-                        <group>
-                            <label for="id" string="View Mode"/>
-                            <div>
-                                <button type="object" name="%(action_warehouse_map_2d)d" 
-                                        string="2D Map" class="btn-primary" 
-                                        context="{'default_warehouse_id': active_id}"/>
-                                <button type="object" name="%(action_warehouse_map_3d)d" 
-                                        string="3D Map" class="btn-success" 
-                                        context="{'default_warehouse_id': active_id}"/>
-                            </div>
-                        </group>
                     </group>
                     
                     <notebook>
                         <page string="2D Warehouse Map" name="map_2d">
-                            <div class="o_warehouse_map_2d" 
-                                 data-warehouse-id="id" 
-                                 style="min-height: 600px; background: #f9f9f9; border: 1px solid #ddd; position: relative;">
-                                <!-- JavaScript will render 2D map here -->
-                                <div class="o_map_loading" style="text-align: center; padding: 100px;">
-                                    <i class="fa fa-spinner fa-spin fa-3x"/>
-                                    <p>Loading warehouse map...</p>
-                                </div>
+                            <div class="alert alert-info">
+                                <p><strong>2D Warehouse Map</strong></p>
+                                <p>Use JavaScript client action to view 2D warehouse map.</p>
                             </div>
                         </page>
                         
                         <page string="3D Warehouse View" name="map_3d">
-                            <div class="o_warehouse_map_3d" 
-                                 data-warehouse-id="id" 
-                                 style="min-height: 600px; background: #2c3e50; position: relative;">
-                                <!-- JavaScript will render 3D view here -->
-                                <div class="o_map_loading" style="text-align: center; padding: 100px; color: white;">
-                                    <i class="fa fa-cube fa-spin fa-3x"/>
-                                    <p>Loading 3D view...</p>
-                                </div>
+                            <div class="alert alert-info">
+                                <p><strong>3D Warehouse View</strong></p>
+                                <p>Use JavaScript client action to view 3D warehouse map.</p>
                             </div>
                         </page>
                         
-                        <page string="Controls" name="controls">
+                        <page string="Layout Configuration" name="layout">
                             <group>
-                                <group string="Barcode Scanner">
-                                    <label for="scan_input"/>
-                                    <div>
-                                        <input type="text" id="scan_input" 
-                                               placeholder="Scan serial number..." 
-                                               class="o_input o_warehouse_scanner"
-                                               style="width: 300px; padding: 10px; font-size: 16px;"/>
-                                        <button type="button" class="btn btn-primary o_scan_button" 
-                                                style="margin-left: 10px;">
-                                            <i class="fa fa-barcode"/> Scan
-                                        </button>
-                                    </div>
-                                </group>
-                                
-                                <group string="Search">
-                                    <label for="product_search"/>
-                                    <div>
-                                        <input type="text" id="product_search" 
-                                               placeholder="Search product..." 
-                                               class="o_input o_product_search"
-                                               style="width: 300px; padding: 10px;"/>
-                                        <button type="button" class="btn btn-secondary o_search_button" 
-                                                style="margin-left: 10px;">
-                                            <i class="fa fa-search"/> Search
-                                        </button>
-                                    </div>
-                                </group>
-                            </group>
-                            
-                            <group string="Display Options">
-                                <field name="id" invisible="1"/>
-                                <label for="heatmap_toggle"/>
-                                <div>
-                                    <input type="checkbox" id="heatmap_toggle" class="o_heatmap_toggle"/>
-                                    <span> Show Stock Heatmap</span>
-                                </div>
-                                
-                                <label for="labels_toggle"/>
-                                <div>
-                                    <input type="checkbox" id="labels_toggle" class="o_labels_toggle" checked="checked"/>
-                                    <span> Show Location Labels</span>
-                                </div>
-                            </group>
-                        </page>
-                        
-                        <page string="Statistics" name="stats">
-                            <group>
-                                <group string="Warehouse Summary">
+                                <group string="Warehouse Information">
                                     <field name="lot_stock_id" readonly="1"/>
-                                    <!-- Add computed fields for stats -->
                                 </group>
                             </group>
                         </page>
@@ -116,24 +47,18 @@
         </field>
     </record>
     
-    <!-- Action for 2D Map -->
-    <record id="action_warehouse_map_2d" model="ir.actions.act_window">
+    <!-- Client Action for 2D Map -->
+    <record id="action_warehouse_map_2d_client" model="ir.actions.client">
         <field name="name">2D Warehouse Map</field>
-        <field name="res_model">stock.warehouse</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="view_warehouse_map_main"/>
+        <field name="tag">warehouse_map_2d</field>
         <field name="target">current</field>
-        <field name="context">{'default_view_mode': '2d'}</field>
     </record>
     
-    <!-- Action for 3D Map -->
-    <record id="action_warehouse_map_3d" model="ir.actions.act_window">
+    <!-- Client Action for 3D Map -->
+    <record id="action_warehouse_map_3d_client" model="ir.actions.client">
         <field name="name">3D Warehouse View</field>
-        <field name="res_model">stock.warehouse</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="view_warehouse_map_main"/>
+        <field name="tag">warehouse_map_3d</field>
         <field name="target">current</field>
-        <field name="context">{'default_view_mode': '3d'}</field>
     </record>
     
 </odoo>

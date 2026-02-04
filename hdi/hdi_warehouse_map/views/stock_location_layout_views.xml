@@ -83,15 +83,6 @@
                                     <field name="height" string="Height (px)"/>
                                 </group>
                             </group>
-                            <separator string="2D Preview"/>
-                            <div class="o_layout_preview" style="border: 1px solid #ccc; padding: 10px; background: #f5f5f5; min-height: 200px;">
-                                <div style="background: var(--field-color, #3498db); opacity: 0.7; position: relative; margin: 20px auto;"
-                                     t-attf-style="width: #{width}px; height: #{height}px; transform: rotate(#{rotation}deg);">
-                                    <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold;">
-                                        <field name="name"/>
-                                    </span>
-                                </div>
-                            </div>
                         </page>
                         
                         <page string="3D Layout" name="layout_3d">
@@ -153,7 +144,6 @@
                 <filter string="2D View" name="filter_2d" domain="[('view_type', 'in', ['2d', 'both'])]"/>
                 <filter string="3D View" name="filter_3d" domain="[('view_type', 'in', ['3d', 'both'])]"/>
                 <separator/>
-                <filter string="Has Stock" name="filter_has_stock" domain="[('stock_quantity', '>', 0)]"/>
                 <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Group By">
                     <filter string="Warehouse" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
@@ -168,7 +158,7 @@
     <record id="action_stock_location_layout" model="ir.actions.act_window">
         <field name="name">Warehouse Layout Configuration</field>
         <field name="res_model">stock.location.layout</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_filter_bin': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

@@ -13,12 +13,12 @@ import { useService } from "@web/core/utils/hooks";
 export class WarehouseMap2D extends Component {
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
         this.notification = useService("notification");
+        this.action = useService("action");
         
         this.canvasRef = useRef("mapCanvas");
         this.state = useState({
-            warehouseId: null,
+            warehouseId: this.props.warehouseId || 1,
             layoutData: null,
             selectedBin: null,
             highlightedBins: [],
@@ -63,7 +63,7 @@ export class WarehouseMap2D extends Component {
         this.state.warehouseId = warehouseId;
         
         try {
-            const data = await this.rpc('/warehouse_map/layout/' + warehouseId);
+            const data = await this.env.services.rpc('/warehouse_map/layout/' + warehouseId);
             this.state.layoutData = data;
             this.render2DMap();
         } catch (error) {
@@ -335,7 +335,7 @@ export class WarehouseMap2D extends Component {
      */
     async showBinDetails(locationId) {
         try {
-            const data = await this.rpc('/warehouse_map/bin_details/' + locationId);
+            const data = await this.env.services.rpc('/warehouse_map/bin_details/' + locationId);
             
             // Show notification with bin info
             let message = `📦 ${data.location_complete_name}\n`;
@@ -373,7 +373,7 @@ export class WarehouseMap2D extends Component {
      */
     async highlightBySerial(serialNumber) {
         try {
-            const result = await this.rpc('/warehouse_map/scan_serial', {
+            const result = await this.env.services.rpc('/warehouse_map/scan_serial', {
                 serial_number: serialNumber
             });
             
@@ -419,7 +419,7 @@ export class WarehouseMap2D extends Component {
      */
     async saveBinPosition(bin) {
         try {
-            await this.rpc('/warehouse_map/update_layout', {
+            await this.env.services.rpc('/warehouse_map/update_layout', {
                 layout_id: bin.id,
                 x: bin.x,
                 y: bin.y
