@@ -1,9 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_warehouse_view_user,warehouse.view user,model_warehouse_view,stock.group_stock_user,1,0,0,0
-access_warehouse_view_manager,warehouse.view manager,model_warehouse_view,stock.group_stock_manager,1,1,1,1
-access_warehouse_area_user,warehouse.area user,model_warehouse_area,stock.group_stock_user,1,0,0,0
-access_warehouse_area_manager,warehouse.area manager,model_warehouse_area,stock.group_stock_manager,1,1,1,1
-access_warehouse_shelves_user,warehouse.shelves user,model_warehouse_shelves,stock.group_stock_user,1,0,0,0
-access_warehouse_shelves_manager,warehouse.shelves manager,model_warehouse_shelves,stock.group_stock_manager,1,1,1,1
-access_warehouse_bin_user,warehouse.bin user,model_warehouse_bin,stock.group_stock_user,1,0,0,0
-access_warehouse_bin_manager,warehouse.bin manager,model_warehouse_bin,stock.group_stock_manager,1,1,1,1
