@@ -26,24 +26,22 @@
                         <field name="description" placeholder="Mô tả chi tiết về sơ đồ kho..." nolabel="1"/>
                         <notebook>
                             <page string="Shelves" name="shelves">
-                                <field name="shelves_ids">
-                                    <tree>
+                                <field name="shelves_ids" nolabel="1">
+                                    <tree string="Shelves" editable="bottom">
                                         <field name="name"/>
                                         <field name="shelf_type"/>
                                         <field name="rows"/>
                                         <field name="columns"/>
                                         <field name="levels"/>
-                                        <field name="bin_count"/>
                                     </tree>
                                 </field>
                             </page>
                             <page string="Areas" name="areas">
-                                <field name="area_ids">
-                                    <tree>
+                                <field name="area_ids" nolabel="1">
+                                    <tree string="Areas" editable="bottom">
                                         <field name="name"/>
                                         <field name="area_type"/>
                                         <field name="is_dangerous"/>
-                                        <field name="active"/>
                                     </tree>
                                 </field>
                             </page>
