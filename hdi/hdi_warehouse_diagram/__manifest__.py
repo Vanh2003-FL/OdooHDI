@@ -1,6 +1,6 @@
 {
     'name': 'Warehouse Diagram',
-    'version': '15.0.1.0.0',
+    'version': '18.0.1.0',
     'category': 'Inventory',
     'description': """
         Module Sơ đồ Kho cho hệ thống quản lý tồn kho.
@@ -8,6 +8,7 @@
         và khu vực không lưu trữ (Areas).
     """,
     'author': 'HDI',
+    'license': 'LGPL-3',
     'depends': ['stock', 'web'],
     'data': [
         'security/ir.model.access.csv',
