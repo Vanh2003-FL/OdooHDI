@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    
+    <!-- 2D Warehouse Map Template -->
+    <t t-name="hdi_warehouse_map.WarehouseMap2D">
+        <div class="o_warehouse_map_2d_container">
+            <canvas ref="mapCanvas" class="warehouse-map-canvas"/>
+            
+            <!-- Toolbar -->
+            <div class="warehouse-map-toolbar">
+                <button t-on-click="() => this.toggleEditMode()" 
+                        t-att-class="{'active': state.editMode}">
+                    <i class="fa fa-edit"/> Edit Mode
+                </button>
+                <button t-on-click="() => this.toggleHeatmap()" 
+                        t-att-class="{'active': state.showHeatmap}">
+                    <i class="fa fa-fire"/> Heatmap
+                </button>
+                <button t-on-click="() => this.toggleLabels()" 
+                        t-att-class="{'active': state.showLabels}">
+                    <i class="fa fa-tag"/> Labels
+                </button>
+                <button t-on-click="() => this.resetView()">
+                    <i class="fa fa-refresh"/> Reset View
+                </button>
+            </div>
+            
+            <!-- Loading State -->
+            <div t-if="!state.layoutData" class="o_map_loading">
+                <i class="fa fa-spinner fa-spin fa-3x"/>
+                <p>Loading warehouse map...</p>
+            </div>
+        </div>
+    </t>
+    
+    <!-- 3D Warehouse View Template -->
+    <t t-name="hdi_warehouse_map.WarehouseMap3D">
+        <div class="o_warehouse_map_3d_container">
+            <div ref="map3dContainer" class="warehouse-map-3d-view"/>
+            
+            <!-- 3D Controls -->
+            <div class="warehouse-map-toolbar">
+                <button t-on-click="() => this.resetView()">
+                    <i class="fa fa-refresh"/> Reset View
+                </button>
+                <div class="control-info">
+                    <small>
+                        🖱️ Drag to rotate<br/>
+                        🔍 Scroll to zoom
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div t-if="!state.layoutData" class="o_map_loading">
+                <i class="fa fa-cube fa-spin fa-3x"/>
+                <p style="color: white;">Loading 3D view...</p>
+            </div>
+        </div>
+    </t>
+    
+    <!-- Main Controller Template -->
+    <t t-name="hdi_warehouse_map.WarehouseMapController">
+        <div class="warehouse_map_controller">
+            <div class="view-switcher" style="margin-bottom: 10px;">
+                <button t-on-click="() => this.switchView('2d')" 
+                        class="btn"
+                        t-att-class="{'btn-primary': state.viewMode === '2d', 'btn-secondary': state.viewMode !== '2d'}">
+                    <i class="fa fa-map"/> 2D Map
+                </button>
+                <button t-on-click="() => this.switchView('3d')" 
+                        class="btn"
+                        t-att-class="{'btn-primary': state.viewMode === '3d', 'btn-secondary': state.viewMode !== '3d'}">
+                    <i class="fa fa-cube"/> 3D View
+                </button>
+            </div>
+            
+            <div t-if="state.viewMode === '2d'">
+                <WarehouseMap2D warehouseId="state.warehouseId"/>
+            </div>
+            
+            <div t-if="state.viewMode === '3d'">
+                <WarehouseMap3D warehouseId="state.warehouseId"/>
+            </div>
+        </div>
+    </t>
+    
+</templates>

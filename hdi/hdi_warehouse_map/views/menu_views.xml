@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Main Menu -->
+        <menuitem id="menu_warehouse_map_root"
+                  name="Warehouse Map"
+                  parent="stock.menu_stock_root"
+                  sequence="20"/>
+        
+        <!-- 2D Map Menu -->
+        <menuitem id="menu_warehouse_map_2d"
+                  name="2D Warehouse Map"
+                  parent="menu_warehouse_map_root"
+                  action="action_warehouse_map_2d"
+                  sequence="10"/>
+        
+        <!-- 3D Map Menu -->
+        <menuitem id="menu_warehouse_map_3d"
+                  name="3D Warehouse View"
+                  parent="menu_warehouse_map_root"
+                  action="action_warehouse_map_3d"
+                  sequence="20"/>
+        
+        <!-- Layout Configuration Menu -->
+        <menuitem id="menu_location_layout_config"
+                  name="Layout Configuration"
+                  parent="menu_warehouse_map_root"
+                  action="action_stock_location_layout"
+                  sequence="30"
+                  groups="stock.group_stock_manager"/>
+        
+    </data>
+</odoo>

@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_stock_location_layout_user,stock.location.layout.user,model_stock_location_layout,stock.group_stock_user,1,1,1,0
+access_stock_location_layout_manager,stock.location.layout.manager,model_stock_location_layout,stock.group_stock_manager,1,1,1,1

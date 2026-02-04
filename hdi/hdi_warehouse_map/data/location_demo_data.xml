@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Demo Warehouse Locations Structure -->
+        <!-- 
+        Structure:
+        └── Stock
+            ├── Zone-A
+            │   ├── Rack-A1
+            │   │   ├── Bin-A1-01
+            │   │   ├── Bin-A1-02
+            │   ├── Rack-A2
+            │       ├── Bin-A2-01
+            │       ├── Bin-A2-02
+            ├── Zone-B
+                ├── Rack-B1
+                    ├── Bin-B1-01
+                    ├── Bin-B1-02
+        -->
+        
+        <!-- Zone A -->
+        <record id="stock_location_zone_a" model="stock.location">
+            <field name="name">Zone-A</field>
+            <field name="location_id" ref="stock.stock_location_stock"/>
+            <field name="usage">view</field>
+            <field name="location_type">zone</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Zone B -->
+        <record id="stock_location_zone_b" model="stock.location">
+            <field name="name">Zone-B</field>
+            <field name="location_id" ref="stock.stock_location_stock"/>
+            <field name="usage">view</field>
+            <field name="location_type">zone</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Rack A1 -->
+        <record id="stock_location_rack_a1" model="stock.location">
+            <field name="name">Rack-A1</field>
+            <field name="location_id" ref="stock_location_zone_a"/>
+            <field name="usage">view</field>
+            <field name="location_type">rack</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Rack A2 -->
+        <record id="stock_location_rack_a2" model="stock.location">
+            <field name="name">Rack-A2</field>
+            <field name="location_id" ref="stock_location_zone_a"/>
+            <field name="usage">view</field>
+            <field name="location_type">rack</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Rack B1 -->
+        <record id="stock_location_rack_b1" model="stock.location">
+            <field name="name">Rack-B1</field>
+            <field name="location_id" ref="stock_location_zone_b"/>
+            <field name="usage">view</field>
+            <field name="location_type">rack</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Bins in Rack A1 -->
+        <record id="stock_location_bin_a1_01" model="stock.location">
+            <field name="name">Bin-A1-01</field>
+            <field name="location_id" ref="stock_location_rack_a1"/>
+            <field name="usage">internal</field>
+            <field name="location_type">bin</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <record id="stock_location_bin_a1_02" model="stock.location">
+            <field name="name">Bin-A1-02</field>
+            <field name="location_id" ref="stock_location_rack_a1"/>
+            <field name="usage">internal</field>
+            <field name="location_type">bin</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Bins in Rack A2 -->
+        <record id="stock_location_bin_a2_01" model="stock.location">
+            <field name="name">Bin-A2-01</field>
+            <field name="location_id" ref="stock_location_rack_a2"/>
+            <field name="usage">internal</field>
+            <field name="location_type">bin</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <record id="stock_location_bin_a2_02" model="stock.location">
+            <field name="name">Bin-A2-02</field>
+            <field name="location_id" ref="stock_location_rack_a2"/>
+            <field name="usage">internal</field>
+            <field name="location_type">bin</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Bins in Rack B1 -->
+        <record id="stock_location_bin_b1_01" model="stock.location">
+            <field name="name">Bin-B1-01</field>
+            <field name="location_id" ref="stock_location_rack_b1"/>
+            <field name="usage">internal</field>
+            <field name="location_type">bin</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <record id="stock_location_bin_b1_02" model="stock.location">
+            <field name="name">Bin-B1-02</field>
+            <field name="location_id" ref="stock_location_rack_b1"/>
+            <field name="usage">internal</field>
+            <field name="location_type">bin</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- ========================================= -->
+        <!-- Layout Configurations for 2D/3D Mapping -->
+        <!-- ========================================= -->
+        
+        <!-- Zone A Layout -->
+        <record id="layout_zone_a" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_zone_a"/>
+            <field name="location_type">zone</field>
+            <field name="x">50</field>
+            <field name="y">50</field>
+            <field name="width">600</field>
+            <field name="height">400</field>
+            <field name="z_level">0</field>
+            <field name="color">#3498db</field>
+            <field name="view_type">both</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <!-- Zone B Layout -->
+        <record id="layout_zone_b" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_zone_b"/>
+            <field name="location_type">zone</field>
+            <field name="x">700</field>
+            <field name="y">50</field>
+            <field name="width">600</field>
+            <field name="height">400</field>
+            <field name="z_level">0</field>
+            <field name="color">#2ecc71</field>
+            <field name="view_type">both</field>
+            <field name="sequence">20</field>
+        </record>
+        
+        <!-- Rack A1 Layout -->
+        <record id="layout_rack_a1" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_rack_a1"/>
+            <field name="location_type">rack</field>
+            <field name="parent_layout_id" ref="layout_zone_a"/>
+            <field name="x">70</field>
+            <field name="y">80</field>
+            <field name="width">250</field>
+            <field name="height">120</field>
+            <field name="z_level">0</field>
+            <field name="color">#e74c3c</field>
+            <field name="view_type">both</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <!-- Rack A2 Layout -->
+        <record id="layout_rack_a2" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_rack_a2"/>
+            <field name="location_type">rack</field>
+            <field name="parent_layout_id" ref="layout_zone_a"/>
+            <field name="x">70</field>
+            <field name="y">280</field>
+            <field name="width">250</field>
+            <field name="height">120</field>
+            <field name="z_level">0</field>
+            <field name="color">#e74c3c</field>
+            <field name="view_type">both</field>
+            <field name="sequence">20</field>
+        </record>
+        
+        <!-- Rack B1 Layout -->
+        <record id="layout_rack_b1" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_rack_b1"/>
+            <field name="location_type">rack</field>
+            <field name="parent_layout_id" ref="layout_zone_b"/>
+            <field name="x">720</field>
+            <field name="y">80</field>
+            <field name="width">250</field>
+            <field name="height">120</field>
+            <field name="z_level">0</field>
+            <field name="color">#9b59b6</field>
+            <field name="view_type">both</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <!-- Bins in Rack A1 -->
+        <record id="layout_bin_a1_01" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_bin_a1_01"/>
+            <field name="location_type">bin</field>
+            <field name="parent_layout_id" ref="layout_rack_a1"/>
+            <field name="x">80</field>
+            <field name="y">90</field>
+            <field name="width">100</field>
+            <field name="height">100</field>
+            <field name="z_level">1</field>
+            <field name="color">#f39c12</field>
+            <field name="view_type">both</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <record id="layout_bin_a1_02" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_bin_a1_02"/>
+            <field name="location_type">bin</field>
+            <field name="parent_layout_id" ref="layout_rack_a1"/>
+            <field name="x">200</field>
+            <field name="y">90</field>
+            <field name="width">100</field>
+            <field name="height">100</field>
+            <field name="z_level">1</field>
+            <field name="color">#f39c12</field>
+            <field name="view_type">both</field>
+            <field name="sequence">20</field>
+        </record>
+        
+        <!-- Bins in Rack A2 -->
+        <record id="layout_bin_a2_01" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_bin_a2_01"/>
+            <field name="location_type">bin</field>
+            <field name="parent_layout_id" ref="layout_rack_a2"/>
+            <field name="x">80</field>
+            <field name="y">290</field>
+            <field name="width">100</field>
+            <field name="height">100</field>
+            <field name="z_level">1</field>
+            <field name="color">#f39c12</field>
+            <field name="view_type">both</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <record id="layout_bin_a2_02" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_bin_a2_02"/>
+            <field name="location_type">bin</field>
+            <field name="parent_layout_id" ref="layout_rack_a2"/>
+            <field name="x">200</field>
+            <field name="y">290</field>
+            <field name="width">100</field>
+            <field name="height">100</field>
+            <field name="z_level">1</field>
+            <field name="color">#f39c12</field>
+            <field name="view_type">both</field>
+            <field name="sequence">20</field>
+        </record>
+        
+        <!-- Bins in Rack B1 -->
+        <record id="layout_bin_b1_01" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_bin_b1_01"/>
+            <field name="location_type">bin</field>
+            <field name="parent_layout_id" ref="layout_rack_b1"/>
+            <field name="x">730</field>
+            <field name="y">90</field>
+            <field name="width">100</field>
+            <field name="height">100</field>
+            <field name="z_level">1</field>
+            <field name="color">#1abc9c</field>
+            <field name="view_type">both</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <record id="layout_bin_b1_02" model="stock.location.layout">
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock_location_bin_b1_02"/>
+            <field name="location_type">bin</field>
+            <field name="parent_layout_id" ref="layout_rack_b1"/>
+            <field name="x">850</field>
+            <field name="y">90</field>
+            <field name="width">100</field>
+            <field name="height">100</field>
+            <field name="z_level">1</field>
+            <field name="color">#1abc9c</field>
+            <field name="view_type">both</field>
+            <field name="sequence">20</field>
+        </record>
+        
+    </data>
+</odoo>

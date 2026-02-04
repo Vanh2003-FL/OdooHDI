@@ -1,0 +1,382 @@
+/* 🎨 HDI Warehouse Map CSS Styles */
+
+/* ========================================
+   2D Warehouse Map Styles
+   ======================================== */
+
+.o_warehouse_map_2d {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.o_warehouse_map_2d canvas {
+    width: 100%;
+    height: 100%;
+    cursor: default;
+}
+
+.o_warehouse_map_2d.edit-mode canvas {
+    cursor: move;
+}
+
+/* Map Loading State */
+.o_map_loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #7f8c8d;
+}
+
+.o_map_loading i {
+    margin-bottom: 20px;
+    color: #3498db;
+}
+
+/* ========================================
+   3D Warehouse View Styles
+   ======================================== */
+
+.o_warehouse_map_3d {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: linear-gradient(to bottom, #2c3e50 0%, #34495e 100%);
+    border: 2px solid #34495e;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.o_warehouse_map_3d:active {
+    cursor: grabbing;
+}
+
+/* 3D Scene */
+.warehouse-3d-scene {
+    width: 100%;
+    height: 100%;
+    perspective: 1200px;
+    perspective-origin: 50% 50%;
+}
+
+.warehouse-3d-world {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+}
+
+/* 3D Floor Grid */
+.warehouse-floor {
+    position: absolute;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+/* 3D Zone */
+.warehouse-zone-3d {
+    transform-style: preserve-3d;
+}
+
+/* 3D Rack */
+.warehouse-rack-3d {
+    transform-style: preserve-3d;
+}
+
+/* 3D Box Component */
+.box-3d {
+    transform-style: preserve-3d;
+    position: absolute;
+}
+
+.box-face {
+    position: absolute;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.box-3d:hover .box-face {
+    opacity: 1 !important;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.box-label {
+    user-select: none;
+    pointer-events: none;
+}
+
+/* ========================================
+   Control Panel Styles
+   ======================================== */
+
+.o_warehouse_scanner,
+.o_product_search {
+    padding: 10px 15px;
+    font-size: 16px;
+    border: 2px solid #3498db;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.o_warehouse_scanner:focus,
+.o_product_search:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.o_scan_button,
+.o_search_button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.o_scan_button {
+    background: #3498db;
+    border: none;
+    color: white;
+}
+
+.o_scan_button:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.o_search_button {
+    background: #95a5a6;
+    border: none;
+    color: white;
+}
+
+.o_search_button:hover {
+    background: #7f8c8d;
+}
+
+/* Toggle Switches */
+.o_heatmap_toggle,
+.o_labels_toggle {
+    margin-right: 10px;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+}
+
+/* ========================================
+   Bin Highlight States
+   ======================================== */
+
+.bin-highlighted {
+    animation: pulse-highlight 1s ease-in-out infinite;
+}
+
+@keyframes pulse-highlight {
+    0%, 100% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+.bin-selected {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+    border: 3px solid #00ff00 !important;
+}
+
+/* ========================================
+   Stock Heatmap Colors
+   ======================================== */
+
+.stock-low {
+    background: rgba(46, 204, 113, 0.5);  /* Green */
+}
+
+.stock-medium {
+    background: rgba(243, 156, 18, 0.5);  /* Orange */
+}
+
+.stock-high {
+    background: rgba(231, 76, 60, 0.5);   /* Red */
+}
+
+/* ========================================
+   Toolbar & Controls
+   ======================================== */
+
+.warehouse-map-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.warehouse-map-toolbar button {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.warehouse-map-toolbar button:hover {
+    background: #2980b9;
+}
+
+.warehouse-map-toolbar button.active {
+    background: #27ae60;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .o_warehouse_map_2d,
+    .o_warehouse_map_3d {
+        height: 400px;
+    }
+    
+    .o_warehouse_scanner,
+    .o_product_search {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .warehouse-map-toolbar {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-top: 10px;
+    }
+}
+
+/* ========================================
+   Statistics & Info Panels
+   ======================================== */
+
+.warehouse-stats-panel {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 15px;
+}
+
+.stat-item {
+    display: inline-block;
+    margin-right: 30px;
+    padding: 10px;
+}
+
+.stat-item .stat-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+}
+
+.stat-item .stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Loading Spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* ========================================
+   Odoo Integration Styles
+   ======================================== */
+
+.o_layout_preview {
+    border: 1px solid #ccc;
+    padding: 10px;
+    background: #f5f5f5;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.o_stat_button .o_stat_info {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Form View Enhancements */
+.oe_button_box {
+    margin-bottom: 15px;
+}
+
+.o_form_sheet_bg {
+    background: white;
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+    .warehouse-map-toolbar,
+    .o_warehouse_scanner,
+    .o_product_search,
+    .o_scan_button,
+    .o_search_button {
+        display: none;
+    }
+    
+    .o_warehouse_map_2d,
+    .o_warehouse_map_3d {
+        border: 1px solid #000;
+        page-break-inside: avoid;
+    }
+}
