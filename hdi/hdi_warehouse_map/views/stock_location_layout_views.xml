@@ -103,7 +103,7 @@
                         
                         <page string="Child Locations" name="children" 
                               invisible="location_type == 'bin'">
-                            <field name="child_layout_ids" mode="tree">
+                            <field name="child_layout_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="location_id" domain="[('usage', '=', 'internal')]"/>

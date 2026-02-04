@@ -34,6 +34,7 @@
         'views/warehouse_map_views.xml',
         'views/warehouse_putaway_wizard_views.xml',
         'views/warehouse_putaway_barcode_wizard_views.xml',
+        'wizard/warehouse_layout_generator_views.xml',
         'data/location_demo_data.xml',
         'views/menu_views.xml',
     ],

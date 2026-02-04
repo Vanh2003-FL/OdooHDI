@@ -5,3 +5,4 @@ access_warehouse_putaway_wizard,warehouse.putaway.wizard,model_warehouse_putaway
 access_warehouse_putaway_wizard_line,warehouse.putaway.wizard.line,model_warehouse_putaway_wizard_line,stock.group_stock_user,1,1,1,1
 access_warehouse_putaway_barcode_wizard,warehouse.putaway.barcode.wizard,model_warehouse_putaway_barcode_wizard,stock.group_stock_user,1,1,1,1
 access_warehouse_putaway_barcode_line,warehouse.putaway.barcode.line,model_warehouse_putaway_barcode_line,stock.group_stock_user,1,1,1,1
+access_warehouse_layout_generator,warehouse.layout.generator,model_warehouse_layout_generator,stock.group_stock_user,1,1,1,1

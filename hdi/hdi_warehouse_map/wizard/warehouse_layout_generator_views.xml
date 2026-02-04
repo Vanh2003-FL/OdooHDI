@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="view_warehouse_layout_generator_form" model="ir.ui.view">
+        <field name="name">warehouse.layout.generator.form</field>
+        <field name="model">warehouse.layout.generator</field>
+        <field name="arch" type="xml">
+            <form string="Generate Warehouse Layout">
+                <group>
+                    <group>
+                        <field name="warehouse_id"/>
+                        <field name="location_domain"/>
+                    </group>
+                    <group>
+                        <field name="auto_arrange"/>
+                        <field name="columns" invisible="not auto_arrange"/>
+                    </group>
+                </group>
+                <group string="Grid Settings" invisible="not auto_arrange">
+                    <group>
+                        <field name="grid_width"/>
+                        <field name="grid_height"/>
+                    </group>
+                </group>
+                <separator string="Info"/>
+                <div class="alert alert-info">
+                    <strong>🗺️ Auto-generate layout from existing locations</strong><br/>
+                    This wizard will create layout records (x, y coordinates) for your warehouse locations,
+                    mapping each real Odoo location to a position on the 2D map.<br/><br/>
+                    <strong>Grid Layout:</strong> Locations will be arranged in a grid pattern for easy visualization.
+                </div>
+                <footer>
+                    <button name="action_generate_layout" string="Generate Layout" 
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_warehouse_layout_generator" model="ir.actions.act_window">
+        <field name="name">Generate Warehouse Layout</field>
+        <field name="res_model">warehouse.layout.generator</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_stock_location_layout"/>
+        <field name="binding_view_types">list</field>
+    </record>
+    
+</odoo>
