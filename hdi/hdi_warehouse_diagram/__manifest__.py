@@ -18,9 +18,6 @@
         'views/warehouse_bin_views.xml',
         'views/warehouse_diagram_menu.xml',
     ],
-    'static': {
-        'description': 'Contains CSS and JS for warehouse diagram',
-    },
     'installable': True,
     'auto_install': False,
     'application': False,
